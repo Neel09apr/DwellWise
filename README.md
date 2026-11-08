@@ -1,6 +1,6 @@
-# DwellWise Platform
+# DwellWise
 
-[![ci](https://github.com/Neel09apr/dwellwise-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/Neel09apr/dwellwise-platform/actions/workflows/ci.yml)
+[![ci](https://github.com/Neel09apr/DwellWise/actions/workflows/ci.yml/badge.svg)](https://github.com/Neel09apr/DwellWise/actions/workflows/ci.yml)
 ![cost](https://img.shields.io/badge/monthly%20cost-%240-brightgreen)
 ![iac](https://img.shields.io/badge/IaC-Terraform-7B42BC)
 ![cloud](https://img.shields.io/badge/cloud-AWS%20eu--west--1-FF9900)
@@ -21,12 +21,13 @@ flowchart LR
   ci --> checks["fmt · validate · TFLint"]
   ci --> scans["Trivy IaC scan · gitleaks"]
   scans --> tab["GitHub code scanning"]
-  ci -- "OIDC: short-lived credentials" --> aws
+  ci -- "OIDC: plan on PR, apply after approval" --> aws
 
   subgraph aws["AWS eu-west-1"]
     state["S3 state bucket<br/>private · encrypted · versioned · TLS-only"]
     roles["IAM roles<br/>plan: read-only<br/>apply: dwellwise-* only, behind a boundary"]
     budget["Budget alarm at $1"]
+    data["S3 snapshots bucket<br/>stacks/data"]
   end
 
   app["DwellWise app<br/>Render (Docker)"] --- db[("Supabase<br/>Postgres + PostGIS")]
@@ -43,6 +44,7 @@ flowchart LR
 | Storage defaults | Reusable `secure-bucket` module: private, owner-enforced, encrypted, versioned, HTTPS-only, old versions expire | One reviewed pattern instead of hand-rolled buckets |
 | Cost | Monthly budget with alerts at 50%, 100% and forecast 100% of $1 | Free-tier drift is caught in days, not on the invoice |
 | Pipeline | Format, validate and lint every module; Trivy misconfiguration scan (HIGH/CRITICAL fail); gitleaks over full history | Problems are caught before merge, findings land in the Security tab |
+| Delivery | Pull requests plan with the read-only role; merges apply with the production role after a required approval; a weekly plan fails on drift | Every change is reviewed as a plan, and out-of-band edits are caught |
 | Supply chain | Actions pinned to commit SHAs; provider checksums locked; Dependabot for both | Tag hijacking cannot change what CI runs |
 
 ## Cost
@@ -81,10 +83,13 @@ Control Tower) are avoided by design.
 ```
 terraform/
   bootstrap/              state bucket, CI roles, permissions boundary, budget
+  stacks/data/            workload storage, changed only through CI
   modules/secure-bucket/  the one S3 pattern every bucket uses
 pipeline/                 nightly ingestion: fetch, raw copy, validate, load (Lambda image)
 docs/DESIGN.md            system design: requirements, architecture, SLOs, decisions
-.github/workflows/ci.yml  validate, lint, scan
+.github/workflows/
+  ci.yml                  validate, lint, test, scan
+  terraform.yml           plan on PR, apply on approval, weekly drift check
 SECURITY.md               reporting and security controls
 ```
 
@@ -125,7 +130,7 @@ environment.
 ## Roadmap
 
 - [x] AWS baseline: keyless CI identity, state, cost guardrail, scanned pipeline
-- [ ] Plan on pull request, apply on approval, through the OIDC roles
+- [x] Plan on pull request, apply on approval, weekly drift detection
 - [x] Pipeline core with counties and settlements: raw copies, validation, atomic loads, tested against PostGIS
 - [ ] Pipeline on AWS Lambda and EventBridge Scheduler; capacity registers, planning applications, protected sites
 - [ ] Monitoring: uptime checks and public status page, metrics and dashboards, error tracking

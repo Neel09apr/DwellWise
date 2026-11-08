@@ -13,7 +13,7 @@ variable "github_owner" {
 variable "github_repo" {
   description = "Repository allowed to assume the CI roles."
   type        = string
-  default     = "dwellwise-platform"
+  default     = "DwellWise"
 }
 
 variable "alert_email" {
