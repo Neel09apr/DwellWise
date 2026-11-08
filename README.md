@@ -56,6 +56,13 @@ flowchart LR
 | Trivy, gitleaks, TFLint | Scanning and linting | Open source |
 | **Total** | | **$0.00**, alarmed at $1 |
 
+**About the AWS free plan.** New accounts get up to $200 of credits on a free
+plan that never bills, but it closes after six months unless upgraded to
+pay-as-you-go. Everything here is Terraform, so the platform can be rebuilt on
+a fresh account in minutes, and after an upgrade the budget alarm keeps any
+drift visible. Things that silently trigger an upgrade (AWS Organizations,
+Control Tower) are avoided by design.
+
 ## Design decisions
 
 - **SSE-S3 instead of a customer-managed KMS key.** A KMS key costs about
@@ -81,9 +88,12 @@ SECURITY.md               reporting and security controls
 
 ## Bootstrap (once per AWS account)
 
-Prerequisites: an AWS account, the AWS CLI signed in as an administrator
-(IAM Identity Center via `aws configure sso` is preferred over access keys),
-and Terraform 1.10 or later.
+Prerequisites: an AWS account, Terraform 1.10 or later, and AWS CLI 2.32 or
+later signed in as an administrator with `aws login`. That uses your console
+sign-in (an IAM user with MFA, never the root user) and hands the CLI
+short-lived credentials, so no access keys are created. IAM Identity Center is
+deliberately not used: it needs AWS Organizations, and joining Organizations
+upgrades a free-plan account to a paid one.
 
 ```bash
 cd terraform/bootstrap
