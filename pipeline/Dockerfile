@@ -1,5 +1,5 @@
 # AWS Lambda container image for the nightly pipeline.
-# trivy:ignore:DS-0026 No HEALTHCHECK: Lambda starts a container per invocation; there is no long-running process to probe.
+# No HEALTHCHECK on purpose: see .trivyignore.yaml.
 FROM public.ecr.aws/lambda/python:3.13
 
 COPY requirements.txt ${LAMBDA_TASK_ROOT}/

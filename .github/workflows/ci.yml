@@ -125,6 +125,7 @@ jobs:
         with:
           scan-type: config
           scan-ref: .
+          trivyignores: .trivyignore.yaml
           format: sarif
           output: trivy.sarif
           exit-code: "0"
@@ -140,6 +141,7 @@ jobs:
         with:
           scan-type: config
           scan-ref: .
+          trivyignores: .trivyignore.yaml
           severity: HIGH,CRITICAL
           exit-code: "1"
           skip-setup-trivy: true
