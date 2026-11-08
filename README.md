@@ -1,6 +1,6 @@
-# DwellWise Platform
+# DwellWise
 
-[![ci](https://github.com/Neel09apr/dwellwise-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/Neel09apr/dwellwise-platform/actions/workflows/ci.yml)
+[![ci](https://github.com/Neel09apr/DwellWise/actions/workflows/ci.yml/badge.svg)](https://github.com/Neel09apr/DwellWise/actions/workflows/ci.yml)
 ![cost](https://img.shields.io/badge/monthly%20cost-%240-brightgreen)
 ![iac](https://img.shields.io/badge/IaC-Terraform-7B42BC)
 ![cloud](https://img.shields.io/badge/cloud-AWS%20eu--west--1-FF9900)
