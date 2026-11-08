@@ -34,7 +34,7 @@ jobs:
       - name: Validate every root and module
         run: |
           set -euo pipefail
-          for dir in terraform/bootstrap terraform/modules/*/; do
+          for dir in terraform/bootstrap terraform/stacks/*/ terraform/modules/*/; do
             echo "::group::$dir"
             terraform -chdir="$dir" init -backend=false -input=false
             terraform -chdir="$dir" validate
