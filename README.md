@@ -85,8 +85,10 @@ terraform/
   bootstrap/              state bucket, CI roles, permissions boundary, budget
   stacks/data/            workload storage, changed only through CI
   modules/secure-bucket/  the one S3 pattern every bucket uses
+pipeline/                 nightly ingestion: fetch, raw copy, validate, load (Lambda image)
+docs/DESIGN.md            system design: requirements, architecture, SLOs, decisions
 .github/workflows/
-  ci.yml                  validate, lint, scan
+  ci.yml                  validate, lint, test, scan
   terraform.yml           plan on PR, apply on approval, weekly drift check
 SECURITY.md               reporting and security controls
 ```
@@ -129,7 +131,8 @@ environment.
 
 - [x] AWS baseline: keyless CI identity, state, cost guardrail, scanned pipeline
 - [x] Plan on pull request, apply on approval, weekly drift detection
-- [ ] Nightly data refresh on AWS Lambda and EventBridge Scheduler, results in S3
+- [x] Pipeline core with counties and settlements: raw copies, validation, atomic loads, tested against PostGIS
+- [ ] Pipeline on AWS Lambda and EventBridge Scheduler; capacity registers, planning applications, protected sites
 - [ ] Monitoring: uptime checks and public status page, metrics and dashboards, error tracking
 - [ ] SRE practice: service-level objectives, alerts, runbooks, incident write-ups
 - [ ] Supply chain: SBOM, signed container images, OpenSSF Scorecard

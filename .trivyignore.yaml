@@ -1,0 +1,10 @@
+# Reviewed exceptions only. Each one is scoped to the files it applies to and
+# says why, so the same finding elsewhere still fails the build.
+misconfigurations:
+  - id: DS-0026
+    paths:
+      - "pipeline/Dockerfile"
+    statement: >-
+      No HEALTHCHECK in the Lambda image. Lambda starts a container per
+      invocation and reports failures itself; there is no long-running
+      process to probe. Long-running containers must still define one.

@@ -8,6 +8,16 @@ updates:
       actions:
         patterns: ["*"]
 
+  - package-ecosystem: pip
+    directory: /pipeline
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directory: /pipeline
+    schedule:
+      interval: weekly
+
   - package-ecosystem: terraform
     directories:
       - /terraform/bootstrap

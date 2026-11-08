@@ -1,0 +1,19 @@
+[project]
+name = "dwellwise-pipeline"
+version = "0.1.0"
+description = "Nightly ingestion of public data for DwellWise"
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "SIM"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["integration: needs a PostGIS database in DATABASE_URL"]
