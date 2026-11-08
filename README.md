@@ -82,6 +82,8 @@ Control Tower) are avoided by design.
 terraform/
   bootstrap/              state bucket, CI roles, permissions boundary, budget
   modules/secure-bucket/  the one S3 pattern every bucket uses
+pipeline/                 nightly ingestion: fetch, raw copy, validate, load (Lambda image)
+docs/DESIGN.md            system design: requirements, architecture, SLOs, decisions
 .github/workflows/ci.yml  validate, lint, scan
 SECURITY.md               reporting and security controls
 ```
@@ -124,7 +126,8 @@ environment.
 
 - [x] AWS baseline: keyless CI identity, state, cost guardrail, scanned pipeline
 - [ ] Plan on pull request, apply on approval, through the OIDC roles
-- [ ] Nightly data refresh on AWS Lambda and EventBridge Scheduler, results in S3
+- [x] Pipeline core with counties and settlements: raw copies, validation, atomic loads, tested against PostGIS
+- [ ] Pipeline on AWS Lambda and EventBridge Scheduler; capacity registers, planning applications, protected sites
 - [ ] Monitoring: uptime checks and public status page, metrics and dashboards, error tracking
 - [ ] SRE practice: service-level objectives, alerts, runbooks, incident write-ups
 - [ ] Supply chain: SBOM, signed container images, OpenSSF Scorecard
