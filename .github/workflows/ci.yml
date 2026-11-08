@@ -93,6 +93,22 @@ jobs:
       - name: Build the Lambda image
         run: docker build -t dwellwise-pipeline:ci .
 
+      - name: Smoke-test the image as its non-root user
+        run: |
+          set -euo pipefail
+          # The base image ships the Lambda runtime interface emulator on port 8080.
+          docker run -d --name fn -p 9000:8080 dwellwise-pipeline:ci
+          for _ in $(seq 1 20); do
+            out=$(curl -s -X POST localhost:9000/2015-03-31/functions/function/invocations               -d '{"sources": ["no-such-source"]}' || true)
+            [ -n "$out" ] && break
+            sleep 1
+          done
+          echo "$out"
+          docker exec fn id -u | grep -qx 65532
+          # The handler imported, ran and rejected the unknown source by name.
+          echo "$out" | grep -q "unknown sources"
+          docker rm -f fn
+
   trivy:
     name: Trivy IaC scan
     runs-on: ubuntu-latest
