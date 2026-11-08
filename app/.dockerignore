@@ -1,0 +1,7 @@
+web/node_modules/
+web/dist/
+api/.env
+**/__pycache__/
+**/.pytest_cache/
+**/.ruff_cache/
+api/tests/

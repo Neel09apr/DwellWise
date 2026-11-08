@@ -1,0 +1,51 @@
+/* Minimal working styles from the DwellWise tokens. The visual design is
+   replaced later (Claude Design); keep this file small until then. */
+:root {
+  --ground: #f7f6f2;
+  --surface: #ffffff;
+  --ink: #142433;
+  --prose: #33485a;
+  --muted: #5b6d7c;
+  --line: #d3dbe1;
+  --accent: #1b4d7a;
+  --red: #b3351f;
+  --focus: #f5c400;
+  --radius: 10px;
+  --serif: "Fraunces", Georgia, serif;
+  --sans: "IBM Plex Sans", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ground); color: var(--ink); font: 16px/1.6 var(--sans); }
+a { color: var(--accent); }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; box-shadow: 0 0 0 5px var(--ink); }
+h1, h2 { font-family: var(--serif); font-weight: 600; line-height: 1.2; }
+h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); margin: 0 0 0.6rem; }
+h2 { font-size: 1.3rem; margin: 2rem 0 0.6rem; }
+
+.skip { position: absolute; left: 1rem; top: -100px; background: var(--surface); padding: 0.5rem; }
+.skip:focus { top: 0.5rem; }
+.header { padding: 0.75rem max(2vw, 1rem); background: var(--surface); border-bottom: 1px solid var(--line); }
+.brand { display: inline-flex; gap: 0.5rem; align-items: center; color: var(--ink); text-decoration: none; font: 600 1.15rem var(--serif); }
+.page { max-width: 760px; margin: 0 auto; padding: 2.5rem 1rem 4rem; }
+.footer { max-width: 760px; margin: 0 auto; padding: 0 1rem 2rem; font-size: 0.85rem; color: var(--muted); }
+
+.eyebrow { font: 600 0.72rem var(--sans); letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin: 0 0 0.5rem; }
+.muted { color: var(--muted); }
+.error { color: var(--red); }
+.mono { font-family: var(--mono); }
+
+label { display: block; font-weight: 600; margin: 1.5rem 0 0.35rem; }
+input { width: 100%; min-height: 44px; font: inherit; padding: 0.6rem 0.75rem; border: 1px solid #7f8f9d; border-radius: 8px; background: var(--surface); }
+
+.results, .sections, .sources { list-style: none; padding: 0; margin: 1rem 0 0; }
+.results a { display: flex; justify-content: space-between; gap: 1rem; min-height: 44px; align-items: center; padding: 0.6rem 0.9rem; margin-bottom: 0.4rem; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); text-decoration: none; color: var(--ink); }
+.results a:hover { border-color: var(--accent); }
+.result-name { font-weight: 600; }
+
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin: 1.5rem 0 0; }
+.facts dt { font-size: 0.85rem; color: var(--muted); }
+.facts dd { margin: 0; font-weight: 600; }
+.sections li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.6rem 0; border-bottom: 1px solid var(--line); }
+.sources li { font-size: 0.9rem; color: var(--prose); margin-bottom: 0.3rem; }

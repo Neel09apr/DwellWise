@@ -10,3 +10,12 @@ crash.log
 backend.hcl
 !backend.hcl.example
 .env
+
+# App
+node_modules/
+dist/
+app/api/.env
+raw/
+__pycache__/
+.pytest_cache/
+.ruff_cache/

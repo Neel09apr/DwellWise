@@ -1,0 +1,15 @@
+# Render blueprint: the app as one Docker web service on the free plan.
+services:
+  - type: web
+    name: dwellwise
+    runtime: docker
+    plan: free
+    region: frankfurt # nearest Render region to Ireland
+    dockerfilePath: ./app/Dockerfile
+    dockerContext: ./app
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL # Supabase session pooler string, set in the dashboard
+        sync: false
+      - key: METRICS_TOKEN # scrapers send "Authorization: Bearer <token>"
+        generateValue: true

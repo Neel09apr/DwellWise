@@ -1,0 +1,19 @@
+[project]
+name = "dwellwise-api"
+version = "0.1.0"
+description = "Read-only API and web host for DwellWise"
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "SIM"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101", "S106"]  # asserts and fake tokens are fine in tests
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["integration: needs a PostGIS database in DATABASE_URL"]

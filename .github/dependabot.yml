@@ -18,6 +18,24 @@ updates:
     schedule:
       interval: weekly
 
+  - package-ecosystem: pip
+    directory: /app/api
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: npm
+    directory: /app/web
+    schedule:
+      interval: weekly
+    groups:
+      web:
+        patterns: ["*"]
+
+  - package-ecosystem: docker
+    directory: /app
+    schedule:
+      interval: weekly
+
   - package-ecosystem: terraform
     directories:
       - /terraform/bootstrap
