@@ -1,6 +1,6 @@
 # AWS Lambda container image for the nightly pipeline.
 # No HEALTHCHECK on purpose: see .trivyignore.yaml.
-FROM public.ecr.aws/lambda/python:3.13
+FROM public.ecr.aws/lambda/python:3.15
 
 COPY requirements.txt ${LAMBDA_TASK_ROOT}/
 RUN pip install --no-cache-dir -r ${LAMBDA_TASK_ROOT}/requirements.txt
