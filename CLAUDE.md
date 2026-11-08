@@ -60,6 +60,9 @@ If it does neither, it is drift.
    possibly an upgrade: time and cost, not a refusal. Use the register's words.
    Settlement evidence describes the town, never the user's site. "Residential"
    is not "housing".
+10. **Design.** Minimal and hierarchical: Ireland > county > settlement > brief, with
+    breadcrumbs and numbered sections. One serif, one sans, mono for metadata;
+    survey blue is the only accent; green, amber and red are for capacity status only.
 8. **Security defaults.** No long-lived cloud keys. Least privilege. Non-root
    containers. Every scanner suppression is scoped and gives its reason.
 9. **Tests that can fail.** A new check is mutation-tested before it is trusted.
@@ -67,8 +70,8 @@ If it does neither, it is drift.
 ## Layout
 
 ```
-app/api        FastAPI: /health /ready /metrics, /v1 settlements; serves the web app
-app/web        React + TypeScript (working UI; visual design to come from Claude Design)
+app/api        FastAPI: /health /ready /metrics, /v1 counties and settlements; serves the web app
+app/web        React + TypeScript; minimal, hierarchical: Ireland > county > settlement > brief
 pipeline/      nightly ingestion: fetch, raw copy to S3, validate, atomic load
 terraform/     bootstrap (state, OIDC roles, budget), stacks/, modules/
 docs/          DESIGN.md; runbooks and decision records as they are written
@@ -82,7 +85,7 @@ docs/          DESIGN.md; runbooks and decision records as they are written
 | 1. Foundation: AWS baseline, keyless CI, scanning | Merged |
 | 2. Delivery: plan on PR, apply on approval, weekly drift check | Merged |
 | 3. Data: pipeline core, counties and settlements | Merged (part 1) |
-| 4–5. API and web app | In progress: API, minimal web UI, container, Render blueprint |
+| 4–5. API and web app | In review (PR #6): API, hierarchical web UI, container, Render blueprint |
 | 6. Operate: uptime, dashboards, errors, SLOs, runbooks | Not started |
 | 7. Supply chain: SBOM, signed images, Scorecard | Not started |
 | 8. Kubernetes: Helm chart on a throwaway cluster | Not started |
@@ -93,7 +96,7 @@ run the bootstrap; nothing in AWS exists yet.
 ## Next
 
 1. Finish milestone 4–5: run the app locally against Supabase, merge, deploy to Render.
-2. Visual design of the web app with Claude Design, then implement it in `app/web`.
+2. Brief sections fill in as each data source lands; the UI keeps its hierarchy (see `app/web/src/styles.css`).
 3. Pipeline sources: wastewater capacity registers, planning applications,
    protected sites; then the brief endpoint.
 4. AWS bootstrap, then the Lambda and scheduler for the nightly pipeline.

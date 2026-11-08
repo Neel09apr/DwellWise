@@ -23,6 +23,11 @@ class Ready(BaseModel):
     checks: dict[str, str]
 
 
+class County(BaseModel):
+    name: str
+    settlements: int
+
+
 class SettlementSummary(BaseModel):
     code: str
     name: str

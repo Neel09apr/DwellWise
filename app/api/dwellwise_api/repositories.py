@@ -5,6 +5,30 @@ from __future__ import annotations
 from psycopg.rows import dict_row
 
 
+def list_counties(conn) -> list[dict]:
+    with conn.cursor(row_factory=dict_row) as cur:
+        cur.execute(
+            """
+            select c.name, count(s.code)::int as settlements
+            from dw.county c left join dw.settlement s on s.county = c.name
+            group by c.name order by c.name
+            """
+        )
+        return cur.fetchall()
+
+
+def county_exists(conn, name: str) -> bool:
+    with conn.cursor() as cur:
+        cur.execute("select 1 from dw.county where name = %s", (name,))
+        return cur.fetchone() is not None
+
+
+def county_settlements(conn, name: str) -> list[dict]:
+    with conn.cursor(row_factory=dict_row) as cur:
+        cur.execute("select code, name, county from dw.settlement where county = %s order by name", (name,))
+        return cur.fetchall()
+
+
 def search_settlements(conn, key: str, county: str | None, limit: int) -> list[dict]:
     with conn.cursor(row_factory=dict_row) as cur:
         cur.execute(

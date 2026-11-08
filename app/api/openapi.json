@@ -59,6 +59,92 @@
         }
       }
     },
+    "/v1/counties": {
+      "get": {
+        "tags": [
+          "counties"
+        ],
+        "summary": "List Counties",
+        "description": "Every county, with how many settlements it contains.",
+        "operationId": "list_counties_v1_counties_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/County"
+                  },
+                  "type": "array",
+                  "title": "Response List Counties V1 Counties Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/counties/{name}/settlements": {
+      "get": {
+        "tags": [
+          "counties"
+        ],
+        "summary": "County Settlements",
+        "description": "The county's settlements, A to Z.",
+        "operationId": "county_settlements_v1_counties__name__settlements_get",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z][A-Za-z \\-]{1,30}$",
+              "description": "County name, any case",
+              "title": "Name"
+            },
+            "description": "County name, any case"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SettlementSummary"
+                  },
+                  "title": "Response County Settlements V1 Counties  Name  Settlements Get"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/settlements": {
       "get": {
         "tags": [
@@ -199,6 +285,24 @@
   },
   "components": {
     "schemas": {
+      "County": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "settlements": {
+            "type": "integer",
+            "title": "Settlements"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "settlements"
+        ],
+        "title": "County"
+      },
       "ErrorBody": {
         "properties": {
           "error": {

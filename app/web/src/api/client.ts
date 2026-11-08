@@ -1,6 +1,7 @@
 import type { components } from "./schema";
 
 type Schemas = components["schemas"];
+export type County = Schemas["County"];
 export type SettlementSummary = Schemas["SettlementSummary"];
 export type SettlementDetail = Schemas["SettlementDetail"];
 
@@ -32,6 +33,9 @@ async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
 }
 
 export const api = {
+  counties: (signal?: AbortSignal) => get<County[]>("/v1/counties", signal),
+  countySettlements: (name: string, signal?: AbortSignal) =>
+    get<SettlementSummary[]>(`/v1/counties/${encodeURIComponent(name)}/settlements`, signal),
   searchSettlements: (q: string, signal?: AbortSignal) =>
     get<SettlementSummary[]>(`/v1/settlements?${new URLSearchParams({ q })}`, signal),
   settlement: (code: string, signal?: AbortSignal) =>

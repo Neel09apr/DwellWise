@@ -3,17 +3,21 @@ import { createRoot } from "react-dom/client";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 
 import { Layout } from "./Layout";
-import { SearchPage } from "./pages/SearchPage";
+import { CountyPage } from "./pages/CountyPage";
+import { HomePage } from "./pages/HomePage";
+import { NotFoundPage } from "./pages/NotFoundPage";
 import { SettlementPage } from "./pages/SettlementPage";
 import "./styles.css";
 
+// The hierarchy the app follows: Ireland -> county -> settlement -> brief.
 const router = createBrowserRouter([
   {
     element: <Layout />,
     children: [
-      { path: "/", element: <SearchPage /> },
+      { path: "/", element: <HomePage /> },
+      { path: "/counties/:slug", element: <CountyPage /> },
       { path: "/settlements/:code", element: <SettlementPage /> },
-      { path: "*", element: <SearchPage /> },
+      { path: "*", element: <NotFoundPage /> },
     ],
   },
 ]);

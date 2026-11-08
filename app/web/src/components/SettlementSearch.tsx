@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 import { api, type SettlementSummary } from "../api/client";
 import { titleCase } from "../text";
+import { Failure } from "./Status";
 
 type State =
   | { kind: "idle" }
@@ -12,7 +13,7 @@ type State =
 
 const DEBOUNCE_MS = 250;
 
-export function SearchPage() {
+export function SettlementSearch() {
   const [query, setQuery] = useState("");
   const [state, setState] = useState<State>({ kind: "idle" });
 
@@ -40,41 +41,41 @@ export function SearchPage() {
   }, [query]);
 
   return (
-    <section className="search">
-      <p className="eyebrow">Pre-planning brief</p>
-      <h1>Which town is the housing proposal in?</h1>
-      <label htmlFor="town">Town or village</label>
+    <div className="search" role="search">
+      <label htmlFor="town" className="search-label">
+        Find a town or village
+      </label>
       <input
         id="town"
         type="search"
         autoComplete="off"
-        placeholder="e.g. Castlebar"
+        spellCheck={false}
+        placeholder="Castlebar, Athy, Kenmare…"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
-      <div aria-live="polite">
-        {state.kind === "loading" && <p className="muted">Searching…</p>}
-        {state.kind === "error" && (
-          <p className="error" role="alert">
-            {state.message}
-          </p>
-        )}
+      <div aria-live="polite" className="search-status">
+        {state.kind === "loading" && <span className="muted">Searching…</span>}
         {state.kind === "ready" && state.results.length === 0 && (
-          <p className="muted">No settlement matches “{query.trim()}”.</p>
+          <span className="muted">No settlement matches “{query.trim()}”.</span>
+        )}
+        {state.kind === "ready" && state.results.length > 0 && (
+          <span className="sr-only">{state.results.length} results</span>
         )}
       </div>
+      {state.kind === "error" && <Failure message={state.message} />}
       {state.kind === "ready" && state.results.length > 0 && (
-        <ul className="results">
+        <ul className="rows">
           {state.results.map((s) => (
             <li key={s.code}>
-              <Link to={`/settlements/${encodeURIComponent(s.code)}`}>
-                <span className="result-name">{s.name}</span>
-                {s.county && <span className="muted">Co. {titleCase(s.county)}</span>}
+              <Link to={`/settlements/${encodeURIComponent(s.code)}`} className="row">
+                <span>{s.name}</span>
+                <span className="row-meta">{s.county ? titleCase(s.county) : ""}</span>
               </Link>
             </li>
           ))}
         </ul>
       )}
-    </section>
+    </div>
   );
 }

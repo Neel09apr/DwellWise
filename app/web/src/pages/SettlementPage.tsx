@@ -1,88 +1,118 @@
-import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
-import { api, type SettlementDetail } from "../api/client";
-import { titleCase } from "../text";
+import { api } from "../api/client";
+import { Breadcrumbs } from "../components/Breadcrumbs";
+import { Failure, Loading } from "../components/Status";
+import { countySlug, titleCase } from "../text";
+import { useResource } from "../useResource";
 
-type State = { kind: "loading" } | { kind: "error"; message: string } | { kind: "ready"; s: SettlementDetail };
+/** The brief's sections in order (docs/DESIGN.md F3–F6). Each fills in when its data source lands. */
+const SECTIONS = [
+  { id: "wastewater", title: "Wastewater capacity", about: "Spare capacity at the treatment plant serving the town." },
+  { id: "precedents", title: "Planning precedents", about: "Recent residential planning applications and decisions." },
+  { id: "protected", title: "Protected sites nearby", about: "SAC, SPA and NHA sites within 1 km and 5 km." },
+  { id: "alternatives", title: "Nearby alternatives", about: "Nearby settlements with spare capacity, by distance." },
+];
 
-/** Brief sections, in the order the design lists them. Each arrives with its data source. */
-const SECTIONS = ["Wastewater capacity", "Planning precedents", "Protected sites nearby", "Nearby alternatives"];
+const number = (i: number) => String(i + 1).padStart(2, "0");
 
 export function SettlementPage() {
   const { code = "" } = useParams();
-  const [state, setState] = useState<State>({ kind: "loading" });
+  const settlement = useResource((signal) => api.settlement(code, signal), code);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    setState({ kind: "loading" });
-    api
-      .settlement(code, controller.signal)
-      .then((s) => setState({ kind: "ready", s }))
-      .catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === "AbortError") return;
-        setState({ kind: "error", message: error instanceof Error ? error.message : "Could not load." });
-      });
-    return () => controller.abort();
-  }, [code]);
-
-  if (state.kind === "loading") return <p className="muted">Loading…</p>;
-  if (state.kind === "error")
+  if (settlement.kind === "loading") return <Loading what="the brief" />;
+  if (settlement.kind === "error")
     return (
-      <div role="alert">
-        <p className="error">{state.message}</p>
-        <Link to="/">Search again</Link>
-      </div>
+      <>
+        <Breadcrumbs trail={[{ label: "Ireland", to: "/" }, { label: "Settlement" }]} />
+        <Failure message={settlement.message} />
+      </>
     );
 
-  const { s } = state;
+  const s = settlement.data;
+  const county = s.county ? titleCase(s.county) : null;
+  const trail = [
+    { label: "Ireland", to: "/" },
+    ...(county ? [{ label: county, to: `/counties/${countySlug(s.county ?? "")}` }] : []),
+    { label: s.name },
+  ];
+
   return (
-    <article className="brief">
-      <p className="eyebrow">Pre-planning brief</p>
-      <h1>
-        {s.name}
-        {s.county && `, Co. ${titleCase(s.county)}`}
-      </h1>
-      <p className="muted">Evidence about the town, not about any particular site in it.</p>
+    <article>
+      <Breadcrumbs trail={trail} />
+      <header className="page-head">
+        <p className="eyebrow">Pre-planning brief</p>
+        <h1>{s.name}</h1>
+        <p className="muted">
+          {county ? `County ${county}. ` : ""}Evidence about the town as a whole, not about any site in it.
+        </p>
+        <dl className="facts">
+          <div>
+            <dt>Area</dt>
+            <dd>{s.area_km2.toFixed(2)} km²</dd>
+          </div>
+          <div>
+            <dt>Centre</dt>
+            <dd>
+              {s.latitude.toFixed(4)}, {s.longitude.toFixed(4)}
+            </dd>
+          </div>
+          <div>
+            <dt>CSO code</dt>
+            <dd>{s.code}</dd>
+          </div>
+        </dl>
+      </header>
 
-      <dl className="facts">
-        <div>
-          <dt>Settlement area</dt>
-          <dd>{s.area_km2.toFixed(2)} km²</dd>
-        </div>
-        <div>
-          <dt>Location</dt>
-          <dd>
-            {s.latitude.toFixed(4)}, {s.longitude.toFixed(4)}
-          </dd>
-        </div>
-        <div>
-          <dt>CSO settlement code</dt>
-          <dd className="mono">{s.code}</dd>
-        </div>
-      </dl>
-
-      <h2>Brief sections</h2>
-      <ul className="sections">
-        {SECTIONS.map((name) => (
-          <li key={name}>
-            <span>{name}</span>
-            <span className="muted">Data source not loaded yet</span>
+      <nav aria-labelledby="contents" className="contents">
+        <h2 id="contents" className="level-title">
+          Contents
+        </h2>
+        <ol>
+          {SECTIONS.map((section, i) => (
+            <li key={section.id}>
+              <a href={`#${section.id}`}>
+                <span className="num">{number(i)}</span>
+                {section.title}
+              </a>
+            </li>
+          ))}
+          <li>
+            <a href="#sources">
+              <span className="num">{number(SECTIONS.length)}</span>
+              Sources
+            </a>
           </li>
-        ))}
-      </ul>
+        </ol>
+      </nav>
 
-      <h2>Sources</h2>
-      <ul className="sources">
-        {s.sources.map((src) => (
-          <li key={src.name}>
-            {src.attribution} Captured {new Date(src.captured_at).toLocaleDateString("en-IE")}.
-          </li>
-        ))}
-      </ul>
-      <p>
-        <Link to="/">Search another town</Link>
-      </p>
+      {SECTIONS.map((section, i) => (
+        <section key={section.id} id={section.id} className="section" aria-labelledby={`${section.id}-title`}>
+          <h2 id={`${section.id}-title`}>
+            <span className="num">{number(i)}</span>
+            {section.title}
+          </h2>
+          <p className="muted">{section.about}</p>
+          <p className="pending">Not loaded yet. This section fills in when its public data source is added.</p>
+        </section>
+      ))}
+
+      <section id="sources" className="section" aria-labelledby="sources-title">
+        <h2 id="sources-title">
+          <span className="num">{number(SECTIONS.length)}</span>
+          Sources
+        </h2>
+        <ul className="sources">
+          {s.sources.map((src) => (
+            <li key={src.name}>
+              <span>{src.attribution}</span>
+              <span className="row-meta">
+                captured {new Date(src.captured_at).toLocaleDateString("en-IE", { dateStyle: "medium" })}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
     </article>
   );
 }
