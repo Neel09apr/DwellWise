@@ -1,0 +1,8 @@
+# After the first apply: copy to backend.hcl (git-ignored), put in the
+# state_bucket output, copy backend.tf.example to backend.tf, then run
+#   terraform init -migrate-state -backend-config=backend.hcl
+bucket       = "dwellwise-tfstate-ACCOUNT_ID"
+key          = "bootstrap/terraform.tfstate"
+region       = "eu-west-1"
+encrypt      = true
+use_lockfile = true

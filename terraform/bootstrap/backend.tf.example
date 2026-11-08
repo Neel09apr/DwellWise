@@ -1,0 +1,4 @@
+# Enabled after the first apply, once the state bucket exists.
+terraform {
+  backend "s3" {}
+}
