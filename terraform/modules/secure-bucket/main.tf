@@ -2,8 +2,7 @@
 # owner-enforced (no ACLs), all public access blocked, versioned, encrypted at
 # rest, HTTPS-only, and old versions expired so storage stays inside the free tier.
 
-# trivy:ignore:AVD-AWS-0132 SSE-S3 (AES256) instead of a customer-managed KMS key: a CMK costs ~$1/month and this platform runs at $0.
-# trivy:ignore:AVD-AWS-0089 No server access logging: it needs a second bucket and adds request cost; CloudTrail management events cover who changed the bucket.
+# trivy:ignore:AWS-0089 No server access logging: it needs a second bucket and adds request cost; CloudTrail management events cover who changed the bucket.
 resource "aws_s3_bucket" "this" {
   bucket        = var.name
   force_destroy = var.force_destroy
@@ -33,6 +32,7 @@ resource "aws_s3_bucket_versioning" "this" {
   }
 }
 
+# trivy:ignore:AWS-0132 SSE-S3 (AES256) instead of a customer-managed KMS key: a CMK costs ~$1/month and this platform runs at $0.
 resource "aws_s3_bucket_server_side_encryption_configuration" "this" {
   bucket = aws_s3_bucket.this.id
 
