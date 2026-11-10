@@ -12,8 +12,9 @@ or answered.
 
 ## What this repository does to stay safe
 
-- **No long-lived cloud credentials.** GitHub Actions reaches AWS through OIDC
-  federation and short-lived role sessions. No AWS access keys exist.
+- **No long-lived cloud credentials.** No cloud account is used. Service
+  credentials live only in GitHub Actions and Render secrets. The AWS modules
+  (not deployed) are written for OIDC federation with short-lived role sessions.
 - **Least privilege.** The plan role is read-only. The apply role can only
   change resources named `dwellwise-*`, only from the approved `production`
   environment, and any role it creates must carry a permissions boundary it
