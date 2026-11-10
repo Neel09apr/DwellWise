@@ -69,11 +69,11 @@ flowchart LR
   api --> db[("Postgres + PostGIS<br/>Supabase")]
   api -.->|"optional summary"| llm["LLM API<br/>Gemini free tier"]
 
-  subgraph aws["AWS eu-west-1"]
-    sched["EventBridge Scheduler<br/>nightly"] --> fn["Lambda (container)<br/>pipeline"]
-    fn --> raw["S3<br/>raw snapshots"]
-    fn --> cw["CloudWatch<br/>metrics, logs, alarms"]
+  subgraph gha["GitHub Actions"]
+    sched["Schedule<br/>nightly"] --> fn["Pipeline container"]
   end
+  fn --> raw["Supabase Storage<br/>raw snapshots (S3 API)"]
+  fn --> obs
 
   sources["Public sources<br/>registers · planning API · boundaries · protected sites"] --> fn
   fn -->|"validated load"| db
@@ -87,13 +87,13 @@ flowchart LR
 | Web (`app/web`) | The workspace: search, proposal, brief, edit, print | Static files served by the API container |
 | API (`app/api`) | Read-only queries that assemble a brief; optional summary; health and metrics | Render free web service (Docker) |
 | Database | Settlements, capacity, applications, protected sites, snapshot log; PostGIS for spatial joins | Supabase free (500 MB) |
-| Pipeline (`pipeline/`) | Fetch each source, store the raw file, validate, transform, load | AWS Lambda container, nightly |
-| Raw store | Dated, immutable copies of every fetched file | S3 (`dwellwise-data-snapshots-*`) |
-| Infrastructure (`infra/`) | Terraform for AWS; deployment config for Render and Supabase | GitHub Actions via OIDC |
+| Pipeline (`pipeline/`) | Fetch each source, store the raw file, validate, transform, load | Scheduled GitHub Actions job running the pipeline container, nightly |
+| Raw store | Dated, immutable copies of every fetched file | Supabase Storage bucket through its S3-compatible API |
+| Infrastructure (`terraform/`) | Terraform for Render, Supabase and GitHub settings, applied by CI; the AWS modules are kept, to be tested against the Floci emulator, never deployed | GitHub Actions |
 
 **Why this split.** The API only reads, so it can scale and fail
 independently of ingestion. The pipeline is the only writer, so every change
-to the data is logged against a run and can be replayed from S3.
+to the data is logged against a run and can be replayed from the raw store.
 
 ## 5. Data model
 
@@ -164,11 +164,11 @@ Rules carried over from the problem domain:
 
 ## 6. Pipeline
 
-One Lambda invocation per source, scheduled nightly, each step idempotent and
+One pipeline run per source, scheduled nightly on GitHub Actions, each step idempotent and
 keyed by a run id.
 
 1. **Fetch** the source and write the untouched file to
-   `s3://…/raw/<source>/<YYYY-MM-DD>/<run_id>/` with its SHA-256.
+   `raw/<source>/<YYYY-MM-DD>/<run_id>/` in the raw store with its SHA-256.
 2. **Validate** before touching the database: expected columns present, no
    applicant name or address fields, row count within ±20% of the last good
    run (configurable per source), geometries valid.
@@ -178,7 +178,7 @@ keyed by a run id.
 5. **Record** a `snapshot` row and emit metrics: rows loaded, duration,
    outcome, data age.
 
-Failures alarm through CloudWatch to email. A run can be replayed from any
+A failed run fails the workflow (GitHub emails the owner) and raises a Grafana Cloud alert. A run can be replayed from any
 stored raw file, which makes backfills and bug fixes cheap.
 
 **Sources (v1)**
@@ -249,9 +249,12 @@ failed, database near its 500 MB limit, cost alarm.
 
 ## 11. Environments and delivery
 
-- **Pull request:** lint, test, type-check, Terraform plan, security scans.
-- **Merge to main:** build and sign the image, Terraform apply after approval,
-  deploy to Render.
+- **Pull request:** lint, test, type-check, Terraform plan, security scans, and
+  the AWS modules applied to a throwaway Floci emulator.
+- **Merge to main:** build and sign the image, Terraform apply (Render,
+  Supabase, GitHub) after approval, deploy to Render.
+- **Nightly:** a scheduled workflow runs the pipeline container; database and
+  Storage credentials are GitHub Actions secrets.
 - **Staging and production:** two Supabase projects (the free tier allows
   two); staging receives every merge, production on release.
 
@@ -261,7 +264,7 @@ failed, database near its 500 MB limit, cost alarm.
 |---|---|---|
 | Render | API container | $0 (free web service) |
 | Supabase | Postgres + PostGIS, 500 MB | $0 (free) |
-| AWS Lambda, Scheduler, S3, CloudWatch | Nightly pipeline and raw files | $0 within free-plan credits; pennies at most after |
+| GitHub Actions schedule, Supabase Storage | Nightly pipeline and raw files (1 GB free) | $0 |
 | Grafana Cloud, Sentry, uptime probe | Observability | $0 (free tiers) |
 | Gemini API | Optional summaries | $0 (free tier) |
 | GitHub Actions | CI/CD on a public repo | $0 |
@@ -271,21 +274,26 @@ failed, database near its 500 MB limit, cost alarm.
 | Decision | Chosen | Instead of | Because |
 |---|---|---|---|
 | Brief engine | Deterministic facts + optional AI summary | AI agent choosing tools | Testable, reliable on free quotas, monitorable |
-| Pipeline runtime | Lambda + EventBridge Scheduler | Scheduled GitHub Actions | Real AWS ownership; fits the OIDC roles; replayable from S3 |
+| Cloud account | None: GitHub, Render, Supabase, Grafana Cloud | AWS free plan | No account that can bill; AWS is kept for another project. The AWS Terraform will be tested against the Floci emulator instead |
+| Pipeline runtime | Scheduled GitHub Actions | Lambda + EventBridge Scheduler | No cloud account needed; free on a public repo; runs replayable from the raw store |
 | App hosting | Render free | AWS App Runner or ECS | No free tier on those; Render is free with Docker |
 | Database | Supabase (Postgres + PostGIS) | Amazon RDS | Free without expiry; PostGIS included |
-| State locking | S3-native lock file | DynamoDB table | One less resource; Terraform 1.10+ |
+| State locking (AWS modules) | S3-native lock file | DynamoDB table | One less resource; Terraform 1.10+ |
 | Encryption at rest | SSE-S3 | Customer-managed KMS key | A KMS key costs ~$1/month; recorded as a reasoned scanner suppression |
 
 ## 14. Milestones
 
-1. **Foundation** (done): AWS baseline, keyless CI, scanned pipeline.
-2. **Delivery** (open PR): plan on pull request, apply on approval, drift check.
-3. **Data:** pipeline for capacity registers and settlements, then planning
-   applications and protected sites; tests on fixtures; replay from S3.
-4. **API:** `/v1` endpoints, health, readiness, metrics; tests against a
+1. **Foundation** (done): keyless CI, scanning, AWS modules (written, not deployed;
+   to be tested against the Floci emulator in CI).
+2. **Delivery** (done): plan on pull request, apply on approval, drift check.
+   Moves to the Render, Supabase and GitHub providers.
+3. **Data:** pipeline core with counties and settlements (done); nightly run on
+   GitHub Actions with raw copies in Supabase Storage; capacity registers,
+   planning applications and protected sites; tests on fixtures; replay from the
+   raw store.
+4. **API** (first slice done): `/v1` endpoints, health, readiness, metrics; tests against a
    PostGIS container in CI.
-5. **Web:** workspace ported onto the `/v1` API.
+5. **Web** (first slice done): hierarchical web app on the `/v1` API.
 6. **Operate:** uptime probe and status page, dashboards, error tracking,
    SLOs, alerts, runbooks.
 7. **Supply chain:** SBOM, signed images, OpenSSF Scorecard.
@@ -295,7 +303,6 @@ failed, database near its 500 MB limit, cost alarm.
 
 - Which register editions to keep: latest only, or history to show status
   changes over time?
-- Whether staging needs its own AWS stack or can share the snapshot bucket
-  with a prefix.
+- Whether staging needs its own Storage bucket or can share one with a prefix.
 - How far back to load planning applications (all time or the last 10 years)
   given the 500 MB database limit.

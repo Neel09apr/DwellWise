@@ -12,7 +12,8 @@ DwellWise is a portfolio project built and operated like a production service.
 It exists to demonstrate, in public, the skills behind **Cloud, DevSecOps,
 Support/Monitoring, Cloud-SRE and Platform Engineering** roles:
 
-- infrastructure as code (Terraform on AWS),
+- infrastructure as code (Terraform: Render, Supabase and GitHub for real; the
+  AWS modules kept and tested against an emulator in CI),
 - secure, keyless delivery (OIDC, least privilege, scanning, signed artefacts),
 - reliable data pipelines,
 - observability with service-level objectives, alerts and runbooks,
@@ -42,12 +43,15 @@ If it does neither, it is drift.
 
 ## Rules
 
-1. **$0 per month.** Free tiers only: Render, Supabase, AWS free plan, Grafana
-   Cloud, Sentry, GitHub Actions. A $1 AWS budget alarm guards it. Avoid anything
-   that silently upgrades the AWS free plan (Organizations, Control Tower,
-   IAM Identity Center).
-2. **AWS for anything that needs a big cloud.** Infrastructure goes through
-   Terraform in `terraform/`, applied by CI after approval. No click-ops.
+1. **$0 per month.** Free tiers only: Render, Supabase, Grafana Cloud, Sentry,
+   GitHub Actions. No paid service and no cloud account that can bill.
+2. **No AWS account.** The owner keeps AWS for another project (decided
+   10 November 2026). The nightly pipeline runs on scheduled GitHub Actions, raw
+   files go to Supabase Storage (S3-compatible), secrets are GitHub Actions
+   secrets, metrics and alerts go to Grafana Cloud. Terraform applies the real
+   Render, Supabase and GitHub settings through CI after approval; no click-ops.
+   The AWS Terraform in `terraform/` is kept and will be tested against the
+   Floci emulator in CI: call it "tested against an emulator", never "deployed".
 3. **Original code only.** Everything here is written for this repository. Do not
    copy code from elsewhere; reuse knowledge of the problem, not files.
 4. **Design first.** Changes of scope or architecture update `docs/DESIGN.md` in
@@ -72,34 +76,34 @@ If it does neither, it is drift.
 ```
 app/api        FastAPI: /health /ready /metrics, /v1 counties and settlements; serves the web app
 app/web        React + TypeScript; minimal, hierarchical: Ireland > county > settlement > brief
-pipeline/      nightly ingestion: fetch, raw copy to S3, validate, atomic load
-terraform/     bootstrap (state, OIDC roles, budget), stacks/, modules/
+pipeline/      nightly ingestion: fetch, raw copy to object storage, validate, atomic load
+terraform/     AWS bootstrap, stacks/, modules/ (not deployed); Render/Supabase/GitHub to come
 docs/          DESIGN.md; runbooks and decision records as they are written
 .github/       CI: lint, tests (PostGIS), image builds, Trivy, gitleaks, plan/apply
 ```
 
-## Status (8 November 2026)
+## Status (10 November 2026)
 
 | Milestone (DESIGN.md §14) | State |
 |---|---|
-| 1. Foundation: AWS baseline, keyless CI, scanning | Merged |
+| 1. Foundation: keyless CI, scanning, AWS modules (not deployed) | Merged |
 | 2. Delivery: plan on PR, apply on approval, weekly drift check | Merged |
 | 3. Data: pipeline core, counties and settlements | Merged (part 1) |
-| 4–5. API and web app | In review (PR #6): API, hierarchical web UI, container, Render blueprint |
+| 4–5. API and web app | Merged (PR #6); Render deploy next |
 | 6. Operate: uptime, dashboards, errors, SLOs, runbooks | Not started |
 | 7. Supply chain: SBOM, signed images, Scorecard | Not started |
 | 8. Kubernetes: Helm chart on a throwaway cluster | Not started |
 
-**Blocked on the owner:** an AWS account (free plan, IAM admin user with MFA) to
-run the bootstrap; nothing in AWS exists yet.
 
 ## Next
 
-1. Finish milestone 4–5: run the app locally against Supabase, merge, deploy to Render.
+1. Deploy to Render (the owner sets `DATABASE_URL` in the Render dashboard).
 2. Brief sections fill in as each data source lands; the UI keeps its hierarchy (see `app/web/src/styles.css`).
 3. Pipeline sources: wastewater capacity registers, planning applications,
    protected sites; then the brief endpoint.
-4. AWS bootstrap, then the Lambda and scheduler for the nightly pipeline.
+4. Nightly pipeline on a GitHub Actions schedule, raw copies to Supabase Storage.
+5. CI job that applies the AWS Terraform to the Floci emulator.
+6. Terraform for Render, Supabase and GitHub settings, applied by CI.
 
 ## Verify a change
 
