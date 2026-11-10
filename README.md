@@ -85,6 +85,8 @@ terraform/
   bootstrap/              state bucket, CI roles, permissions boundary, budget
   stacks/data/            workload storage, changed only through CI
   modules/secure-bucket/  the one S3 pattern every bucket uses
+app/api/                  FastAPI: health, readiness, metrics, settlement search; serves the web app
+app/web/                  React + TypeScript web app
 pipeline/                 nightly ingestion: fetch, raw copy, validate, load (Lambda image)
 docs/DESIGN.md            system design: requirements, architecture, SLOs, decisions
 .github/workflows/
@@ -132,6 +134,7 @@ environment.
 - [x] AWS baseline: keyless CI identity, state, cost guardrail, scanned pipeline
 - [x] Plan on pull request, apply on approval, weekly drift detection
 - [x] Pipeline core with counties and settlements: raw copies, validation, atomic loads, tested against PostGIS
+- [x] API and web app (first slice): settlement search and pages, one container, Render blueprint
 - [ ] Pipeline on AWS Lambda and EventBridge Scheduler; capacity registers, planning applications, protected sites
 - [ ] Monitoring: uptime checks and public status page, metrics and dashboards, error tracking
 - [ ] SRE practice: service-level objectives, alerts, runbooks, incident write-ups
