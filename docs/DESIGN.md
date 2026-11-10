@@ -20,6 +20,8 @@ and print.
 **Goals**
 
 - A brief for a chosen settlement and proposal size, built from public data.
+- A national view of planning activity: how many applications were granted,
+  refused or are still pending, across Ireland and per county, refreshed nightly.
 - Every fact traceable to its source and the date that source was captured.
 - Runs at **$0/month** on free tiers, with a cost alarm proving it.
 - Operated like a production service: infrastructure as code, scanned
@@ -49,6 +51,7 @@ and print.
 | F6 | see nearby settlements with spare capacity, by distance |
 | F7 | read an optional plain-English summary written over those facts |
 | F8 | edit the brief, keep it in the browser, and print or export it |
+| F9 | see planning activity for Ireland and each county: applications granted, refused and pending, by month, with the date the data was captured |
 
 ### Non-functional
 
@@ -124,6 +127,9 @@ erDiagram
     text application_number PK
     date received
     text decision
+    text decision_class "granted | refused | pending | withdrawn | other"
+    date decided
+    text county
     int units_stated
     bool residential
     geometry location "EPSG:2157"
@@ -159,6 +165,16 @@ Rules carried over from the problem domain:
 - **Residential is not housing.** Many residential applications create no
   dwelling (extensions, retention). The brief says "residential planning
   applications" unless it filters to new dwellings.
+- **Planning activity counts applications, not projects.** One scheme can be
+  filed, withdrawn and filed again. The dashboard says "applications" and shows
+  whether it counts all applications or residential ones only.
+- **Decision classes.** Councils word decisions differently ("Conditional",
+  "Grant Permission", "Refuse"). The pipeline maps each raw decision to a class
+  through one tested table; anything unmapped is counted as "other" and raised as
+  a validation warning, never guessed. The raw wording is kept.
+- **Planning activity is not construction.** A grant is not a start on site.
+  Construction starts need commencement notices, which are a separate source
+  with their own licence check (open question below).
 - **Coordinates** are stored in Irish Transverse Mercator (EPSG:2157) and
   reprojected only for display.
 
@@ -200,6 +216,7 @@ Versioned under `/v1`, JSON only, one error shape `{"error": {"code", "message"}
 | `GET /ready` | Database reachable and data younger than 48 h (readiness) |
 | `GET /metrics` | Prometheus metrics: request counts and latency by route, data age |
 | `GET /v1/settlements?q=` | Search settlements |
+| `GET /v1/stats/applications?county=&residential=&from=&to=` | Planning activity: counts by decision class, per county and per month, with the snapshot's capture date. No county means all of Ireland |
 | `GET /v1/settlements/{id}/brief?units=&type=` | Assemble the brief: capacity, applications, protected sites, alternatives, each with source and capture date |
 | `POST /v1/settlements/{id}/brief/summary` | Optional AI summary over the brief's facts; rate-limited and cached |
 
@@ -223,7 +240,7 @@ is generated from it, so the two cannot drift.
 | SLI | SLO | Measured by |
 |---|---|---|
 | Availability | 99.0% of probes succeed, monthly | External uptime probe every 5 minutes |
-| Latency | p95 under 800 ms for `/v1/…/brief`, warm | API metrics |
+| Latency | p95 under 800 ms for `/v1/…/brief` and `/v1/stats/…`, warm | API metrics |
 | Freshness | Data age under 48 h | `/ready` and pipeline metrics |
 | Pipeline success | 95% of nightly runs succeed per 30 days | Snapshot log |
 
@@ -293,8 +310,11 @@ failed, database near its 500 MB limit, cost alarm.
    raw store.
 4. **API** (first slice done): `/v1` endpoints, health, readiness, metrics; tests against a
    PostGIS container in CI.
-5. **Web** (first slice done): hierarchical web app on the `/v1` API.
-6. **Operate:** uptime probe and status page, dashboards, error tracking,
+5. **Web** (first slice done): hierarchical web app on the `/v1` API. The
+   Ireland page becomes the national planning dashboard (F9) once planning
+   applications load; each county page shows its own figures.
+6. **Operate:** uptime probe and status page, dashboards (service health and the
+   same planning counts as metrics), error tracking,
    SLOs, alerts, runbooks.
 7. **Supply chain:** SBOM, signed images, OpenSSF Scorecard.
 8. **Kubernetes:** Helm chart deployed to a throwaway cluster in CI.
@@ -305,4 +325,7 @@ failed, database near its 500 MB limit, cost alarm.
   changes over time?
 - Whether staging needs its own Storage bucket or can share one with a prefix.
 - How far back to load planning applications (all time or the last 10 years)
-  given the 500 MB database limit.
+  given the 500 MB database limit. The dashboard's trend length follows from it.
+- Whether commencement notices (Building Control Management System) can be
+  used, under what licence, to show construction starts beside planning
+  decisions. Not in v1 until checked.
