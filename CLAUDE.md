@@ -94,7 +94,7 @@ docs/          DESIGN.md; runbooks and decision records as they are written
 | 3. Data: planning applications (from 2020) | Merged (PR #18); loaded 17 Nov |
 | 4–5. API and web app | Merged (PR #6); live at https://dwellwise.onrender.com since 17 Nov |
 | 5. National planning dashboard (F9) | Merged (PR #19); live 17 Nov |
-| 3. Data: nightly pipeline on GitHub Actions | In review |
+| 3. Data: nightly pipeline on GitHub Actions | Merged (PR #20); needs the `nightly` environment's secrets |
 | 6. Operate: uptime, dashboards, errors, SLOs, runbooks | Not started |
 | 7. Supply chain: SBOM, signed images, Scorecard | Not started |
 | 8. Kubernetes: Helm chart on a throwaway cluster | Not started |
