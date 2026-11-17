@@ -1,6 +1,8 @@
 # DwellWise
 
 [![ci](https://github.com/Neel09apr/DwellWise/actions/workflows/ci.yml/badge.svg)](https://github.com/Neel09apr/DwellWise/actions/workflows/ci.yml)
+[![uptime](https://github.com/Neel09apr/DwellWise/actions/workflows/uptime.yml/badge.svg)](https://github.com/Neel09apr/DwellWise/actions/workflows/uptime.yml)
+[![incidents](https://img.shields.io/github/issues/Neel09apr/DwellWise/incident?label=open%20incidents)](https://github.com/Neel09apr/DwellWise/issues?q=label%3Aincident)
 ![cost](https://img.shields.io/badge/monthly%20cost-%240-brightgreen)
 ![iac](https://img.shields.io/badge/IaC-Terraform-7B42BC)
 ![runs on](https://img.shields.io/badge/runs%20on-Render%20%C2%B7%20Supabase%20%C2%B7%20GitHub%20Actions-2F6FB0)
@@ -91,8 +93,9 @@ SECURITY.md               reporting and security controls
 - [x] Nightly pipeline on GitHub Actions, gzipped raw copies in Supabase Storage, 7-day retention
 - [ ] Capacity registers and protected sites; the settlement brief
 - [ ] AWS modules applied to the Floci emulator in CI; Terraform for Render, Supabase and GitHub
-- [ ] Monitoring: uptime checks and status page, Grafana Cloud dashboards, error tracking
-- [ ] SRE practice: service-level objectives, alerts, runbooks, incident write-ups
+- [x] Uptime probe every 10 minutes; incidents opened and closed as GitHub issues; runbooks
+- [ ] Monitoring: Grafana Cloud dashboards and alerts (Terraform), error tracking
+- [ ] SRE practice: SLO reporting and error budget, incident write-ups
 - [ ] Supply chain: SBOM, signed container images, OpenSSF Scorecard
 - [ ] Kubernetes: Helm chart deployed to a throwaway cluster in CI
 

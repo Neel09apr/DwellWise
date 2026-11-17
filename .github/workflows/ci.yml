@@ -144,6 +144,13 @@ jobs:
           cache: npm
           cache-dependency-path: app/web/package-lock.json
 
+      - name: Uptime probe lint and tests
+        working-directory: .
+        run: |
+          ruff check ops
+          ruff format --check ops
+          python -m pytest -q ops
+
       - name: Web typecheck, tests and build
         working-directory: app/web
         run: |

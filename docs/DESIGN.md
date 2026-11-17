@@ -251,18 +251,28 @@ is generated from it, so the two cannot drift.
 
 | SLI | SLO | Measured by |
 |---|---|---|
-| Availability | 99.0% of probes succeed, monthly | External uptime probe every 5 minutes |
+| Availability | 99.0% of probes succeed, monthly | External uptime probe every 10 minutes (`ops/probe.py`, scheduled GitHub Actions) |
 | Latency | p95 under 800 ms for `/v1/…/brief` and `/v1/stats/…`, warm | API metrics |
 | Freshness | Data age under 48 h | `/ready` and pipeline metrics |
 | Pipeline success | 95% of nightly runs succeed per 30 days | Snapshot log |
 
 **Free-tier trade-off, stated up front.** Render's free service sleeps after
-15 minutes idle and takes tens of seconds to wake. The availability probe
-keeps it warm during the day and the SLO is set at 99.0%, not 99.9%. The
-error budget and any breach are written up honestly rather than hidden.
+15 minutes idle and takes tens of seconds to wake. The probe runs every 10
+minutes, which keeps it awake (one service uses about 730 of the 750 free
+hours a month), and each check retries three times, 20 seconds apart, so a cold
+start is not counted as an outage. The SLO is 99.0%, not 99.9%. The error
+budget and any breach are written up honestly rather than hidden.
+
+**Incidents are GitHub issues.** When a check fails all its attempts, the probe
+opens an issue labelled `incident` (one per check: API down, data stale,
+dashboard API failing) linking its runbook, and closes it with the outage length
+when the check passes again. The issue list is the public incident log. Latency
+over a check's budget is reported as "slow" in the run summary, never as down.
+Grafana Cloud adds latency and error-rate dashboards and alerts from `/metrics`.
 
 Each alert has a runbook in `docs/runbooks/`: API down, data stale, pipeline
-failed, database near its 500 MB limit, Storage near its 1 GB limit.
+failed; database near its 500 MB limit and Storage near its 1 GB limit come with
+the Grafana alerts.
 
 ## 10. Security
 
@@ -328,9 +338,9 @@ failed, database near its 500 MB limit, Storage near its 1 GB limit.
 5. **Web** (first slice done): hierarchical web app on the `/v1` API. The
    Ireland page becomes the national planning dashboard (F9) once planning
    applications load; each county page shows its own figures.
-6. **Operate:** uptime probe and status page, dashboards (service health and the
-   same planning counts as metrics), error tracking,
-   SLOs, alerts, runbooks.
+6. **Operate:** uptime probe with incidents as issues and runbooks (done);
+   Grafana Cloud dashboards (service health and the same planning counts as
+   metrics) and alerts, defined in Terraform; error tracking.
 7. **Supply chain:** SBOM, signed images, OpenSSF Scorecard.
 8. **Kubernetes:** Helm chart deployed to a throwaway cluster in CI.
 

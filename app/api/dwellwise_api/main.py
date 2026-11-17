@@ -102,7 +102,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     if dist and (dist / "index.html").is_file():
         root = dist.resolve()
 
-        @app.get("/{path:path}", include_in_schema=False)
+        @app.api_route("/{path:path}", methods=["GET", "HEAD"], include_in_schema=False)
         async def web_app(path: str):
             if path.startswith("v1/"):
                 raise HTTPException(404, "No such API route.")

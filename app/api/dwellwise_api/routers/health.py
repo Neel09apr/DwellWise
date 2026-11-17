@@ -25,6 +25,12 @@ def health() -> Health:
     return Health(status="ok")
 
 
+@router.head("/health", include_in_schema=False)
+def health_head() -> Response:
+    """Uptime monitors often send HEAD; answer it like GET, without a body."""
+    return Response(status_code=200)
+
+
 @router.get("/ready", response_model=Ready, responses={503: {"model": Ready}})
 def ready(request: Request, response: Response) -> Ready:
     """The database answers and every required source is fresh."""
