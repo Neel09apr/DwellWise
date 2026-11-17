@@ -1,15 +1,18 @@
-# AWS Lambda container image for the nightly pipeline.
-# No HEALTHCHECK on purpose: see .trivyignore.yaml.
-FROM public.ecr.aws/lambda/python:3.13
+# The nightly pipeline: one short-lived container per run, started by a
+# scheduled GitHub Actions workflow. No HEALTHCHECK on purpose: see .trivyignore.yaml.
+FROM python:3.13-slim
 
-COPY requirements.txt ${LAMBDA_TASK_ROOT}/
-RUN pip install --no-cache-dir -r ${LAMBDA_TASK_ROOT}/requirements.txt
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+WORKDIR /srv
 
-COPY dwellwise_pipeline ${LAMBDA_TASK_ROOT}/dwellwise_pipeline
-COPY sql ${LAMBDA_TASK_ROOT}/sql
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Never run as root. Lambda adds its own sandbox user on top; CI invokes the
-# image as this user to prove the runtime still starts.
+COPY dwellwise_pipeline dwellwise_pipeline
+COPY sql sql
+
+# Never run as root.
 USER 65532:65532
 
-CMD ["dwellwise_pipeline.handler.handler"]
+ENTRYPOINT ["python", "-m", "dwellwise_pipeline"]
+CMD ["run"]

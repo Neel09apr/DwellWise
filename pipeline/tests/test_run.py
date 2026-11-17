@@ -1,3 +1,4 @@
+import gzip
 import hashlib
 from datetime import UTC, datetime
 
@@ -17,14 +18,14 @@ def test_dry_run_stores_the_exact_bytes_it_validated(tmp_path, counties):
     result = run_source(SOURCES["counties"], store, fetch=lambda *a: counties, now=when)
 
     assert result.status == "validated" and result.rows == 26
-    key = f"raw/counties/2026-11-08/{result.run_id}.geojson"
-    assert hashlib.sha256(store.get(key)).hexdigest() == result.sha256
+    key = f"raw/counties/2026-11-08/{result.run_id}.geojson.gz"
+    assert hashlib.sha256(gzip.decompress(store.get(key))).hexdigest() == result.sha256
 
 
 def test_dry_run_still_rejects_bad_data_but_keeps_the_raw_copy(tmp_path, counties):
     with pytest.raises(ValidationError):
         run_source(SOURCES["counties"], LocalStore(tmp_path), fetch=lambda *a: counties)
-    assert list(tmp_path.rglob("*.geojson")), "the raw file is kept for diagnosis"
+    assert list(tmp_path.rglob("*.geojson.gz")), "the raw file is kept for diagnosis"
 
 
 def test_the_source_filter_reaches_the_fetch(tmp_path, counties):

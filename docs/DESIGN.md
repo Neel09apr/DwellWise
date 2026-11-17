@@ -190,8 +190,11 @@ Rules carried over from the problem domain:
 One pipeline run per source, scheduled nightly on GitHub Actions, each step idempotent and
 keyed by a run id.
 
-1. **Fetch** the source and write the untouched file to
-   `raw/<source>/<YYYY-MM-DD>/<run_id>/` in the raw store with its SHA-256.
+1. **Fetch** the source and write the untouched file, gzipped, to
+   `raw/<source>/<YYYY-MM-DD>/<run_id>.geojson.gz` in the raw store, with the
+   SHA-256 of the uncompressed file. Copies older than 7 days are pruned after
+   each run, except the newest copy of each source (planning is about 10 MB a
+   night compressed, so the 1 GB free Storage holds the window easily).
 2. **Validate** before touching the database: expected columns present, no
    applicant name or address fields, row count within ±20% of the last good
    run (configurable per source), geometries valid.
@@ -201,8 +204,10 @@ keyed by a run id.
 5. **Record** a `snapshot` row and emit metrics: rows loaded, duration,
    outcome, data age.
 
-A failed run fails the workflow (GitHub emails the owner) and raises a Grafana Cloud alert. A run can be replayed from any
-stored raw file, which makes backfills and bug fixes cheap.
+A failed run fails the workflow (GitHub emails the owner) and, once monitoring
+lands, raises a Grafana Cloud alert. A run can be replayed from any stored raw
+file, which makes backfills and bug fixes cheap. What to do when it fails:
+[`docs/runbooks/pipeline-failed.md`](runbooks/pipeline-failed.md).
 
 **Sources (v1)**
 
@@ -277,8 +282,11 @@ failed, database near its 500 MB limit, Storage near its 1 GB limit.
   the AWS modules applied to a throwaway Floci emulator.
 - **Merge to main:** build and sign the image, Terraform apply (Render,
   Supabase, GitHub) after approval, deploy to Render.
-- **Nightly:** a scheduled workflow runs the pipeline container; database and
-  Storage credentials are GitHub Actions secrets.
+- **Nightly:** `.github/workflows/pipeline.yml` builds the same pipeline image
+  CI scans and runs it at 03:17 UTC: migrate, every source in order, prune.
+  Database and Storage credentials are secrets of the `nightly` environment, so
+  no other job can read them; values reach the container through an env file,
+  never a command line. It can also be started by hand for one source.
 - **Staging and production:** two Supabase projects (the free tier allows
   two); staging receives every merge, production on release.
 

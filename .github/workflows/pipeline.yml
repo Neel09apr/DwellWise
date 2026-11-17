@@ -1,0 +1,82 @@
+# Nightly data pipeline: the same image CI builds and scans, run on a schedule.
+# Secrets live in the "nightly" environment, so only this job can read them.
+name: nightly pipeline
+
+on:
+  schedule:
+    - cron: "17 3 * * *" # 03:17 UTC
+  workflow_dispatch:
+    inputs:
+      sources:
+        description: "Sources to run, space separated (blank: all, in order)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nightly-pipeline
+  cancel-in-progress: false # never cut a load short
+
+jobs:
+  run:
+    name: Fetch, validate, load, prune
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: nightly
+    env:
+      IMAGE: dwellwise-pipeline:run
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Build the pipeline image
+        run: docker build -t "$IMAGE" pipeline
+
+      - name: Write the container environment
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SNAPSHOT_BUCKET: ${{ vars.SNAPSHOT_BUCKET }}
+          SNAPSHOT_ENDPOINT: ${{ vars.SNAPSHOT_ENDPOINT }}
+          SNAPSHOT_REGION: ${{ vars.SNAPSHOT_REGION }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.SNAPSHOT_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.SNAPSHOT_SECRET_ACCESS_KEY }}
+        run: |
+          set -euo pipefail
+          for name in DATABASE_URL SNAPSHOT_BUCKET SNAPSHOT_ENDPOINT AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY; do
+            [ -n "${!name}" ] || { echo "::error::$name is not set in the nightly environment"; exit 1; }
+          done
+          # Values travel through a file in the runner's temp folder, never on a command line.
+          env | grep -E '^(DATABASE_URL|SNAPSHOT_[A-Z]+|AWS_ACCESS_KEY_ID|AWS_SECRET_ACCESS_KEY)=' > "$RUNNER_TEMP/pipeline.env"
+
+      - name: Apply the schema
+        run: docker run --rm --env-file "$RUNNER_TEMP/pipeline.env" "$IMAGE" migrate
+
+      - name: Run the sources
+        env:
+          SOURCES: ${{ inputs.sources }}
+        run: |
+          set -euo pipefail
+          # SOURCES is split into words on purpose; the CLI rejects unknown names.
+          # shellcheck disable=SC2086
+          docker run --rm --env-file "$RUNNER_TEMP/pipeline.env" "$IMAGE" run $SOURCES | tee "$RUNNER_TEMP/run.log"
+
+      - name: Prune raw copies older than 7 days
+        run: docker run --rm --env-file "$RUNNER_TEMP/pipeline.env" "$IMAGE" prune --keep-days 7
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Nightly pipeline"
+            echo "| Source | Status | Rows | Detail |"
+            echo "|---|---|---|---|"
+            jq -r 'select(.status) | "| \(.source) | \(.status) | \(.rows) | \(.detail | tostring) |"' \
+              "$RUNNER_TEMP/run.log" 2>/dev/null || echo "| (no run output) | | | |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove the environment file
+        if: always()
+        run: rm -f "$RUNNER_TEMP/pipeline.env"

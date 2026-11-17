@@ -30,8 +30,7 @@ flowchart LR
   app --> obs["Grafana Cloud<br/>metrics and alerts"]
 ```
 
-The nightly schedule, Storage copies and Grafana Cloud are wired up next; see
-the roadmap.
+Grafana Cloud metrics and alerts come with the monitoring milestone; see the roadmap.
 
 ## What is in place
 
@@ -88,7 +87,9 @@ SECURITY.md               reporting and security controls
 - [x] Pipeline core with counties and settlements, tested against PostGIS
 - [x] API and web app (first slice): settlement search and pages, one container, Render blueprint
 - [ ] Deploy to Render
-- [ ] Nightly pipeline on GitHub Actions, raw copies in Supabase Storage; capacity registers, planning applications, protected sites
+- [x] Planning applications since 2020 and the national planning dashboard
+- [x] Nightly pipeline on GitHub Actions, gzipped raw copies in Supabase Storage, 7-day retention
+- [ ] Capacity registers and protected sites; the settlement brief
 - [ ] AWS modules applied to the Floci emulator in CI; Terraform for Render, Supabase and GitHub
 - [ ] Monitoring: uptime checks and status page, Grafana Cloud dashboards, error tracking
 - [ ] SRE practice: service-level objectives, alerts, runbooks, incident write-ups

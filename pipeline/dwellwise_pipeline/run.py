@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gzip
 import hashlib
 import json
 import uuid
@@ -62,7 +63,7 @@ def run_source(
     run = RunResult(
         source=source.name,
         run_id=run_id,
-        raw_uri=store.put(raw_key(source.name, fetched_at, run_id), data),
+        raw_uri=store.put(raw_key(source.name, fetched_at, run_id), gzip.compress(data, mtime=0)),
         sha256=hashlib.sha256(data).hexdigest(),
         rows=len(collection["features"]),
         status="validated",
