@@ -2,6 +2,7 @@ import { Link, useParams } from "react-router-dom";
 
 import { api } from "../api/client";
 import { Breadcrumbs } from "../components/Breadcrumbs";
+import { PlanningActivity } from "../components/PlanningActivity";
 import { Failure, Loading } from "../components/Status";
 import { byFirstLetter, countyFromSlug, titleCase } from "../text";
 import { useResource } from "../useResource";
@@ -24,6 +25,9 @@ export function CountyPage() {
         )}
       </header>
 
+      <PlanningActivity county={countyFromSlug(slug)} />
+
+      <h2 className="level-title level">Settlements</h2>
       {settlements.kind === "loading" && <Loading what="settlements" />}
       {settlements.kind === "error" && <Failure message={settlements.message} />}
       {settlements.kind === "ready" && settlements.data.length === 0 && (

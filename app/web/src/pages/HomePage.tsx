@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 
 import { api } from "../api/client";
+import { PlanningActivity } from "../components/PlanningActivity";
 import { SettlementSearch } from "../components/SettlementSearch";
 import { Failure, Loading } from "../components/Status";
 import { countySlug, titleCase } from "../text";
@@ -21,6 +22,8 @@ export function HomePage() {
       </section>
 
       <SettlementSearch />
+
+      <PlanningActivity />
 
       <section aria-labelledby="browse" className="level">
         <h2 id="browse" className="level-title">

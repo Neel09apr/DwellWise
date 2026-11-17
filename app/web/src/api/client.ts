@@ -4,6 +4,7 @@ type Schemas = components["schemas"];
 export type County = Schemas["County"];
 export type SettlementSummary = Schemas["SettlementSummary"];
 export type SettlementDetail = Schemas["SettlementDetail"];
+export type ApplicationStats = Schemas["ApplicationStats"];
 
 /** Every API error carries {error: {code, message}}; this keeps the status too. */
 export class ApiError extends Error {
@@ -40,4 +41,11 @@ export const api = {
     get<SettlementSummary[]>(`/v1/settlements?${new URLSearchParams({ q })}`, signal),
   settlement: (code: string, signal?: AbortSignal) =>
     get<SettlementDetail>(`/v1/settlements/${encodeURIComponent(code)}`, signal),
+  applicationStats: ({ county, residential }: { county?: string; residential?: boolean }, signal?: AbortSignal) => {
+    const params = new URLSearchParams();
+    if (county) params.set("county", county);
+    if (residential) params.set("residential", "true");
+    const query = params.toString();
+    return get<ApplicationStats>(`/v1/stats/applications${query ? `?${query}` : ""}`, signal);
+  },
 };

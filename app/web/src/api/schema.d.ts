@@ -121,16 +121,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/stats/applications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Application Stats
+         * @description Planning applications received each month, counted by their current decision class.
+         */
+        get: operations["application_stats_v1_stats_applications_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** ApplicationStats */
+        ApplicationStats: {
+            /** County */
+            county: string | null;
+            /** Residential */
+            residential: boolean | null;
+            /** From Month */
+            from_month: string;
+            /** To Month */
+            to_month: string;
+            /** Captured At */
+            captured_at: string | null;
+            /** Attribution */
+            attribution: string;
+            totals: components["schemas"]["DecisionCounts"];
+            /** Months */
+            months: components["schemas"]["MonthCounts"][];
+            /** Counties */
+            counties: components["schemas"]["CountyCounts"][];
+        };
         /** County */
         County: {
             /** Name */
             name: string;
             /** Settlements */
             settlements: number;
+        };
+        /** CountyCounts */
+        CountyCounts: {
+            /** Granted */
+            granted: number;
+            /** Refused */
+            refused: number;
+            /** Pending */
+            pending: number;
+            /** Withdrawn */
+            withdrawn: number;
+            /** Other */
+            other: number;
+            /** Total */
+            total: number;
+            /** County */
+            county: string;
+        };
+        /**
+         * DecisionCounts
+         * @description Applications by current decision class. "other" covers invalid, exempt and split decisions.
+         */
+        DecisionCounts: {
+            /** Granted */
+            granted: number;
+            /** Refused */
+            refused: number;
+            /** Pending */
+            pending: number;
+            /** Withdrawn */
+            withdrawn: number;
+            /** Other */
+            other: number;
+            /** Total */
+            total: number;
         };
         /** ErrorBody */
         ErrorBody: {
@@ -152,6 +227,23 @@ export interface components {
         Health: {
             /** Status */
             status: string;
+        };
+        /** MonthCounts */
+        MonthCounts: {
+            /** Granted */
+            granted: number;
+            /** Refused */
+            refused: number;
+            /** Pending */
+            pending: number;
+            /** Withdrawn */
+            withdrawn: number;
+            /** Other */
+            other: number;
+            /** Total */
+            total: number;
+            /** Month */
+            month: string;
         };
         /** Ready */
         Ready: {
@@ -404,6 +496,53 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    application_stats_v1_stats_applications_get: {
+        parameters: {
+            query?: {
+                /** @description County name; none means Ireland */
+                county?: string | null;
+                /** @description true: only applications that state dwellings */
+                residential?: boolean | null;
+                /** @description First month, YYYY-MM */
+                from?: string | null;
+                /** @description Last month, YYYY-MM */
+                to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApplicationStats"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };

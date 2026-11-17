@@ -281,10 +281,209 @@
           }
         }
       }
+    },
+    "/v1/stats/applications": {
+      "get": {
+        "tags": [
+          "stats"
+        ],
+        "summary": "Application Stats",
+        "description": "Planning applications received each month, counted by their current decision class.",
+        "operationId": "application_stats_v1_stats_applications_get",
+        "parameters": [
+          {
+            "name": "county",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[A-Za-z][A-Za-z \\-]{1,30}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "County name; none means Ireland",
+              "title": "County"
+            },
+            "description": "County name; none means Ireland"
+          },
+          {
+            "name": "residential",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "true: only applications that state dwellings",
+              "title": "Residential"
+            },
+            "description": "true: only applications that state dwellings"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "First month, YYYY-MM",
+              "title": "From"
+            },
+            "description": "First month, YYYY-MM"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Last month, YYYY-MM",
+              "title": "To"
+            },
+            "description": "Last month, YYYY-MM"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationStats"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "ApplicationStats": {
+        "properties": {
+          "county": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "County"
+          },
+          "residential": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Residential"
+          },
+          "from_month": {
+            "type": "string",
+            "title": "From Month"
+          },
+          "to_month": {
+            "type": "string",
+            "title": "To Month"
+          },
+          "captured_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Captured At"
+          },
+          "attribution": {
+            "type": "string",
+            "title": "Attribution"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/DecisionCounts"
+          },
+          "months": {
+            "items": {
+              "$ref": "#/components/schemas/MonthCounts"
+            },
+            "type": "array",
+            "title": "Months"
+          },
+          "counties": {
+            "items": {
+              "$ref": "#/components/schemas/CountyCounts"
+            },
+            "type": "array",
+            "title": "Counties"
+          }
+        },
+        "type": "object",
+        "required": [
+          "county",
+          "residential",
+          "from_month",
+          "to_month",
+          "captured_at",
+          "attribution",
+          "totals",
+          "months",
+          "counties"
+        ],
+        "title": "ApplicationStats"
+      },
       "County": {
         "properties": {
           "name": {
@@ -302,6 +501,88 @@
           "settlements"
         ],
         "title": "County"
+      },
+      "CountyCounts": {
+        "properties": {
+          "granted": {
+            "type": "integer",
+            "title": "Granted"
+          },
+          "refused": {
+            "type": "integer",
+            "title": "Refused"
+          },
+          "pending": {
+            "type": "integer",
+            "title": "Pending"
+          },
+          "withdrawn": {
+            "type": "integer",
+            "title": "Withdrawn"
+          },
+          "other": {
+            "type": "integer",
+            "title": "Other"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "county": {
+            "type": "string",
+            "title": "County"
+          }
+        },
+        "type": "object",
+        "required": [
+          "granted",
+          "refused",
+          "pending",
+          "withdrawn",
+          "other",
+          "total",
+          "county"
+        ],
+        "title": "CountyCounts"
+      },
+      "DecisionCounts": {
+        "properties": {
+          "granted": {
+            "type": "integer",
+            "title": "Granted"
+          },
+          "refused": {
+            "type": "integer",
+            "title": "Refused"
+          },
+          "pending": {
+            "type": "integer",
+            "title": "Pending"
+          },
+          "withdrawn": {
+            "type": "integer",
+            "title": "Withdrawn"
+          },
+          "other": {
+            "type": "integer",
+            "title": "Other"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "granted",
+          "refused",
+          "pending",
+          "withdrawn",
+          "other",
+          "total"
+        ],
+        "title": "DecisionCounts",
+        "description": "Applications by current decision class. \"other\" covers invalid, exempt and split decisions."
       },
       "ErrorBody": {
         "properties": {
@@ -358,6 +639,49 @@
           "status"
         ],
         "title": "Health"
+      },
+      "MonthCounts": {
+        "properties": {
+          "granted": {
+            "type": "integer",
+            "title": "Granted"
+          },
+          "refused": {
+            "type": "integer",
+            "title": "Refused"
+          },
+          "pending": {
+            "type": "integer",
+            "title": "Pending"
+          },
+          "withdrawn": {
+            "type": "integer",
+            "title": "Withdrawn"
+          },
+          "other": {
+            "type": "integer",
+            "title": "Other"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "month": {
+            "type": "string",
+            "title": "Month"
+          }
+        },
+        "type": "object",
+        "required": [
+          "granted",
+          "refused",
+          "pending",
+          "withdrawn",
+          "other",
+          "total",
+          "month"
+        ],
+        "title": "MonthCounts"
       },
       "Ready": {
         "properties": {
