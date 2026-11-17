@@ -25,3 +25,19 @@ def test_dry_run_still_rejects_bad_data_but_keeps_the_raw_copy(tmp_path, countie
     with pytest.raises(ValidationError):
         run_source(SOURCES["counties"], LocalStore(tmp_path), fetch=lambda *a: counties)
     assert list(tmp_path.rglob("*.geojson")), "the raw file is kept for diagnosis"
+
+
+def test_the_source_filter_reaches_the_fetch(tmp_path, counties):
+    seen = []
+    counties["features"] *= 13
+
+    def fetch(*args):
+        seen.append(args)
+        return counties
+
+    run_source(SOURCES["counties"], LocalStore(tmp_path), fetch=fetch)
+    assert seen[0][3] == "1=1"
+    seen.clear()
+    with pytest.raises(ValidationError):  # the counties fixture is not planning data
+        run_source(SOURCES["planning"], LocalStore(tmp_path), fetch=fetch)
+    assert seen[0][3] == "ReceivedDate >= DATE '2020-01-01'"

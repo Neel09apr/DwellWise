@@ -40,6 +40,20 @@ def test_personal_data_fields_are_rejected_whatever_their_spelling():
         validate(SETTLEMENTS, rows(850, Applicant_Name="someone"), previous_rows=None)
 
 
+@pytest.mark.parametrize("field", ["ApplicantForename", "ApplicantSurname", "Agent Address"])
+def test_any_applicant_or_agent_field_is_rejected(field):
+    with pytest.raises(ValidationError, match=f"personal-data fields present: {field}"):
+        validate(SETTLEMENTS, rows(850, **{field: "x"}), previous_rows=None)
+
+
+def test_a_source_check_can_reject_a_run():
+    from dataclasses import replace
+
+    strict = replace(SETTLEMENTS, check=lambda c: ["nope"])
+    with pytest.raises(ValidationError, match="nope"):
+        validate(strict, rows(850), previous_rows=None)
+
+
 def test_missing_required_values_and_geometry_are_rejected():
     data = rows(850)
     data["features"][0]["properties"]["SETTL_NAME"] = ""

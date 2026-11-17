@@ -1,7 +1,7 @@
 """Local runner.
 
 python -m dwellwise_pipeline migrate
-python -m dwellwise_pipeline run counties settlements [--dry-run] [--raw-dir raw]
+python -m dwellwise_pipeline run [counties settlements planning] [--dry-run] [--raw-dir raw]
 """
 
 from __future__ import annotations

@@ -58,3 +58,11 @@ def test_gives_up_after_three_bad_answers():
 def test_refuses_plain_http():
     with pytest.raises(FetchError, match="non-HTTPS"):
         http_get("http://example.test/")
+
+
+def test_the_where_filter_is_sent_to_the_service():
+    service = FakeService([{"type": "FeatureCollection", "features": [feature(1)]}])
+    fetch_features(
+        "https://x/0", ["ID"], "ID", "ReceivedDate >= DATE '2020-01-01'", opener=service, sleep=no_sleep
+    )
+    assert "where=ReceivedDate+%3E%3D+DATE+%272020-01-01%27" in service.urls[0]

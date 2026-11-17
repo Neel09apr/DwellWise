@@ -133,7 +133,7 @@ erDiagram
     int units_stated
     bool residential
     geometry location "EPSG:2157"
-    int settlement_id FK
+    text settlement "CSO code of the containing settlement, if any"
     uuid snapshot_id FK
   }
   protected_site {
@@ -164,14 +164,21 @@ Rules carried over from the problem domain:
   as a block.
 - **Residential is not housing.** Many residential applications create no
   dwelling (extensions, retention). The brief says "residential planning
-  applications" unless it filters to new dwellings.
+  applications" unless it filters to new dwellings. In the data, `residential`
+  is true only when an application states dwellings: a unit count above zero
+  or a one-off house.
+- **County comes from the planning authority.** The 31 authorities map onto the
+  26 counties (the four Dublin councils to Dublin, city and county councils
+  together). An authority the table does not know rejects the run.
 - **Planning activity counts applications, not projects.** One scheme can be
   filed, withdrawn and filed again. The dashboard says "applications" and shows
   whether it counts all applications or residential ones only.
 - **Decision classes.** Councils word decisions differently ("Conditional",
   "Grant Permission", "Refuse"). The pipeline maps each raw decision to a class
   through one tested table; anything unmapped is counted as "other" and raised as
-  a validation warning, never guessed. The raw wording is kept.
+  a validation warning, never guessed. The raw wording is kept. A blank decision
+  falls back to the application's status (withdrawn, invalid), otherwise it is
+  pending. Against the data from 2020, the table recognises all but 0.1% of rows.
 - **Planning activity is not construction.** A grant is not a start on site.
   Construction starts need commencement notices, which are a separate source
   with their own licence check (open question below).
@@ -324,8 +331,9 @@ failed, database near its 500 MB limit, Storage near its 1 GB limit.
 - Which register editions to keep: latest only, or history to show status
   changes over time?
 - Whether staging needs its own Storage bucket or can share one with a prefix.
-- How far back to load planning applications (all time or the last 10 years)
-  given the 500 MB database limit. The dashboard's trend length follows from it.
+- How far back to load planning applications. v1 loads applications received
+  from 1 January 2020 (about 264,000 of 513,000), to stay well inside the 500 MB
+  database; widen it once the table's size is measured.
 - Whether commencement notices (Building Control Management System) can be
   used, under what licence, to show construction starts beside planning
   decisions. Not in v1 until checked.

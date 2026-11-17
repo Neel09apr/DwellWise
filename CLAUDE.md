@@ -91,6 +91,7 @@ docs/          DESIGN.md; runbooks and decision records as they are written
 | 1. Foundation: keyless CI, scanning, AWS modules (not deployed) | Merged |
 | 2. Delivery: plan on PR, apply on approval, weekly drift check | Merged |
 | 3. Data: pipeline core, counties and settlements | Merged (part 1) |
+| 3. Data: planning applications (from 2020) | In review |
 | 4–5. API and web app | Merged (PR #6); live at https://dwellwise.onrender.com since 17 Nov |
 | 6. Operate: uptime, dashboards, errors, SLOs, runbooks | Not started |
 | 7. Supply chain: SBOM, signed images, Scorecard | Not started |
@@ -100,8 +101,8 @@ docs/          DESIGN.md; runbooks and decision records as they are written
 ## Next
 
 1. Brief sections fill in as each data source lands; the UI keeps its hierarchy (see `app/web/src/styles.css`).
-2. Pipeline sources: wastewater capacity registers, planning applications,
-   protected sites; then the brief endpoint.
+2. Pipeline sources: wastewater capacity registers, protected sites; then the
+   brief endpoint and `/v1/stats/applications` with the Ireland dashboard (F9).
 3. Nightly pipeline on a GitHub Actions schedule, raw copies to Supabase Storage.
 4. CI job that applies the AWS Terraform to the Floci emulator.
 5. Terraform for Render, Supabase and GitHub settings, applied by CI.
