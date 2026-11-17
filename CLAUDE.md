@@ -82,14 +82,14 @@ docs/          DESIGN.md; runbooks and decision records as they are written
 .github/       CI: lint, tests (PostGIS), image builds, Trivy, gitleaks, plan/apply
 ```
 
-## Status (10 November 2026)
+## Status (17 November 2026)
 
 | Milestone (DESIGN.md §14) | State |
 |---|---|
 | 1. Foundation: keyless CI, scanning, AWS modules (not deployed) | Merged |
 | 2. Delivery: plan on PR, apply on approval, weekly drift check | Merged |
 | 3. Data: pipeline core, counties and settlements | Merged (part 1) |
-| 4–5. API and web app | Merged (PR #6); Render deploy next |
+| 4–5. API and web app | Merged (PR #6); live at https://dwellwise.onrender.com since 17 Nov |
 | 6. Operate: uptime, dashboards, errors, SLOs, runbooks | Not started |
 | 7. Supply chain: SBOM, signed images, Scorecard | Not started |
 | 8. Kubernetes: Helm chart on a throwaway cluster | Not started |
@@ -97,13 +97,12 @@ docs/          DESIGN.md; runbooks and decision records as they are written
 
 ## Next
 
-1. Deploy to Render (the owner sets `DATABASE_URL` in the Render dashboard).
-2. Brief sections fill in as each data source lands; the UI keeps its hierarchy (see `app/web/src/styles.css`).
-3. Pipeline sources: wastewater capacity registers, planning applications,
+1. Brief sections fill in as each data source lands; the UI keeps its hierarchy (see `app/web/src/styles.css`).
+2. Pipeline sources: wastewater capacity registers, planning applications,
    protected sites; then the brief endpoint.
-4. Nightly pipeline on a GitHub Actions schedule, raw copies to Supabase Storage.
-5. CI job that applies the AWS Terraform to the Floci emulator.
-6. Terraform for Render, Supabase and GitHub settings, applied by CI.
+3. Nightly pipeline on a GitHub Actions schedule, raw copies to Supabase Storage.
+4. CI job that applies the AWS Terraform to the Floci emulator.
+5. Terraform for Render, Supabase and GitHub settings, applied by CI.
 
 ## Verify a change
 
