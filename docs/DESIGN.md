@@ -21,7 +21,7 @@ and print.
 
 - A brief for a chosen settlement and proposal size, built from public data.
 - Every fact traceable to its source and the date that source was captured.
-- Runs at **$0/month** on free tiers, with a cost alarm proving it.
+- Runs at **$0/month** on free tiers, with no account that can bill.
 - Operated like a production service: infrastructure as code, scanned
   delivery, monitoring with service-level objectives, runbooks.
 
@@ -58,7 +58,7 @@ and print.
 | Latency | Brief API p95 under 800 ms when warm |
 | Freshness | Every source refreshed by a successful nightly run at least once in the last 48 hours |
 | Correctness | Facts come from SQL and code, never from the AI step; the AI may only rephrase facts it is given |
-| Cost | $0.00/month expected, alarm at $1 |
+| Cost | $0.00/month: free tiers only, no account that can bill |
 | Security | No long-lived cloud keys; least-privilege roles; every pull request scanned |
 
 ## 4. Architecture
@@ -233,7 +233,7 @@ keeps it warm during the day and the SLO is set at 99.0%, not 99.9%. The
 error budget and any breach are written up honestly rather than hidden.
 
 Each alert has a runbook in `docs/runbooks/`: API down, data stale, pipeline
-failed, database near its 500 MB limit, cost alarm.
+failed, database near its 500 MB limit, Storage near its 1 GB limit.
 
 ## 10. Security
 
