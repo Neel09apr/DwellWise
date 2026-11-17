@@ -70,4 +70,48 @@ def load_settlements(cur, rows: list[dict], snapshot_id: str) -> dict:
     return {"county_by_nearest": nearest}
 
 
-LOADERS: dict[str, Callable[..., dict]] = {"county": load_counties, "settlement": load_settlements}
+PLANNING_COLUMNS = (
+    "authority", "application_number", "received", "decided", "decision", "decision_class",
+    "recognised", "county", "units_stated", "residential", "geometry",
+)  # fmt: skip
+
+
+def load_planning(cur, rows: list[dict], snapshot_id: str) -> dict:
+    """COPY into staging (hundreds of thousands of rows), then swap in one statement.
+
+    A repeated application number keeps its most recently received row. Each
+    point gets the settlement that contains it, if any.
+    """
+    cur.execute("select count(*) from dw.settlement")
+    if cur.fetchone()[0] == 0:
+        raise LoadError("load settlements before planning: each application is placed in one")
+    cur.execute(
+        "create temp table stage_planning (authority text, application_number text, received date, "
+        "decided date, decision text, decision_class text, recognised boolean, county text, "
+        "units_stated integer, residential boolean, geometry text) on commit drop"
+    )
+    with cur.copy(f"copy stage_planning ({', '.join(PLANNING_COLUMNS)}) from stdin") as copy:
+        for r in rows:
+            copy.write_row(tuple(r[c] for c in PLANNING_COLUMNS))
+    cur.execute("select count(*) filter (where not recognised) from stage_planning")
+    unrecognised = cur.fetchone()[0]
+    cur.execute("delete from dw.planning_application")
+    cur.execute(
+        "insert into dw.planning_application (authority, application_number, received, decided, decision, "
+        "decision_class, county, units_stated, residential, location, settlement, snapshot_id) "
+        "select p.authority, p.application_number, p.received, p.decided, p.decision, p.decision_class, "
+        "p.county, p.units_stated, p.residential, p.location, "
+        "(select s.code from dw.settlement s where ST_Contains(s.boundary, p.location) limit 1), %s "
+        "from (select distinct on (authority, application_number) *, "
+        "ST_Transform(ST_SetSRID(ST_GeomFromGeoJSON(geometry), 4326), 2157) as location "
+        "from stage_planning order by authority, application_number, received desc) p",
+        (snapshot_id,),
+    )
+    return {"duplicates_dropped": len(rows) - cur.rowcount, "decisions_unrecognised": unrecognised}
+
+
+LOADERS: dict[str, Callable[..., dict]] = {
+    "county": load_counties,
+    "settlement": load_settlements,
+    "planning_application": load_planning,
+}

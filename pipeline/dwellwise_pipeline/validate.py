@@ -6,9 +6,10 @@ import re
 
 from .sources.base import Source
 
-# Planning data must never carry who applied or where they live. Field names
-# are compared with case, spaces and punctuation removed.
-FORBIDDEN_FIELDS = frozenset({"applicant", "applicantname", "applicantaddress", "agentname", "agentaddress"})
+# Planning data must never carry who applied or where they live. Any field
+# whose name starts with these (case, spaces and punctuation removed) is refused:
+# the national dataset has ApplicantForename, ApplicantSurname, ApplicantAddress.
+FORBIDDEN_PREFIXES = ("applicant", "agent")
 
 
 class ValidationError(ValueError):
@@ -30,7 +31,7 @@ def validate(source: Source, collection: dict, previous_rows: int | None, max_dr
         problems.append(f"{count} rows against {previous_rows} last time (more than {max_drift:.0%} change)")
 
     fields = {key for feature in features for key in (feature.get("properties") or {})}
-    forbidden = sorted(f for f in fields if _norm(f) in FORBIDDEN_FIELDS)
+    forbidden = sorted(f for f in fields if _norm(f).startswith(FORBIDDEN_PREFIXES))
     if forbidden:
         problems.append(f"personal-data fields present: {', '.join(forbidden)}")
 
@@ -42,6 +43,9 @@ def validate(source: Source, collection: dict, previous_rows: int | None, max_dr
     no_geometry = sum(1 for f in features if not f.get("geometry"))
     if no_geometry:
         problems.append(f"{no_geometry} rows without geometry")
+
+    if source.check:
+        problems.extend(source.check(collection))
 
     if problems:
         raise ValidationError(f"{source.name}: " + "; ".join(problems))

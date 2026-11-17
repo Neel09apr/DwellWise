@@ -18,6 +18,7 @@ URL = os.environ.get("DATABASE_URL")
 # The real minimums (26 counties, 800 settlements) are lowered for small fixtures.
 COUNTIES = replace(SOURCES["counties"], min_rows=1)
 SETTLEMENTS = replace(SOURCES["settlements"], min_rows=1)
+PLANNING = replace(SOURCES["planning"], min_rows=1)
 
 
 @pytest.fixture
@@ -61,3 +62,56 @@ def test_a_rejected_run_leaves_yesterdays_data_in_place(conn, tmp_path, counties
     assert names == ["CORK", "KERRY"]
     statuses = [r[0] for r in conn.execute("select status from dw.snapshot order by fetched_at").fetchall()]
     assert statuses == ["loaded", "rejected"]
+
+
+def application(number: str, lon: float, lat: float, **props) -> dict:
+    base = {
+        "PlanningAuthority": "Cork County Council",
+        "ApplicationNumber": number,
+        "ReceivedDate": 1752451200000,
+        "DecisionDate": None,
+        "WithdrawnDate": None,
+        "Decision": "CONDITIONAL",
+        "ApplicationStatus": "",
+        "NumResidentialUnits": 2,
+        "OneOffHouse": "",
+    }
+    return {
+        "type": "Feature",
+        "properties": {**base, **props},
+        "geometry": {"type": "Point", "coordinates": [lon, lat]},
+    }
+
+
+def test_planning_loads_with_settlement_classes_and_no_duplicates(conn, tmp_path, counties, settlements):
+    store = LocalStore(tmp_path)
+    run_source(COUNTIES, store, conn, fetch=lambda *a: counties)
+    run_source(SETTLEMENTS, store, conn, fetch=lambda *a: settlements)
+    apps = {
+        "type": "FeatureCollection",
+        "features": [
+            application("A1", -8.55, 51.95),  # inside settlement 1001
+            application("A2", -8.2, 52.1, Decision="Something new"),  # open country, unknown wording
+            application("A1", -8.55, 51.95, ReceivedDate=1700000000000, Decision="REFUSED"),  # older copy
+        ],
+    }
+    result = run_source(PLANNING, store, conn, fetch=lambda *a: apps)
+
+    got = conn.execute(
+        "select application_number, decision_class, settlement, county, received::text "
+        "from dw.planning_application order by application_number"
+    ).fetchall()
+    assert got == [
+        ("A1", "granted", "1001", "CORK", "2025-07-14"),
+        ("A2", "other", None, "CORK", "2025-07-14"),
+    ]
+    assert result.detail == {"duplicates_dropped": 1, "decisions_unrecognised": 1}
+    assert conn.execute("select distinct ST_SRID(location) from dw.planning_application").fetchall() == [
+        (2157,)
+    ]
+
+
+def test_planning_refuses_to_load_without_settlements(conn, tmp_path):
+    apps = {"type": "FeatureCollection", "features": [application("A1", -8.55, 51.95)]}
+    with pytest.raises(LoadError, match="load settlements before planning"):
+        run_source(PLANNING, LocalStore(tmp_path), conn, fetch=lambda *a: apps)

@@ -52,6 +52,7 @@ def fetch_features(
     layer_url: str,
     out_fields: list[str],
     order_by: str,
+    where: str = "1=1",
     *,
     opener: Opener = http_get,
     sleep: Callable[[float], None] = time.sleep,
@@ -63,7 +64,7 @@ def fetch_features(
     while True:
         query = urllib.parse.urlencode(
             {
-                "where": "1=1",
+                "where": where,
                 "outFields": ",".join(out_fields),
                 "returnGeometry": "true",
                 "outSR": "4326",
