@@ -31,6 +31,8 @@ If it does neither, it is drift.
 - Settlement search and a brief per settlement: wastewater capacity, planning
   precedents, protected sites nearby, nearby alternatives with capacity.
 - An optional AI summary written only over computed facts.
+- A national planning dashboard on the Ireland page: applications granted,
+  refused and pending, per county and month, refreshed nightly (F9).
 - The platform around it: Terraform, CI/CD, scanning, monitoring, SLOs.
 
 **Out**, unless this file is changed first:
