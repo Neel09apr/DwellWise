@@ -108,7 +108,33 @@ h1 { font: 600 clamp(1.9rem, 5vw, 2.6rem)/1.15 var(--serif); letter-spacing: -0.
 .sources { list-style: none; margin: 0.75rem 0 0 2.2rem; padding: 0; }
 .sources li { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: 0.45rem 0; border-bottom: 1px solid var(--rule); font-size: 0.9rem; color: var(--prose); }
 
+/* ---- planning activity -------------------------------------------------- */
+.activity-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
+.toggle { display: inline-flex; align-items: center; gap: 0.45rem; min-height: 44px; font-size: 0.9rem; color: var(--prose); cursor: pointer; }
+.toggle input { width: 1.05rem; height: 1.05rem; accent-color: var(--accent); }
+.headline { margin: 0.25rem 0 0; font-size: 1.05rem; color: var(--prose); }
+.headline-number { font: 600 2.2rem/1.1 var(--serif); color: var(--ink); margin-right: 0.15rem; }
+.chart { margin: 1.75rem 0 0; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart-axis { stroke: var(--rule); stroke-width: 1; }
+.chart-bar path { fill: var(--accent); }
+.chart-hit { fill: transparent; }
+.chart-bar:hover path { fill: var(--ink); }
+.chart-bar-partial path { fill-opacity: 0.45; }
+.chart-label { font: 11px var(--mono); fill: var(--muted); }
+.chart-table { margin-top: 0.5rem; font-size: 0.85rem; }
+.chart-table summary { cursor: pointer; color: var(--accent); min-height: 32px; display: inline-flex; align-items: center; }
+.chart-table table, .counts { width: 100%; border-collapse: collapse; margin-top: 0.5rem; font-size: 0.9rem; }
+.counts { margin-top: 2rem; }
+.chart-table th, .chart-table td, .counts th, .counts td { padding: 0.45rem 0.25rem; border-bottom: 1px solid var(--rule); text-align: right; font-variant-numeric: tabular-nums; }
+.chart-table th[scope="row"], .counts th[scope="row"], .chart-table thead th:first-child, .counts thead th:first-child { text-align: left; }
+.chart-table thead th, .counts thead th { font: 0.72rem var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 400; }
+.counts td { font-family: var(--mono); font-size: 0.85rem; }
+.note { margin: 1rem 0 0; font-size: 0.8rem; color: var(--muted); max-width: 40rem; }
+
 @media (max-width: 520px) {
+  .counts th:nth-child(5), .counts td:nth-child(5) { display: none; }
+  .chart-label { font-size: 21px; } /* the chart scales to half size here; keeps labels near 11px */
   .section > p, .sources { margin-left: 0; }
   .letter { grid-template-columns: 1.75rem 1fr; gap: 0 0.75rem; }
 }

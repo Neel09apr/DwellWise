@@ -13,9 +13,34 @@ from dwellwise_api.main import create_app
 pytestmark = pytest.mark.integration
 psycopg = pytest.importorskip("psycopg")
 URL = os.environ.get("DATABASE_URL")
-SCHEMA = Path(__file__).resolve().parents[3] / "pipeline" / "sql" / "001_core.sql"
+SQL_DIR = Path(__file__).resolve().parents[3] / "pipeline" / "sql"
 
 SQUARE = "ST_Multi(ST_Transform(ST_MakeEnvelope(%s, %s, %s, %s, 4326), 2157))"
+
+
+INSERT_APPLICATION = (
+    "insert into dw.planning_application (authority, application_number, received, decision_class, "
+    "county, residential, location, snapshot_id) values ('Test Council', %s, %s, %s, %s, %s, "
+    "ST_Transform(ST_SetSRID(ST_MakePoint(%s, %s), 4326), 2157), %s)"
+)
+APPLICATIONS = [  # number, county, received, class, residential
+    ("K1", "KILDARE", "2026-10-05", "granted", True),
+    ("K2", "KILDARE", "2026-10-20", "refused", False),
+    ("K3", "KILDARE", "2026-09-01", "pending", True),
+    ("M1", "MAYO", "2026-10-10", "granted", False),
+    ("M2", "MAYO", "2025-01-15", "granted", True),  # outside the ranges asked for below
+]
+
+
+def seed_planning(conn) -> None:
+    snap = str(uuid.uuid4())
+    conn.execute(
+        "insert into dw.snapshot (id, source, fetched_at, raw_uri, sha256, rows_loaded, status) "
+        "values (%s, 'planning', now(), 'test://', 'x', 5, 'loaded')",
+        (snap,),
+    )
+    for number, county, received, cls, residential in APPLICATIONS:
+        conn.execute(INSERT_APPLICATION, (number, received, cls, county, residential, -7.0, 53.0, snap))
 
 
 @pytest.fixture
@@ -24,7 +49,8 @@ def client():
         pytest.skip("DATABASE_URL not set")
     with psycopg.connect(URL, autocommit=True) as conn:
         conn.execute("drop schema if exists dw cascade")
-        conn.execute(SCHEMA.read_text(encoding="utf-8"))
+        for sql in sorted(SQL_DIR.glob("*.sql")):
+            conn.execute(sql.read_text(encoding="utf-8"))
         snap = str(uuid.uuid4())
         conn.execute(
             "insert into dw.snapshot (id, source, fetched_at, raw_uri, sha256, rows_loaded, status) "
@@ -48,6 +74,7 @@ def client():
                 f"insert into dw.settlement values (%s, %s, %s, %s, {SQUARE}, %s)",  # noqa: S608 - constant SQL
                 (code, name, key, county, *box, snap),
             )
+        seed_planning(conn)
     with TestClient(create_app(Settings(database_url=URL))) as c:
         yield c
 
@@ -108,3 +135,37 @@ def test_ready_reports_the_missing_source(client):
     assert response.status_code == 503
     assert response.json()["checks"]["data:counties"] == "never loaded"
     assert response.json()["checks"]["data:settlements"].endswith("h old")
+
+
+def test_stats_count_applications_by_month_and_class_across_ireland(client):
+    body = client.get("/v1/stats/applications", params={"from": "2026-08", "to": "2026-10"}).json()
+    assert body["county"] is None and body["captured_at"]
+    assert body["totals"] == {
+        "granted": 2,
+        "refused": 1,
+        "pending": 1,
+        "withdrawn": 0,
+        "other": 0,
+        "total": 4,
+    }
+    assert [(m["month"], m["total"]) for m in body["months"]] == [
+        ("2026-08", 0),
+        ("2026-09", 1),
+        ("2026-10", 3),
+    ]
+    by_county = {c["county"]: c["total"] for c in body["counties"]}
+    assert by_county == {"KILDARE": 3, "LEITRIM": 0, "MAYO": 1, "MEATH": 0}
+
+
+def test_stats_for_one_county_can_keep_only_residential(client):
+    params = {"county": "kildare", "residential": "true", "from": "2026-09", "to": "2026-10"}
+    body = client.get("/v1/stats/applications", params=params).json()
+    assert body["county"] == "KILDARE" and body["residential"] is True
+    assert (body["totals"]["granted"], body["totals"]["pending"], body["totals"]["total"]) == (1, 1, 2)
+    assert [c["county"] for c in body["counties"]] == ["KILDARE"]
+
+
+def test_stats_for_an_unknown_county_is_a_404(client):
+    response = client.get("/v1/stats/applications", params={"county": "Atlantis"})
+    assert response.status_code == 404
+    assert response.json()["error"]["message"] == "No county is called Atlantis."

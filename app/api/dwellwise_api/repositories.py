@@ -74,3 +74,20 @@ def loaded_sources(conn) -> dict[str, dict]:
             """
         )
         return {row["source"]: row for row in cur.fetchall()}
+
+
+def application_counts(conn, county: str | None, residential: bool | None, start, end) -> list[dict]:
+    """Applications received in [start, end), counted per county, month and decision class."""
+    with conn.cursor(row_factory=dict_row) as cur:
+        cur.execute(
+            """
+            select county, date_trunc('month', received)::date as month, decision_class, count(*)::int as n
+            from dw.planning_application
+            where received >= %(start)s and received < %(end)s
+              and (%(county)s::text is null or county = %(county)s)
+              and (%(residential)s::boolean is null or residential = %(residential)s)
+            group by 1, 2, 3
+            """,
+            {"start": start, "end": end, "county": county, "residential": residential},
+        )
+        return cur.fetchall()
