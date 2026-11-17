@@ -90,24 +90,19 @@ jobs:
       - name: Tests, including the database tests against PostGIS
         run: pytest -q -rs
 
-      - name: Build the Lambda image
+      - name: Build the pipeline image
         run: docker build -t dwellwise-pipeline:ci .
 
       - name: Smoke-test the image as its non-root user
         run: |
           set -euo pipefail
-          # The base image ships the Lambda runtime interface emulator on port 8080.
-          docker run -d --name fn -p 9000:8080 dwellwise-pipeline:ci
-          for _ in $(seq 1 20); do
-            out=$(curl -s -X POST localhost:9000/2015-03-31/functions/function/invocations               -d '{"sources": ["no-such-source"]}' || true)
-            [ -n "$out" ] && break
-            sleep 1
-          done
-          echo "$out"
-          docker exec fn id -u | grep -qx 65532
-          # The handler imported, ran and rejected the unknown source by name.
-          echo "$out" | grep -q "unknown sources"
-          docker rm -f fn
+          docker run --rm --entrypoint id dwellwise-pipeline:ci -u | grep -qx 65532
+          # The CLI starts, lists every source, and rejects an unknown one by name.
+          docker run --rm dwellwise-pipeline:ci run --help | grep -q planning
+          ! out=$(docker run --rm dwellwise-pipeline:ci run no-such-source 2>&1)
+          echo "$out" | grep -q "invalid choice"
+          # Prune runs against an empty local store without credentials.
+          docker run --rm dwellwise-pipeline:ci prune | grep -q '"pruned": 0'
 
   app:
     name: App API, web and image

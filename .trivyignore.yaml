@@ -5,6 +5,7 @@ misconfigurations:
     paths:
       - "pipeline/Dockerfile"
     statement: >-
-      No HEALTHCHECK in the Lambda image. Lambda starts a container per
-      invocation and reports failures itself; there is no long-running
-      process to probe. Long-running containers must still define one.
+      No HEALTHCHECK in the pipeline image. It is a batch job: the nightly
+      workflow starts one container per run, which exits when done, and the
+      exit code is the health signal. Long-running containers must still
+      define one.

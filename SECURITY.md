@@ -13,7 +13,8 @@ or answered.
 ## What this repository does to stay safe
 
 - **No long-lived cloud credentials.** No cloud account is used. Service
-  credentials live only in GitHub Actions and Render secrets. The AWS modules
+  credentials live only in Render and in the GitHub `nightly` environment,
+  which only the nightly pipeline job can read. The AWS modules
   (not deployed) are written for OIDC federation with short-lived role sessions.
 - **Least privilege.** The plan role is read-only. The apply role can only
   change resources named `dwellwise-*`, only from the approved `production`

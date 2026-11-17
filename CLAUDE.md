@@ -78,7 +78,7 @@ If it does neither, it is drift.
 ```
 app/api        FastAPI: /health /ready /metrics, /v1 counties, settlements, stats; serves the web app
 app/web        React + TypeScript; minimal, hierarchical: Ireland > county > settlement > brief
-pipeline/      nightly ingestion: fetch, raw copy to object storage, validate, atomic load
+pipeline/      nightly ingestion (GitHub Actions): fetch, gzipped raw copy, validate, atomic load, prune
 terraform/     AWS bootstrap, stacks/, modules/ (not deployed); Render/Supabase/GitHub to come
 docs/          DESIGN.md; runbooks and decision records as they are written
 .github/       CI: lint, tests (PostGIS), image builds, Trivy, gitleaks, plan/apply
@@ -94,6 +94,7 @@ docs/          DESIGN.md; runbooks and decision records as they are written
 | 3. Data: planning applications (from 2020) | Merged (PR #18); loaded 17 Nov |
 | 4–5. API and web app | Merged (PR #6); live at https://dwellwise.onrender.com since 17 Nov |
 | 5. National planning dashboard (F9) | Merged (PR #19); live 17 Nov |
+| 3. Data: nightly pipeline on GitHub Actions | In review |
 | 6. Operate: uptime, dashboards, errors, SLOs, runbooks | Not started |
 | 7. Supply chain: SBOM, signed images, Scorecard | Not started |
 | 8. Kubernetes: Helm chart on a throwaway cluster | Not started |
@@ -104,9 +105,8 @@ docs/          DESIGN.md; runbooks and decision records as they are written
 1. Brief sections fill in as each data source lands; the UI keeps its hierarchy (see `app/web/src/styles.css`).
 2. Pipeline sources: wastewater capacity registers, protected sites; then the
    brief endpoint.
-3. Nightly pipeline on a GitHub Actions schedule, raw copies to Supabase Storage.
-4. CI job that applies the AWS Terraform to the Floci emulator.
-5. Terraform for Render, Supabase and GitHub settings, applied by CI.
+3. CI job that applies the AWS Terraform to the Floci emulator.
+4. Terraform for Render, Supabase and GitHub settings, applied by CI.
 
 ## Verify a change
 
