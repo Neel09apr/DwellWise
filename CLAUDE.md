@@ -79,7 +79,7 @@ If it does neither, it is drift.
 app/api        FastAPI: /health /ready /metrics, /v1 counties, settlements, briefs, stats; serves the web app
 app/web        React + TypeScript; minimal, hierarchical: Ireland > county > settlement > brief
 pipeline/      nightly ingestion (GitHub Actions): fetch, gzipped raw copy, validate, atomic load, prune
-terraform/     stacks/observability (Grafana Cloud, applied by CI, state in Postgres); AWS bootstrap, stacks/data, modules (not deployed)
+terraform/     stacks/observability (Grafana Cloud) and stacks/github (repository settings), applied by CI, state in Postgres; AWS bootstrap, stacks/data, modules (not deployed)
 docs/          DESIGN.md; runbooks and decision records as they are written
 .github/       CI: lint, tests (PostGIS), Trivy, gitleaks, plan/apply; images (GHCR, cosign, SBOM); Scorecard; nightly pipeline; uptime probe
 ops/           uptime probe (stdlib Python), run every 10 minutes by .github/workflows/uptime.yml
@@ -100,7 +100,8 @@ ops/           uptime probe (stdlib Python), run every 10 minutes by .github/wor
 | 3/5. Data and brief: protected sites (SAC, SPA, NHA) and section 03 (F5) | Merged (PR #31); loaded and live 21 Nov |
 | 6. Operate: uptime probe, incidents as issues, runbooks | Merged (PR #21); probing every 10 minutes |
 | 6. Operate: Grafana Cloud dashboards and alerts (Terraform) | Merged (PR #22); applied 21 Nov; all four alerts verified, alert email delivered |
-| 7. Supply chain: SBOM, signed images, Scorecard | In review |
+| 7. Supply chain: SBOM, signed images, Scorecard | Merged (PR #32); images signed, nightly verifies before running (21 Nov) |
+| 2. Delivery: GitHub settings as Terraform (ruleset on main, Dependabot alerts) | In review |
 | 8. Kubernetes: Helm chart on a throwaway cluster | Not started |
 
 
@@ -110,7 +111,7 @@ ops/           uptime probe (stdlib Python), run every 10 minutes by .github/wor
 2. Pipeline sources: wastewater capacity registers (licence check first), for
    brief sections 01 and 04.
 3. CI job that applies the AWS Terraform to the Floci emulator.
-4. Terraform for Render, Supabase and GitHub settings, applied by CI.
+4. Terraform for Render and Supabase settings, applied by CI (GitHub is done).
 
 ## Verify a change
 
