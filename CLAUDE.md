@@ -81,10 +81,11 @@ app/web        React + TypeScript; minimal, hierarchical: Ireland > county > set
 pipeline/      nightly ingestion (GitHub Actions): fetch, gzipped raw copy, validate, atomic load, prune
 terraform/     AWS bootstrap, stacks/, modules/ (not deployed); Render/Supabase/GitHub to come
 docs/          DESIGN.md; runbooks and decision records as they are written
-.github/       CI: lint, tests (PostGIS), image builds, Trivy, gitleaks, plan/apply
+.github/       CI: lint, tests (PostGIS), image builds, Trivy, gitleaks, plan/apply; nightly pipeline; uptime probe
+ops/           uptime probe (stdlib Python), run every 10 minutes by .github/workflows/uptime.yml
 ```
 
-## Status (17 November 2026)
+## Status (21 November 2026)
 
 | Milestone (DESIGN.md §14) | State |
 |---|---|
@@ -94,8 +95,9 @@ docs/          DESIGN.md; runbooks and decision records as they are written
 | 3. Data: planning applications (from 2020) | Merged (PR #18); loaded 17 Nov |
 | 4–5. API and web app | Merged (PR #6); live at https://dwellwise.onrender.com since 17 Nov |
 | 5. National planning dashboard (F9) | Merged (PR #19); live 17 Nov |
-| 3. Data: nightly pipeline on GitHub Actions | Merged (PR #20); needs the `nightly` environment's secrets |
-| 6. Operate: uptime, dashboards, errors, SLOs, runbooks | Not started |
+| 3. Data: nightly pipeline on GitHub Actions | Merged (PR #20); running nightly since 17 Nov |
+| 6. Operate: uptime probe, incidents as issues, runbooks | Merged (PR #21); probing every 10 minutes |
+| 6. Operate: Grafana Cloud dashboards and alerts (Terraform) | Not started; needs a Grafana Cloud account |
 | 7. Supply chain: SBOM, signed images, Scorecard | Not started |
 | 8. Kubernetes: Helm chart on a throwaway cluster | Not started |
 

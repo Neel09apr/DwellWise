@@ -1,0 +1,80 @@
+# External uptime probe. Every 10 minutes it checks the live service; when a
+# check fails it opens a GitHub issue labelled "incident" (one per check), and
+# closes it with the outage length once the check passes again. The issue list
+# is the public incident log. Probing this often also keeps Render's free
+# service from sleeping.
+name: uptime
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: uptime
+  cancel-in-progress: false
+
+env:
+  BASE_URL: https://dwellwise.onrender.com
+
+jobs:
+  probe:
+    name: Probe the live service
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Probe
+        id: probe
+        run: |
+          set +e
+          python3 ops/probe.py "$BASE_URL" > "$RUNNER_TEMP/results.jsonl"
+          echo "failed=$?" >> "$GITHUB_OUTPUT"
+          cat "$RUNNER_TEMP/results.jsonl"
+
+      - name: Open or close incidents
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          gh label create incident --repo "$REPO" --color B3351F \
+            --description "Opened and closed by the uptime probe" 2>/dev/null || true
+          while IFS= read -r line; do
+            title="Incident: $(jq -r .name <<<"$line")"
+            ok=$(jq -r .ok <<<"$line")
+            open=$(gh issue list --repo "$REPO" --label incident --state open --limit 50 \
+              --json number,title,createdAt | jq -c --arg t "$title" 'map(select(.title == $t))[0] // empty')
+            if [ "$ok" = "false" ] && [ -z "$open" ]; then
+              body=$(jq -r '"The uptime probe saw `\(.path)` fail after \(.attempts) attempts.\n\n- Status: \(.status) (0 means unreachable)\n- Detail: `\(.detail)`\n- Runbook: [\(.runbook)](../blob/main/\(.runbook))\n\nThis issue closes itself when the check passes again."' <<<"$line")
+              gh issue create --repo "$REPO" --label incident --title "$title" --body "$body"
+            elif [ "$ok" = "true" ] && [ -n "$open" ]; then
+              number=$(jq -r .number <<<"$open")
+              since=$(jq -r .createdAt <<<"$open")
+              minutes=$(( ($(date -u +%s) - $(date -u -d "$since" +%s)) / 60 ))
+              gh issue close "$number" --repo "$REPO" \
+                --comment "Recovered: \`$(jq -r .path <<<"$line")\` passes again, about $minutes minutes after this issue opened."
+            fi
+          done < "$RUNNER_TEMP/results.jsonl"
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Uptime probe"
+            echo "| Check | Path | Result | Status | Seconds | Attempts |"
+            echo "|---|---|---|---|---|---|"
+            jq -r '"| \(.name) | `\(.path)` | \(if .ok then (if .slow then "up, slow" else "up" end) else "**down**" end) | \(.status) | \(.seconds) | \(.attempts) |"' \
+              "$RUNNER_TEMP/results.jsonl" 2>/dev/null || echo "| (no results) | | | | | |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fail the run when a check is down
+        if: steps.probe.outputs.failed != '0'
+        run: exit 1

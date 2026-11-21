@@ -1,0 +1,9 @@
+# Same rules as pipeline/ and app/api/.
+line-length = 110
+target-version = "py312"
+
+[lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "SIM", "T20"]
+
+[lint.per-file-ignores]
+"test_*.py" = ["S101"]

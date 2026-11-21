@@ -4,6 +4,10 @@ from dwellwise_api.config import Settings
 from dwellwise_api.main import create_app
 
 
+def test_head_is_answered_for_uptime_monitors(client):
+    assert client.head("/health").status_code == 200
+
+
 def test_health_needs_nothing(client):
     response = client.get("/health")
     assert response.status_code == 200 and response.json() == {"status": "ok"}
@@ -56,6 +60,7 @@ def test_the_web_app_is_served_for_client_routes_but_not_for_api_routes(tmp_path
     (tmp_path.parent / "secret.txt").write_text("nope", encoding="utf-8")
     with TestClient(create_app(Settings(web_dist=tmp_path))) as c:
         assert "<title>app</title>" in c.get("/settlements/123").text
+        assert c.head("/").status_code == 200
         asset = c.get("/assets/app-1a2b.js")
         assert "immutable" in asset.headers["cache-control"]
         assert c.get("/v1/nothing").status_code == 404
