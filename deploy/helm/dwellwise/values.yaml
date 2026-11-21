@@ -1,0 +1,31 @@
+# The signed image the images workflow publishes on main. Prefer a digest:
+# a tag can move, a digest cannot (cosign signs the digest).
+image:
+  repository: ghcr.io/neel09apr/dwellwise-app
+  tag: latest
+  digest: "" # e.g. sha256:...; wins over tag when set
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+# An existing Secret with DATABASE_URL and (optional) METRICS_TOKEN keys.
+# The chart never creates or templates secret values.
+existingSecret: dwellwise
+
+containerPort: 8000
+
+service:
+  port: 80
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+networkPolicy:
+  enabled: true
+  # Postgres (Supabase session pooler and direct) is outside the cluster.
+  databasePorts: [5432, 6543]

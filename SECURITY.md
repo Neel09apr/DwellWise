@@ -25,6 +25,10 @@ or answered.
   full history for secrets, and TFLint enforces provider-aware rules.
 - **Pinned supply chain.** Every GitHub Action is pinned to a commit SHA and
   updated by Dependabot. Terraform providers are locked with checksums.
+- **Kubernetes-ready.** The Helm chart passes the Pod Security `restricted`
+  profile (enforced in CI on a throwaway kind cluster): non-root, read-only root
+  filesystem, all capabilities dropped, runtime-default seccomp, no
+  service-account token, a NetworkPolicy, and secrets referenced, never templated.
 - **Signed images.** Both container images are scanned by Trivy, pushed to
   GHCR by digest, signed keyless with cosign and carry an attested SPDX SBOM.
   The nightly pipeline verifies the signature (this repository's `images`

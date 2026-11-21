@@ -1,0 +1,24 @@
+{{- if .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    {{- include "dwellwise.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "dwellwise.selector" . | nindent 6 }}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - ports:
+        - port: http
+  egress:
+    - ports: # DNS
+        - { port: 53, protocol: UDP }
+        - { port: 53, protocol: TCP }
+    - ports: # Postgres, outside the cluster
+        {{- range .Values.networkPolicy.databasePorts }}
+        - { port: {{ . }}, protocol: TCP }
+        {{- end }}
+{{- end }}

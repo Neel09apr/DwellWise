@@ -83,6 +83,7 @@ terraform/     stacks/observability (Grafana Cloud), stacks/github (repository s
 docs/          DESIGN.md; runbooks and decision records as they are written
 .github/       CI: lint, tests (PostGIS), Trivy, gitleaks, plan/apply; images (GHCR, cosign, SBOM); Scorecard; nightly pipeline; uptime probe
 ops/           uptime probe (stdlib Python), run every 10 minutes by .github/workflows/uptime.yml
+deploy/        Helm chart for the app, installed on a throwaway kind cluster in CI
 ```
 
 ## Status (21 November 2026)
@@ -104,8 +105,8 @@ ops/           uptime probe (stdlib Python), run every 10 minutes by .github/wor
 | 2. Delivery: GitHub settings as Terraform (ruleset on main, Dependabot alerts) | Merged (PR #33); applied 21 Nov |
 | 5. Brief: wastewater section 01 as a link to the county register (F3) | Merged (PR #34); live 21 Nov |
 | 1. Foundation: AWS Terraform applied to the Floci emulator in CI | Merged (PR #35); green on main |
-| 2. Delivery: Supabase settings as Terraform (SSL enforcement); legacy public tables dropped | Merged (PR #36); SSL enforced 21 Nov, state-TLS fix in review |
-| 8. Kubernetes: Helm chart on a throwaway cluster | Not started |
+| 2. Delivery: Supabase settings as Terraform (SSL enforcement); legacy public tables dropped | Merged (PRs #36, #37); SSL enforced, all Terraform state over TLS (21 Nov) |
+| 8. Kubernetes: Helm chart on a throwaway kind cluster, Pod Security restricted | In review |
 
 
 ## Next
@@ -113,7 +114,7 @@ ops/           uptime probe (stdlib Python), run every 10 minutes by .github/wor
 1. Brief sections fill in as each data source lands (planning precedents first); the UI keeps its hierarchy (see `app/web/src/styles.css`).
 2. Wastewater capacity: the registers may not be republished (DESIGN.md §6), so
    section 01 links to them and section 04 waits. Revisit only if the licence changes.
-3. Kubernetes: Helm chart on a throwaway cluster in CI.
+3. Roadmap complete once Kubernetes merges; then SRE practice (SLO report, error budget, incident write-ups) and error tracking.
 4. Render stays on its Blueprint until the provider can update free services (DESIGN.md §11).
 
 ## Verify a change

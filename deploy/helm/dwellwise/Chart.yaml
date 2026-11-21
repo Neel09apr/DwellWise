@@ -1,0 +1,6 @@
+apiVersion: v2
+name: dwellwise
+description: DwellWise API and web app. Installed on a throwaway kind cluster in CI; production runs on Render.
+type: application
+version: 0.1.0
+appVersion: "main"

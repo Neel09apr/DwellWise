@@ -352,6 +352,19 @@ the Grafana alerts.
   old app, readable with the anon key through the Data API; two held a copy of
   the capacity register, which may not be republished). `public` is now empty
   and the anon role has no access to `dw`.
+- **Kubernetes:** `deploy/helm/dwellwise` packages the app image as a Helm
+  chart, and a CI job installs it on every pull request into a throwaway kind
+  cluster, in a namespace that enforces the Pod Security `restricted` profile.
+  The chart runs non-root with a read-only root filesystem (an `emptyDir` for
+  `/tmp`), drops all capabilities, uses the runtime-default seccomp profile,
+  sets requests and limits, mounts no service-account token, and ships a
+  NetworkPolicy (ingress on the app port; egress to DNS and Postgres only).
+  Secrets come from an existing Secret the chart only references. Liveness and
+  readiness both use `/health`, not `/ready`: a stale or unreachable data source
+  should leave the site serving its last good data with the age shown, not take
+  every pod out of the Service. `helm test` runs a smoke check with the app's own
+  image (no extra image to trust). Production stays on Render; the cluster
+  exists only for the length of the job.
 - **Render:** stays on its Blueprint (`render.yaml`), which is Render's own
   configuration as code. The Terraform provider cannot update free-tier web
   services (render-oss/terraform-provider-render#80, open as of v1.9.1) and the
@@ -419,7 +432,8 @@ the Grafana alerts.
    Grafana Cloud dashboards (service health and the same planning counts as
    metrics) and alerts, defined in Terraform; error tracking.
 7. **Supply chain:** SBOM, signed images, OpenSSF Scorecard.
-8. **Kubernetes:** Helm chart deployed to a throwaway cluster in CI.
+8. **Kubernetes:** Helm chart deployed to a throwaway kind cluster in CI on every
+   pull request, under the Pod Security `restricted` profile.
 
 ## 15. Open questions
 
