@@ -10,8 +10,12 @@ RUN npm run build
 FROM python:3.15-slim
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 WEB_DIST=/srv/web
 WORKDIR /srv
+# Patch the base image's Debian packages (a fixed CVE should not wait for the next
+# python:3.15-slim rebuild), then remove pip: nothing installs at run time, and pip
+# carries its own vendored copies of urllib3, msgpack and setuptools that scanners flag.
+RUN apt-get update && apt-get upgrade -y --no-install-recommends && rm -rf /var/lib/apt/lists/*
 COPY api/requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt && pip uninstall -y pip
 COPY api/dwellwise_api ./dwellwise_api
 COPY --from=web /web/dist ./web
 
