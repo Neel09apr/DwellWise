@@ -169,3 +169,12 @@ def test_stats_for_an_unknown_county_is_a_404(client):
     response = client.get("/v1/stats/applications", params={"county": "Atlantis"})
     assert response.status_code == 404
     assert response.json()["error"]["message"] == "No county is called Atlantis."
+
+
+def test_metrics_report_data_age_without_anyone_calling_ready(client):
+    from dwellwise_api.metrics import DATA_AGE
+
+    DATA_AGE.clear()  # nothing set by earlier /ready calls
+    body = client.get("/metrics").text
+    assert 'dwellwise_data_age_hours{source="planning"}' in body
+    assert 'dwellwise_data_age_hours{source="settlements"}' in body
