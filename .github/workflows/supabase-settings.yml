@@ -35,7 +35,7 @@ jobs:
     environment: supabase-settings
     env:
       # A scoped access token: this project only, 90-day expiry, write access
-      # only to SSL enforcement and auth config, nothing to SQL or secrets.
+      # only to SSL enforcement, nothing to SQL or secrets.
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
     steps:
       - name: Is Supabase configured?
