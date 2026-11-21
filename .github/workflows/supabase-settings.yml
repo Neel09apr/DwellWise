@@ -34,8 +34,8 @@ jobs:
     timeout-minutes: 20
     environment: supabase-settings
     env:
-      # The Management API has no read-only or short-lived token, so plans and
-      # applies share one personal access token, kept only in this environment.
+      # A scoped access token: this project only, 90-day expiry, write access
+      # only to SSL enforcement and auth config, nothing to SQL or secrets.
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
     steps:
       - name: Is Supabase configured?

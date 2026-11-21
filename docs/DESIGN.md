@@ -338,8 +338,11 @@ the Grafana alerts.
   The project resource is deliberately not managed: the provider resets the
   database password when the configured value differs from state, and an
   imported project has none, so adopting it could rotate the live password.
-  The Management API has no short-lived or read-only token, so a personal access
-  token sits in the `supabase-settings` environment. On 21 November 2026 the
+  Credentials: a scoped Supabase access token in the `supabase-settings`
+  environment, limited to this one project, expiring after 90 days, read-only
+  except for SSL enforcement and auth config (read-write), and with no access
+  to SQL, backups, API key secrets, the JWT secret or signing keys. Supabase has
+  no OIDC exchange, so it is a stored token, rotated when it expires. On 21 November 2026 the
   last legacy objects in `public` were dropped (six tables and a view left by the
   old app, readable with the anon key through the Data API; two held a copy of
   the capacity register, which may not be republished). `public` is now empty
