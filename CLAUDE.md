@@ -79,7 +79,7 @@ If it does neither, it is drift.
 app/api        FastAPI: /health /ready /metrics, /v1 counties, settlements, stats; serves the web app
 app/web        React + TypeScript; minimal, hierarchical: Ireland > county > settlement > brief
 pipeline/      nightly ingestion (GitHub Actions): fetch, gzipped raw copy, validate, atomic load, prune
-terraform/     AWS bootstrap, stacks/, modules/ (not deployed); Render/Supabase/GitHub to come
+terraform/     stacks/observability (Grafana Cloud, applied by CI, state in Postgres); AWS bootstrap, stacks/data, modules (not deployed)
 docs/          DESIGN.md; runbooks and decision records as they are written
 .github/       CI: lint, tests (PostGIS), image builds, Trivy, gitleaks, plan/apply; nightly pipeline; uptime probe
 ops/           uptime probe (stdlib Python), run every 10 minutes by .github/workflows/uptime.yml
@@ -97,7 +97,7 @@ ops/           uptime probe (stdlib Python), run every 10 minutes by .github/wor
 | 5. National planning dashboard (F9) | Merged (PR #19); live 17 Nov |
 | 3. Data: nightly pipeline on GitHub Actions | Merged (PR #20); running nightly since 17 Nov |
 | 6. Operate: uptime probe, incidents as issues, runbooks | Merged (PR #21); probing every 10 minutes |
-| 6. Operate: Grafana Cloud dashboards and alerts (Terraform) | Not started; needs a Grafana Cloud account |
+| 6. Operate: Grafana Cloud dashboards and alerts (Terraform) | Merged (PR #22); applied by CI |
 | 7. Supply chain: SBOM, signed images, Scorecard | Not started |
 | 8. Kubernetes: Helm chart on a throwaway cluster | Not started |
 

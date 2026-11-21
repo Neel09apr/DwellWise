@@ -1,0 +1,107 @@
+{
+  "title": "DwellWise service",
+  "uid": "dwellwise-service",
+  "tags": ["dwellwise"],
+  "timezone": "utc",
+  "refresh": "5m",
+  "time": { "from": "now-24h", "to": "now" },
+  "schemaVersion": 39,
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Oldest data source (hours)",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 5 },
+      "datasource": { "type": "prometheus", "uid": "${prometheus_uid}" },
+      "targets": [{ "refId": "A", "expr": "max(dwellwise_data_age_hours)" }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "h",
+          "decimals": 1,
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "text", "value": null }, { "color": "red", "value": 48 }] }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "p95 latency, /v1 (last hour)",
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 5 },
+      "datasource": { "type": "prometheus", "uid": "${prometheus_uid}" },
+      "targets": [{ "refId": "A", "expr": "histogram_quantile(0.95, sum by (le) (rate(dwellwise_http_request_duration_seconds_bucket{route=~\"/v1/.*\"}[1h])))" }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 2,
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "text", "value": null }, { "color": "red", "value": 0.8 }] }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Server errors (last hour)",
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 5 },
+      "datasource": { "type": "prometheus", "uid": "${prometheus_uid}" },
+      "targets": [{ "refId": "A", "expr": "sum(increase(dwellwise_http_requests_total{status=~\"5..\",route!=\"/ready\"}[1h]))" }],
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Requests (last hour)",
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 5 },
+      "datasource": { "type": "prometheus", "uid": "${prometheus_uid}" },
+      "targets": [{ "refId": "A", "expr": "sum(increase(dwellwise_http_requests_total[1h]))" }],
+      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Requests per minute, by route",
+      "gridPos": { "x": 0, "y": 5, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "${prometheus_uid}" },
+      "targets": [{ "refId": "A", "expr": "sum by (route) (rate(dwellwise_http_requests_total[5m])) * 60", "legendFormat": "{{route}}" }],
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "lineWidth": 2 } } }
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "p95 latency, /v1 routes (SLO 0.8 s)",
+      "gridPos": { "x": 12, "y": 5, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "${prometheus_uid}" },
+      "targets": [{ "refId": "A", "expr": "histogram_quantile(0.95, sum by (le, route) (rate(dwellwise_http_request_duration_seconds_bucket{route=~\"/v1/.*\"}[10m])))", "legendFormat": "{{route}}" }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "lineWidth": 2, "thresholdsStyle": { "mode": "line" } },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "transparent", "value": null }, { "color": "red", "value": 0.8 }] }
+        }
+      }
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Server errors per minute (excluding /ready)",
+      "gridPos": { "x": 0, "y": 13, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "${prometheus_uid}" },
+      "targets": [{ "refId": "A", "expr": "sum by (route) (rate(dwellwise_http_requests_total{status=~\"5..\",route!=\"/ready\"}[5m])) * 60", "legendFormat": "{{route}}" }],
+      "fieldConfig": { "defaults": { "unit": "short", "custom": { "lineWidth": 2 } } }
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Data age by source (limit 48 h)",
+      "gridPos": { "x": 12, "y": 13, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "${prometheus_uid}" },
+      "targets": [{ "refId": "A", "expr": "max by (source) (dwellwise_data_age_hours)", "legendFormat": "{{source}}" }],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "h",
+          "custom": { "lineWidth": 2, "thresholdsStyle": { "mode": "line" } },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "transparent", "value": null }, { "color": "red", "value": 48 }] }
+        }
+      }
+    }
+  ]
+}

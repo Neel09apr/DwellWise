@@ -68,4 +68,22 @@ def metrics(request: Request) -> Response:
     token = request.app.state.settings.metrics_token
     if token and not hmac.compare_digest(request.headers.get("authorization", ""), f"Bearer {token}"):
         raise HTTPException(401, "A bearer token is required.")
+    refresh_data_age(request.app.state.pool)
     return Response(generate_latest(REGISTRY), media_type=CONTENT_TYPE_LATEST)
+
+
+def refresh_data_age(pool) -> None:
+    """Set data age from the snapshot log on every scrape.
+
+    Without this the gauge only moves when something calls /ready, so the
+    "Data stale" alert would go blind if the uptime probe stopped. A database
+    problem never fails the scrape; "Metrics missing" and /ready cover outages.
+    """
+    if pool is None:
+        return
+    try:
+        with pool.connection(timeout=3) as conn:
+            for source, row in repo.loaded_sources(conn).items():
+                DATA_AGE.labels(source).set(float(row["age_hours"]))
+    except (PoolTimeout, DatabaseError):
+        pass
