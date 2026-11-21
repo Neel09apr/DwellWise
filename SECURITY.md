@@ -25,5 +25,10 @@ or answered.
   full history for secrets, and TFLint enforces provider-aware rules.
 - **Pinned supply chain.** Every GitHub Action is pinned to a commit SHA and
   updated by Dependabot. Terraform providers are locked with checksums.
+- **Signed images.** Both container images are scanned by Trivy, pushed to
+  GHCR by digest, signed keyless with cosign and carry an attested SPDX SBOM.
+  The nightly pipeline verifies the signature (this repository's `images`
+  workflow on `main`) before the image gets any credentials. To check one:
+  `cosign verify ghcr.io/neel09apr/dwellwise-pipeline:latest --certificate-oidc-issuer https://token.actions.githubusercontent.com --certificate-identity https://github.com/Neel09apr/DwellWise/.github/workflows/images.yml@refs/heads/main`
 - **Secure defaults for storage.** Buckets are private, encrypted, versioned
   and reject plain HTTP.

@@ -13,6 +13,7 @@ its status (`loaded`, `rejected`, `failed`) and detail.
 
 | Step failed | Likely cause | What to do |
 |---|---|---|
+| Pull and verify the signed pipeline image | No signed image yet, or the signature does not match this repository's `images` workflow on `main` | Check the latest `images` run on main succeeded; re-run it (Run workflow). Never skip the verification: an unsigned image must not get database credentials |
 | Write the container environment | A secret or variable is missing | Add it under Settings → Environments → nightly |
 | Apply the schema | Database unreachable or password changed | Check Supabase is up; update the `DATABASE_URL` secret |
 | Run the sources, status `rejected` | Validation refused the data (row count swing, personal-data field, unknown authority) | Read the detail. If the source really changed, update the source definition in a pull request. Never loosen a check to make a run pass |
@@ -20,6 +21,9 @@ its status (`loaded`, `rejected`, `failed`) and detail.
 | Prune | Storage credentials or permissions | Raw copies pile up; not urgent. Fix the access key |
 
 ## Re-run one source
+
+The run uses the pipeline image last signed on main. After merging a pipeline
+change, wait for the `images` workflow to finish before running it by hand.
 
 Actions → nightly pipeline → Run workflow, with `sources` set to, for example,
 `planning`. Counties load before settlements, and settlements before planning.

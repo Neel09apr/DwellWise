@@ -81,7 +81,7 @@ app/web        React + TypeScript; minimal, hierarchical: Ireland > county > set
 pipeline/      nightly ingestion (GitHub Actions): fetch, gzipped raw copy, validate, atomic load, prune
 terraform/     stacks/observability (Grafana Cloud, applied by CI, state in Postgres); AWS bootstrap, stacks/data, modules (not deployed)
 docs/          DESIGN.md; runbooks and decision records as they are written
-.github/       CI: lint, tests (PostGIS), image builds, Trivy, gitleaks, plan/apply; nightly pipeline; uptime probe
+.github/       CI: lint, tests (PostGIS), Trivy, gitleaks, plan/apply; images (GHCR, cosign, SBOM); Scorecard; nightly pipeline; uptime probe
 ops/           uptime probe (stdlib Python), run every 10 minutes by .github/workflows/uptime.yml
 ```
 
@@ -97,10 +97,10 @@ ops/           uptime probe (stdlib Python), run every 10 minutes by .github/wor
 | 5. National planning dashboard (F9) | Merged (PR #19); live 17 Nov |
 | 3. Data: nightly pipeline on GitHub Actions | Merged (PR #20); running nightly since 17 Nov |
 | 5. Brief: planning precedents section (F4) | Merged (PR #24); live 21 Nov |
-| 3/5. Data and brief: protected sites (SAC, SPA, NHA) and section 03 (F5) | In review |
+| 3/5. Data and brief: protected sites (SAC, SPA, NHA) and section 03 (F5) | Merged (PR #31); loaded and live 21 Nov |
 | 6. Operate: uptime probe, incidents as issues, runbooks | Merged (PR #21); probing every 10 minutes |
 | 6. Operate: Grafana Cloud dashboards and alerts (Terraform) | Merged (PR #22); applied 21 Nov; all four alerts verified, alert email delivered |
-| 7. Supply chain: SBOM, signed images, Scorecard | Not started |
+| 7. Supply chain: SBOM, signed images, Scorecard | In review |
 | 8. Kubernetes: Helm chart on a throwaway cluster | Not started |
 
 
