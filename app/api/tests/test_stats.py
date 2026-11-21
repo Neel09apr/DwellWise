@@ -64,3 +64,58 @@ def test_a_reversed_range_is_a_422_with_a_plain_message(offline):
     assert response.json() == {
         "error": {"code": "unprocessable_content", "message": "from must not be after to."}
     }
+
+
+class CountingConn:
+    """Stands in for a psycopg connection: answers every query with one row and counts them."""
+
+    def __init__(self, row):
+        self.row = row
+        self.queries = 0
+
+    def cursor(self, row_factory=None):
+        conn = self
+
+        class Cursor:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc):
+                return False
+
+            def execute(self, _sql, _params=None):
+                conn.queries += 1
+
+            def fetchone(self):
+                return conn.row
+
+        return Cursor()
+
+
+ROW = {
+    "counties": ["CORK", "MAYO"],
+    "rows": [
+        {"county": "CORK", "month": "2026-10-01", "decision_class": "granted", "n": 3},
+        {"county": "MAYO", "month": "2026-10-01", "decision_class": "refused", "n": 1},
+    ],
+    "captured_at": None,
+}
+
+
+def test_the_stats_need_exactly_one_database_round_trip():
+    from dwellwise_api.stats import application_stats
+
+    conn = CountingConn(ROW)
+    stats = application_stats(conn, None, None, "2026-09", "2026-10", TODAY)
+    assert conn.queries == 1
+    assert (stats.totals.granted, stats.totals.refused, stats.totals.total) == (3, 1, 4)
+    assert [(m.month, m.total) for m in stats.months] == [("2026-09", 0), ("2026-10", 4)]
+    assert [(c.county, c.total) for c in stats.counties] == [("CORK", 3), ("MAYO", 1)]
+
+
+def test_an_unknown_county_is_none_after_the_same_single_query():
+    from dwellwise_api.stats import application_stats
+
+    conn = CountingConn(ROW)
+    assert application_stats(conn, "atlantis", None, None, None, TODAY) is None
+    assert conn.queries == 1

@@ -53,25 +53,25 @@ def application_stats(
     """None when the county does not exist."""
     first, last = month_range(start, end, today)
     name = county.strip().upper() if county else None
-    if name and not repo.county_exists(conn, name):
+    data = repo.application_stats_data(conn, name, residential, first, add_months(last, 1))
+    if name and name not in data["counties"]:
         return None
-    rows = repo.application_counts(conn, name, residential, first, add_months(last, 1))
+    rows = data["rows"]
 
     months, day = [], first
     while day <= last:
         months.append(MonthCounts(month=f"{day:%Y-%m}", **_counts([r for r in rows if r["month"] == day])))
         day = add_months(day, 1)
 
-    names = [name] if name else [c["name"] for c in repo.list_counties(conn)]
+    names = [name] if name else data["counties"]
     counties = [CountyCounts(county=n, **_counts([r for r in rows if r["county"] == n])) for n in names]
 
-    loaded = repo.loaded_sources(conn).get("planning")
     return ApplicationStats(
         county=name,
         residential=residential,
         from_month=f"{first:%Y-%m}",
         to_month=f"{last:%Y-%m}",
-        captured_at=loaded["captured_at"] if loaded else None,
+        captured_at=data["captured_at"],
         attribution=ATTRIBUTION,
         totals=DecisionCounts(**_counts(rows)),
         months=months,
