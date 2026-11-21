@@ -296,8 +296,8 @@ the Grafana alerts.
 |---|---|
 | Leaked cloud credentials | None exist: CI uses OIDC and short-lived roles |
 | CI compromise changing infrastructure | Plan role is read-only; apply needs the approved `production` environment; apply role limited to `dwellwise-*` and to roles under a permissions boundary it cannot change |
-| Vulnerable dependencies or images | Dependabot, Trivy on code and image, SBOM on every release |
-| Tampered build artefacts | Container images signed (keyless) and verified before deploy |
+| Vulnerable dependencies or images | Dependabot; Trivy on the IaC and on both images (HIGH or CRITICAL with a fix fails the build); an SPDX SBOM attested to every published image |
+| Tampered build artefacts | Images pushed to GHCR by digest and signed keyless with cosign (GitHub OIDC, Sigstore). The nightly pipeline runs only the digest it has verified was signed by this repository's `images` workflow on `main`. Render still builds the app from source; moving it to the signed image is the next step |
 | Abuse of the AI endpoint | Per-IP and daily limits; cached responses; works without it |
 | Secrets in git | gitleaks on full history; push protection on |
 | Personal data | Applicant fields excluded at fetch and asserted absent at validation |
@@ -306,8 +306,12 @@ the Grafana alerts.
 
 - **Pull request:** lint, test, type-check, Terraform plan, security scans, and
   the AWS modules applied to a throwaway Floci emulator.
-- **Merge to main:** build and sign the image, Terraform apply (Render,
-  Supabase, GitHub) after approval, deploy to Render.
+- **Merge to main:** `.github/workflows/images.yml` builds both images,
+  scans them with Trivy, pushes them to GHCR, signs each digest with cosign
+  (keyless) and attests its SBOM; on pull requests it builds and scans without
+  pushing. Terraform apply (Render, Supabase, GitHub) after approval; Render
+  deploys. OpenSSF Scorecard runs weekly and on merge (`scorecard.yml`) and
+  publishes its result.
 - **Observability:** `.github/workflows/observability.yml` plans the Grafana
   stack on pull requests and applies it on merge. Its state sits in the
   project's Postgres (Terraform's `pg` backend, schema `terraform_observability`),

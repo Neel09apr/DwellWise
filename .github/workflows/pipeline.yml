@@ -1,4 +1,5 @@
-# Nightly data pipeline: the same image CI builds and scans, run on a schedule.
+# Nightly data pipeline: the image the images workflow built, scanned and signed
+# on main, run by digest only after its signature checks out.
 # Secrets live in the "nightly" environment, so only this job can read them.
 name: nightly pipeline
 
@@ -14,6 +15,7 @@ on:
 
 permissions:
   contents: read
+  packages: read # pull the signed image from GHCR
 
 concurrency:
   group: nightly-pipeline
@@ -25,15 +27,24 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: nightly
-    env:
-      IMAGE: dwellwise-pipeline:run
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
+      - uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
 
-      - name: Build the pipeline image
-        run: docker build -t "$IMAGE" pipeline
+      - name: Pull and verify the signed pipeline image
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          echo "$TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          repo="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/dwellwise-pipeline"
+          docker pull -q "$repo:latest"
+          ref=$(docker inspect --format '{{index .RepoDigests 0}}' "$repo:latest")
+          # Only a digest signed by this repository's images workflow on main may run.
+          identity="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/.github/workflows/images.yml@refs/heads/main"
+          cosign verify "$ref" --certificate-identity "$identity" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com > /dev/null
+          echo "IMAGE=$ref" >> "$GITHUB_ENV"
+          echo "Verified \`$ref\`" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Write the container environment
         env:

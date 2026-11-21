@@ -1,6 +1,7 @@
 # DwellWise
 
 [![ci](https://github.com/Neel09apr/DwellWise/actions/workflows/ci.yml/badge.svg)](https://github.com/Neel09apr/DwellWise/actions/workflows/ci.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/Neel09apr/DwellWise/badge)](https://scorecard.dev/viewer/?uri=github.com/Neel09apr/DwellWise)
 [![uptime](https://github.com/Neel09apr/DwellWise/actions/workflows/uptime.yml/badge.svg)](https://github.com/Neel09apr/DwellWise/actions/workflows/uptime.yml)
 [![incidents](https://img.shields.io/github/issues/Neel09apr/DwellWise/incident?label=open%20incidents)](https://github.com/Neel09apr/DwellWise/issues?q=label%3Aincident)
 ![cost](https://img.shields.io/badge/monthly%20cost-%240-brightgreen)
@@ -43,7 +44,7 @@ flowchart LR
 | Scanning | Trivy (IaC and Dockerfiles, HIGH/CRITICAL fail), gitleaks over full history, findings in the Security tab | Problems are caught before merge |
 | Delivery | Terraform plan on pull request, apply after a required approval, weekly drift check | Every infrastructure change is reviewed as a plan |
 | Monitoring | Uptime probe every 10 minutes opening and closing incident issues; Grafana Cloud scrape, dashboard and four SLO-based alerts, all Terraform; runbooks | Outages are noticed, recorded and handled the same way every time |
-| Supply chain | Actions pinned to commit SHAs; provider checksums locked; Dependabot | Tag hijacking cannot change what CI runs |
+| Supply chain | Both images scanned by Trivy, pushed to GHCR, signed keyless with cosign and given an attested SPDX SBOM; the nightly pipeline runs only a digest whose signature it has verified; OpenSSF Scorecard weekly; Actions pinned to commit SHAs; provider checksums locked; Dependabot | A tampered or unscanned image never receives database credentials |
 
 ## AWS modules (not deployed)
 
@@ -78,6 +79,9 @@ render.yaml               Render blueprint (free plan, Frankfurt)
 .github/workflows/
   ci.yml                  lint, test (PostGIS), build, scan
   terraform.yml           plan on PR, apply on approval, weekly drift check
+  images.yml              build and scan images; on main push to GHCR, sign, attest SBOM
+  pipeline.yml            nightly pipeline: verify the signed image, then run it
+  scorecard.yml           OpenSSF Scorecard, weekly and on merge
 SECURITY.md               reporting and security controls
 ```
 
@@ -98,7 +102,7 @@ SECURITY.md               reporting and security controls
 - [x] Grafana Cloud dashboard and alerts as Terraform, state in Postgres, applied by CI
 - [ ] Error tracking (Sentry)
 - [ ] SRE practice: SLO reporting and error budget, incident write-ups
-- [ ] Supply chain: SBOM, signed container images, OpenSSF Scorecard
+- [x] Supply chain: SBOM, signed container images, OpenSSF Scorecard
 - [ ] Kubernetes: Helm chart deployed to a throwaway cluster in CI
 
 ## Licence

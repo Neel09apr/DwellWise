@@ -1,0 +1,122 @@
+# Container images: build and scan on every pull request; on main, also push to
+# GHCR, sign each digest with cosign (keyless, GitHub OIDC) and attest its SBOM.
+# The nightly pipeline runs only a pipeline image this workflow signed on main.
+name: images
+
+on:
+  pull_request:
+    paths:
+      - "app/**"
+      - "pipeline/**"
+      - ".trivyignore.yaml"
+      - ".github/workflows/images.yml"
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - "pipeline/**"
+      - ".trivyignore.yaml"
+      - ".github/workflows/images.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: images-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }} # never cut a signing run short
+
+jobs:
+  image:
+    name: ${{ matrix.image }} image
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        image: [app, pipeline]
+    permissions:
+      contents: read
+      packages: write # push to GHCR (main only)
+      id-token: write # keyless signing: the OIDC token becomes the Sigstore identity (main only)
+      security-events: write # upload Trivy findings
+    env:
+      IMAGE: ${{ matrix.image }}
+      PUBLISH: ${{ github.event_name != 'pull_request' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Build
+        run: |
+          set -euo pipefail
+          repo="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/dwellwise-$IMAGE"
+          echo "REPO=$repo" >> "$GITHUB_ENV"
+          docker build \
+            --label "org.opencontainers.image.source=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY" \
+            --label "org.opencontainers.image.revision=$GITHUB_SHA" \
+            -t "$repo:$GITHUB_SHA" "$IMAGE"
+
+      - name: Scan for the Security tab (all severities)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: image
+          image-ref: ${{ env.REPO }}:${{ github.sha }}
+          trivyignores: .trivyignore.yaml
+          format: sarif
+          output: trivy-image.sarif
+          exit-code: "0"
+
+      - uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        if: always()
+        with:
+          sarif_file: trivy-image.sarif
+          category: trivy-image-${{ matrix.image }}
+
+      - name: Fail on HIGH or CRITICAL with a fix available
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: image
+          image-ref: ${{ env.REPO }}:${{ github.sha }}
+          trivyignores: .trivyignore.yaml
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          skip-setup-trivy: true
+
+      - name: SBOM (SPDX)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: image
+          image-ref: ${{ env.REPO }}:${{ github.sha }}
+          format: spdx-json
+          output: sbom.spdx.json
+          exit-code: "0"
+          skip-setup-trivy: true
+
+      - name: Push to GHCR
+        if: env.PUBLISH == 'true'
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          echo "$TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker tag "$REPO:$GITHUB_SHA" "$REPO:latest"
+          docker push -q "$REPO:$GITHUB_SHA"
+          docker push -q "$REPO:latest"
+          # Sign the digest, never a tag: a tag can be moved, a digest cannot.
+          echo "DIGEST_REF=$(docker inspect --format '{{index .RepoDigests 0}}' "$REPO:$GITHUB_SHA")" >> "$GITHUB_ENV"
+
+      - uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
+        if: env.PUBLISH == 'true'
+
+      - name: Sign and attest the SBOM
+        if: env.PUBLISH == 'true'
+        run: |
+          set -euo pipefail
+          cosign sign --yes "$DIGEST_REF"
+          cosign attest --yes --type spdxjson --predicate sbom.spdx.json "$DIGEST_REF"
+          {
+            echo "### $IMAGE image"
+            echo "Signed and SBOM attested: \`$DIGEST_REF\`"
+          } >> "$GITHUB_STEP_SUMMARY"
