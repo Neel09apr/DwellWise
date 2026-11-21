@@ -115,3 +115,32 @@ def test_planning_refuses_to_load_without_settlements(conn, tmp_path):
     apps = {"type": "FeatureCollection", "features": [application("A1", -8.55, 51.95)]}
     with pytest.raises(LoadError, match="load settlements before planning"):
         run_source(PLANNING, LocalStore(tmp_path), conn, fetch=lambda *a: apps)
+
+
+def site(code: str, name: str, west: float) -> dict:
+    return {
+        "type": "Feature",
+        "properties": {"SITECODE": code, "SITE_NAME": name, "URL": f"https://www.npws.ie/x/{code}"},
+        "geometry": {
+            "type": "Polygon",
+            "coordinates": [[[west, 52.0], [west + 0.01, 52.0], [west + 0.01, 52.01], [west, 52.0]]],
+        },
+    }
+
+
+def test_protected_sites_merge_split_sites_and_replace_only_their_designation(conn, tmp_path):
+    store = LocalStore(tmp_path)
+    sac = replace(SOURCES["sac"], min_rows=1)
+    nha = replace(SOURCES["nha"], min_rows=1)
+    split = [site("000001", "Bog SAC", -8.5), site("000001", "Bog SAC", -8.4)]  # one site, two features
+    result = run_source(sac, store, conn, fetch=lambda *a: {"features": split})
+    run_source(nha, store, conn, fetch=lambda *a: {"features": [site("000001", "Bog NHA", -8.5)]})
+    # A new SAC edition replaces the SACs and leaves the NHA alone.
+    run_source(sac, store, conn, fetch=lambda *a: {"features": [site("000002", "Fen SAC", -8.3)]})
+
+    got = conn.execute(
+        "select designation, site_code, name, ST_NumGeometries(boundary), ST_SRID(boundary) "
+        "from dw.protected_site order by designation, site_code"
+    ).fetchall()
+    assert got == [("NHA", "000001", "Bog NHA", 1, 2157), ("SAC", "000002", "Fen SAC", 1, 2157)]
+    assert result.detail == {"features_merged": 1}

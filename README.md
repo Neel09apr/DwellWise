@@ -9,8 +9,8 @@
 
 A web app that turns public data into a pre-planning brief for small housing
 schemes in Ireland, built and operated like a production service: infrastructure
-as code, keyless and scanned delivery, a tested data pipeline, and (coming next)
-monitoring with service-level objectives.
+as code, keyless and scanned delivery, a tested data pipeline, and
+monitoring with alerts and runbooks.
 
 Everything runs on free tiers, with no cloud account that can bill.
 
@@ -26,13 +26,11 @@ flowchart LR
     nightly["Nightly schedule<br/>pipeline container"]
   end
 
-  sources["Public sources<br/>Tailte Éireann boundaries, …"] --> nightly
+  sources["Public sources<br/>boundaries · planning applications · NPWS protected sites"] --> nightly
   nightly -->|"validated, atomic load"| db
   nightly --> raw["Supabase Storage<br/>raw snapshots (S3 API)"]
   app --> obs["Grafana Cloud<br/>metrics and alerts"]
 ```
-
-Grafana Cloud metrics and alerts come with the monitoring milestone; see the roadmap.
 
 ## What is in place
 
@@ -89,11 +87,12 @@ SECURITY.md               reporting and security controls
 - [x] Plan on pull request, apply on approval, weekly drift detection
 - [x] Pipeline core with counties and settlements, tested against PostGIS
 - [x] API and web app (first slice): settlement search and pages, one container, Render blueprint
-- [ ] Deploy to Render
+- [x] Deploy to Render: https://dwellwise.onrender.com
 - [x] Planning applications since 2020 and the national planning dashboard
 - [x] Nightly pipeline on GitHub Actions, gzipped raw copies in Supabase Storage, 7-day retention
 - [x] Settlement brief, first section: planning precedents
-- [ ] Capacity registers and protected sites; the remaining brief sections
+- [x] Protected sites (SAC, SPA, NHA) within 5 km: brief section 03
+- [ ] Capacity registers; the remaining brief sections
 - [ ] AWS modules applied to the Floci emulator in CI; Terraform for Render, Supabase and GitHub
 - [x] Uptime probe every 10 minutes; incidents opened and closed as GitHub issues; runbooks
 - [x] Grafana Cloud dashboard and alerts as Terraform, state in Postgres, applied by CI

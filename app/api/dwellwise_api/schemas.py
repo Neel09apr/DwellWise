@@ -102,7 +102,28 @@ class Precedents(BaseModel):
     attribution: str
 
 
+class ProtectedSite(BaseModel):
+    """A SAC, SPA or NHA near the settlement, measured boundary to boundary."""
+
+    designation: str  # SAC | SPA | NHA
+    site_code: str
+    name: str
+    url: str | None  # the site's NPWS page
+    distance_m: int  # shortest distance between the site and the settlement boundary; 0 when they touch
+    band: str  # "touches" | "1km" | "5km"
+
+
+class ProtectedSites(BaseModel):
+    """Protected sites within radius_m of the settlement boundary, nearest first."""
+
+    radius_m: int
+    sites: list[ProtectedSite]
+    captured_at: datetime | None
+    attribution: str
+
+
 class Brief(BaseModel):
     code: str
     precedents: Precedents
+    protected: ProtectedSites
     pending: list[str]  # sections whose data source has not landed yet

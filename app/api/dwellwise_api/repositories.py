@@ -113,8 +113,8 @@ def application_stats_data(conn, county: str | None, residential: bool | None, s
     return {"counties": data["counties"], "rows": rows, "captured_at": data["captured_at"]}
 
 
-def settlement_precedents(conn, code: str, since, limit: int) -> dict:
-    """The planning precedents section for one settlement, in one round trip."""
+def settlement_brief(conn, code: str, since, limit: int, radius_m: int) -> dict:
+    """Every live section of one settlement's brief, in one round trip."""
     with conn.cursor(row_factory=dict_row) as cur:
         cur.execute(
             """
@@ -137,8 +137,19 @@ def settlement_precedents(conn, code: str, since, limit: int) -> dict:
                     order by received desc, application_number
                     limit %(limit)s) r) as recent,
                 (select max(fetched_at) from dw.snapshot where source = 'planning' and status = 'loaded')
-                    as captured_at
+                    as captured_at,
+                (select coalesce(json_agg(p order by p.distance_m, p.designation, p.site_code), '[]') from (
+                    select ps.designation, ps.site_code, ps.name, ps.url,
+                           round(ST_Distance(ps.boundary, s.boundary))::int as distance_m
+                    from dw.settlement s
+                    join dw.protected_site ps on ST_DWithin(ps.boundary, s.boundary, %(radius)s)
+                    where s.code = %(code)s) p) as protected,
+                -- the oldest of the three designations' latest loads: the section is as old as that
+                (select min(latest) from (
+                    select max(fetched_at) as latest from dw.snapshot
+                    where source in ('sac', 'spa', 'nha') and status = 'loaded' group by source) l)
+                    as protected_captured_at
             """,
-            {"code": code, "since": since, "limit": limit},
+            {"code": code, "since": since, "limit": limit, "radius": radius_m},
         )
         return cur.fetchone()

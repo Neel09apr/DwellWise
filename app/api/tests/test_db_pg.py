@@ -33,6 +33,15 @@ APPLICATIONS = [  # number, county, received, class, residential, settlement
 ]
 
 
+# Around Athy (-7.0, 53.0, -6.98, 53.01); at this latitude 0.01 degrees of longitude is about 670 m.
+PROTECTED = [  # designation, code, box
+    ("SAC", "000001", (-6.99, 53.0, -6.97, 53.01)),  # overlaps the town
+    ("SPA", "004001", (-6.9725, 53.0, -6.96, 53.01)),  # about 500 m east
+    ("NHA", "000001", (-6.935, 53.0, -6.92, 53.01)),  # about 3 km east; same code as the SAC
+    ("SAC", "000002", (-6.86, 53.0, -6.85, 53.01)),  # about 8 km east: outside 5 km
+]
+
+
 def seed_planning(conn) -> None:
     snap = str(uuid.uuid4())
     conn.execute(
@@ -78,6 +87,11 @@ def client():
                 (code, name, key, county, *box, snap),
             )
         seed_planning(conn)
+        for designation, code, box in PROTECTED:
+            conn.execute(
+                f"insert into dw.protected_site values (%s, %s, %s, null, {SQUARE}, %s)",  # noqa: S608
+                (designation, code, f"Site {code}", *box, snap),
+            )
     with TestClient(create_app(Settings(database_url=URL))) as c:
         yield c
 
@@ -190,7 +204,7 @@ def test_the_brief_counts_recent_residential_applications_in_the_town(client):
     assert (p["residential"]["granted"], p["residential"]["pending"], p["residential"]["total"]) == (1, 1, 2)
     assert p["all_applications"] == 3  # K4 is older than five years
     assert [a["application_number"] for a in p["recent"]] == ["K1", "K3"]  # newest first, residential only
-    assert body["pending"] == ["wastewater", "protected", "alternatives"]
+    assert body["pending"] == ["wastewater", "alternatives"]
 
 
 def test_a_town_without_applications_has_an_empty_section_not_an_error(client):
@@ -200,3 +214,17 @@ def test_a_town_without_applications_has_an_empty_section_not_an_error(client):
 
 def test_the_brief_for_an_unknown_settlement_is_a_404(client):
     assert client.get("/v1/settlements/999/brief").status_code == 404
+
+
+def test_the_brief_lists_protected_sites_within_5_km_nearest_first(client):
+    sites = client.get("/v1/settlements/1/brief").json()["protected"]["sites"]
+    assert [(x["designation"], x["site_code"], x["band"]) for x in sites] == [
+        ("SAC", "000001", "touches"),
+        ("SPA", "004001", "1km"),
+        ("NHA", "000001", "5km"),
+    ]
+    assert sites[0]["distance_m"] == 0 and 400 < sites[1]["distance_m"] < 600
+
+
+def test_a_town_far_from_protected_sites_has_an_empty_list(client):
+    assert client.get("/v1/settlements/3/brief").json()["protected"]["sites"] == []

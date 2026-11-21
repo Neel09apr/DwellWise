@@ -1,7 +1,5 @@
-import { api, type Brief } from "../api/client";
-import { useResource } from "../useResource";
+import type { Brief } from "../api/client";
 import { decidedShare, decisionLabel } from "./planningText";
-import { Failure, Loading } from "./Status";
 
 const FIGURES = [
   { key: "granted", label: "Granted" },
@@ -15,15 +13,7 @@ const fmt = new Intl.NumberFormat("en-IE");
 const day = (iso: string) => new Date(iso).toLocaleDateString("en-IE", { dateStyle: "medium" });
 
 /** Brief section 02: recent residential planning applications in the town (F4). */
-export function PlanningPrecedents({ code }: { code: string }) {
-  const brief = useResource((signal) => api.brief(code, signal), code);
-
-  if (brief.kind === "loading") return <Loading what="planning applications" />;
-  if (brief.kind === "error") return <Failure message={brief.message} />;
-  return <Precedents precedents={brief.data.precedents} />;
-}
-
-function Precedents({ precedents: p }: { precedents: Brief["precedents"] }) {
+export function PlanningPrecedents({ precedents: p }: { precedents: Brief["precedents"] }) {
   const share = decidedShare(p.residential.granted, p.residential.refused);
   const since = day(p.since);
 
@@ -54,8 +44,12 @@ function Precedents({ precedents: p }: { precedents: Brief["precedents"] }) {
             <thead>
               <tr>
                 <th scope="col">Received</th>
-                <th scope="col" className="wording">Reference</th>
-                <th scope="col" className="wording">Decision</th>
+                <th scope="col" className="wording">
+                  Reference
+                </th>
+                <th scope="col" className="wording">
+                  Decision
+                </th>
                 <th scope="col">Dwellings</th>
               </tr>
             </thead>

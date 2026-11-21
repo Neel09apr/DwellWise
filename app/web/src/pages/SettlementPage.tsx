@@ -1,11 +1,12 @@
 import { useParams } from "react-router-dom";
 
-import { api } from "../api/client";
+import { api, type Brief } from "../api/client";
 import { Breadcrumbs } from "../components/Breadcrumbs";
 import { PlanningPrecedents } from "../components/PlanningPrecedents";
+import { ProtectedSites } from "../components/ProtectedSites";
 import { Failure, Loading } from "../components/Status";
 import { countySlug, titleCase } from "../text";
-import { useResource } from "../useResource";
+import { type Resource, useResource } from "../useResource";
 
 /** The brief's sections in order (docs/DESIGN.md F3–F6). Each fills in when its data source lands. */
 const SECTIONS = [
@@ -22,7 +23,7 @@ const SECTIONS = [
   {
     id: "protected",
     title: "Protected sites nearby",
-    about: "SAC, SPA and NHA sites within 1 km and 5 km.",
+    about: "SAC, SPA and NHA sites within 1 km and 5 km of the town boundary.",
   },
   {
     id: "alternatives",
@@ -31,11 +32,27 @@ const SECTIONS = [
   },
 ];
 
+type BriefState = Resource<Brief>;
+
+/** A section's content: its data once the brief arrives, or a note that its source has not landed. */
+function SectionBody({ id, title, brief }: { id: string; title: string; brief: BriefState }) {
+  if (id !== "precedents" && id !== "protected")
+    return <p className="pending">Not loaded yet. This section fills in when its public data source is added.</p>;
+  if (brief.kind === "loading") return <Loading what={title.toLowerCase()} />;
+  if (brief.kind === "error") return <Failure message={brief.message} />;
+  return id === "precedents" ? (
+    <PlanningPrecedents precedents={brief.data.precedents} />
+  ) : (
+    <ProtectedSites protected={brief.data.protected} />
+  );
+}
+
 const number = (i: number) => String(i + 1).padStart(2, "0");
 
 export function SettlementPage() {
   const { code = "" } = useParams();
   const settlement = useResource((signal) => api.settlement(code, signal), code);
+  const brief = useResource((signal) => api.brief(code, signal), code);
 
   if (settlement.kind === "loading") return <Loading what="the brief" />;
   if (settlement.kind === "error")
@@ -110,11 +127,7 @@ export function SettlementPage() {
             {section.title}
           </h2>
           <p className="muted">{section.about}</p>
-          {section.id === "precedents" ? (
-            <PlanningPrecedents code={s.code} />
-          ) : (
-            <p className="pending">Not loaded yet. This section fills in when its public data source is added.</p>
-          )}
+          <SectionBody id={section.id} title={section.title} brief={brief} />
         </section>
       ))}
 
