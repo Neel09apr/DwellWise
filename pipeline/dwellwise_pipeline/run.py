@@ -57,7 +57,9 @@ def run_source(
     """Run one source. With no connection it stops after validation (a dry run)."""
     fetched_at = now or datetime.now(UTC)
     run_id = str(uuid.uuid4())
-    collection = fetch(source.layer_url, list(source.out_fields), source.order_by, source.where)
+    collection = fetch(
+        source.layer_url, list(source.out_fields), source.order_by, source.where, source.max_offset
+    )
 
     data = json.dumps(collection, separators=(",", ":")).encode("utf-8")
     run = RunResult(

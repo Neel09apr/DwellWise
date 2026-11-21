@@ -190,6 +190,7 @@ export interface components {
             /** Code */
             code: string;
             precedents: components["schemas"]["Precedents"];
+            protected: components["schemas"]["ProtectedSites"];
             /** Pending */
             pending: string[];
         };
@@ -313,6 +314,38 @@ export interface components {
             all_applications: number;
             /** Recent */
             recent: components["schemas"]["PrecedentApplication"][];
+            /** Captured At */
+            captured_at: string | null;
+            /** Attribution */
+            attribution: string;
+        };
+        /**
+         * ProtectedSite
+         * @description A SAC, SPA or NHA near the settlement, measured boundary to boundary.
+         */
+        ProtectedSite: {
+            /** Designation */
+            designation: string;
+            /** Site Code */
+            site_code: string;
+            /** Name */
+            name: string;
+            /** Url */
+            url: string | null;
+            /** Distance M */
+            distance_m: number;
+            /** Band */
+            band: string;
+        };
+        /**
+         * ProtectedSites
+         * @description Protected sites within radius_m of the settlement boundary, nearest first.
+         */
+        ProtectedSites: {
+            /** Radius M */
+            radius_m: number;
+            /** Sites */
+            sites: components["schemas"]["ProtectedSite"][];
             /** Captured At */
             captured_at: string | null;
             /** Attribution */

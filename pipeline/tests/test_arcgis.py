@@ -66,3 +66,11 @@ def test_the_where_filter_is_sent_to_the_service():
         "https://x/0", ["ID"], "ID", "ReceivedDate >= DATE '2020-01-01'", opener=service, sleep=no_sleep
     )
     assert "where=ReceivedDate+%3E%3D+DATE+%272020-01-01%27" in service.urls[0]
+
+
+def test_simplification_is_requested_only_when_asked():
+    service = FakeService([{"features": [feature(1)]}, {"features": [feature(1)]}])
+    fetch_features("https://example.test/0", ["ID"], "ID", "1=1", 0.0001, opener=service, sleep=no_sleep)
+    fetch_features("https://example.test/0", ["ID"], "ID", opener=service, sleep=no_sleep)
+    assert "maxAllowableOffset=0.0001" in service.urls[0]
+    assert "maxAllowableOffset" not in service.urls[1]

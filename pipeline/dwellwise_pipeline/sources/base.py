@@ -17,3 +17,4 @@ class Source:
     transform: Callable[[dict], list[dict]]
     where: str = "1=1"  # ArcGIS filter, e.g. a date window
     check: Callable[[dict], list[str]] | None = None  # extra problems that reject a run
+    max_offset: float | None = None  # ArcGIS maxAllowableOffset (degrees): simplify boundaries server side

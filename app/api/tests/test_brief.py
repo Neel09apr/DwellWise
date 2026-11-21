@@ -2,7 +2,7 @@
 
 from datetime import date
 
-from dwellwise_api.brief import PRECEDENT_YEARS, brief, years_before
+from dwellwise_api.brief import PRECEDENT_YEARS, band, brief, years_before
 
 from .test_stats import CountingConn
 
@@ -34,6 +34,11 @@ ROW = {
         }
     ],
     "captured_at": None,
+    "protected": [
+        {"designation": "SAC", "site_code": "000006", "name": "Bog SAC", "url": None, "distance_m": 0},
+        {"designation": "NHA", "site_code": "000009", "name": "Fen NHA", "url": None, "distance_m": 2400},
+    ],
+    "protected_captured_at": None,
 }
 
 
@@ -46,7 +51,13 @@ def test_the_brief_needs_one_round_trip_and_fills_missing_classes_with_zero():
     assert b.precedents.all_applications == 9
     assert b.precedents.since == date(2021, 11, 21)
     assert b.precedents.recent[0].received == date(2026, 10, 2)
-    assert b.pending == ["wastewater", "protected", "alternatives"]
+    assert b.pending == ["wastewater", "alternatives"]
+    assert [(s.site_code, s.band) for s in b.protected.sites] == [("000006", "touches"), ("000009", "5km")]
+    assert b.protected.radius_m == 5000
+
+
+def test_distance_bands_meet_at_one_kilometre():
+    assert [band(d) for d in (0, 1, 1000, 1001, 5000)] == ["touches", "1km", "1km", "5km", "5km"]
 
 
 def test_an_unknown_settlement_is_none():

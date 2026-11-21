@@ -76,7 +76,7 @@ If it does neither, it is drift.
 ## Layout
 
 ```
-app/api        FastAPI: /health /ready /metrics, /v1 counties, settlements, stats; serves the web app
+app/api        FastAPI: /health /ready /metrics, /v1 counties, settlements, briefs, stats; serves the web app
 app/web        React + TypeScript; minimal, hierarchical: Ireland > county > settlement > brief
 pipeline/      nightly ingestion (GitHub Actions): fetch, gzipped raw copy, validate, atomic load, prune
 terraform/     stacks/observability (Grafana Cloud, applied by CI, state in Postgres); AWS bootstrap, stacks/data, modules (not deployed)
@@ -97,6 +97,7 @@ ops/           uptime probe (stdlib Python), run every 10 minutes by .github/wor
 | 5. National planning dashboard (F9) | Merged (PR #19); live 17 Nov |
 | 3. Data: nightly pipeline on GitHub Actions | Merged (PR #20); running nightly since 17 Nov |
 | 5. Brief: planning precedents section (F4) | Merged (PR #24); live 21 Nov |
+| 3/5. Data and brief: protected sites (SAC, SPA, NHA) and section 03 (F5) | In review |
 | 6. Operate: uptime probe, incidents as issues, runbooks | Merged (PR #21); probing every 10 minutes |
 | 6. Operate: Grafana Cloud dashboards and alerts (Terraform) | Merged (PR #22); applied 21 Nov; all four alerts verified, alert email delivered |
 | 7. Supply chain: SBOM, signed images, Scorecard | Not started |
@@ -106,8 +107,8 @@ ops/           uptime probe (stdlib Python), run every 10 minutes by .github/wor
 ## Next
 
 1. Brief sections fill in as each data source lands (planning precedents first); the UI keeps its hierarchy (see `app/web/src/styles.css`).
-2. Pipeline sources: wastewater capacity registers, protected sites; then the
-   brief endpoint.
+2. Pipeline sources: wastewater capacity registers (licence check first), for
+   brief sections 01 and 04.
 3. CI job that applies the AWS Terraform to the Floci emulator.
 4. Terraform for Render, Supabase and GitHub settings, applied by CI.
 

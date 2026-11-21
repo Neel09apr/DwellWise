@@ -53,6 +53,7 @@ def fetch_features(
     out_fields: list[str],
     order_by: str,
     where: str = "1=1",
+    max_offset: float | None = None,
     *,
     opener: Opener = http_get,
     sleep: Callable[[float], None] = time.sleep,
@@ -61,9 +62,11 @@ def fetch_features(
     """Return every feature of the layer as one GeoJSON FeatureCollection in WGS84."""
     features: list[dict] = []
     offset = 0
+    simplify = {} if max_offset is None else {"maxAllowableOffset": max_offset}
     while True:
         query = urllib.parse.urlencode(
             {
+                **simplify,
                 "where": where,
                 "outFields": ",".join(out_fields),
                 "returnGeometry": "true",

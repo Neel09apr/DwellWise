@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from . import repositories as repo
+from .brief import PROTECTED_ATTRIBUTION
 from .names import name_key
 from .schemas import County, SettlementDetail, SettlementSummary, SourceInfo
 from .stats import ATTRIBUTION as PLANNING_ATTRIBUTION
@@ -11,6 +12,9 @@ ATTRIBUTION = {
     "counties": "County boundaries © Tailte Éireann. CC BY 4.0.",
     "settlements": "Settlement boundaries © Tailte Éireann. CC BY 4.0.",
     "planning": PLANNING_ATTRIBUTION,
+    "sac": PROTECTED_ATTRIBUTION,
+    "spa": PROTECTED_ATTRIBUTION,
+    "nha": PROTECTED_ATTRIBUTION,
 }
 MIN_KEY_LENGTH = 2  # shorter queries match half the country
 

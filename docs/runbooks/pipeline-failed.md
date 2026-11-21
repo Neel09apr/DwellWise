@@ -23,6 +23,7 @@ its status (`loaded`, `rejected`, `failed`) and detail.
 
 Actions → nightly pipeline → Run workflow, with `sources` set to, for example,
 `planning`. Counties load before settlements, and settlements before planning.
+The protected sites (`sac`, `spa`, `nha`) depend on nothing and can run alone.
 
 ## Replay a raw copy locally
 

@@ -549,6 +549,9 @@
           "precedents": {
             "$ref": "#/components/schemas/Precedents"
           },
+          "protected": {
+            "$ref": "#/components/schemas/ProtectedSites"
+          },
           "pending": {
             "items": {
               "type": "string"
@@ -561,6 +564,7 @@
         "required": [
           "code",
           "precedents",
+          "protected",
           "pending"
         ],
         "title": "Brief"
@@ -885,6 +889,92 @@
         ],
         "title": "Precedents",
         "description": "Residential applications (stating new dwellings) inside the settlement boundary."
+      },
+      "ProtectedSite": {
+        "properties": {
+          "designation": {
+            "type": "string",
+            "title": "Designation"
+          },
+          "site_code": {
+            "type": "string",
+            "title": "Site Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "distance_m": {
+            "type": "integer",
+            "title": "Distance M"
+          },
+          "band": {
+            "type": "string",
+            "title": "Band"
+          }
+        },
+        "type": "object",
+        "required": [
+          "designation",
+          "site_code",
+          "name",
+          "url",
+          "distance_m",
+          "band"
+        ],
+        "title": "ProtectedSite",
+        "description": "A SAC, SPA or NHA near the settlement, measured boundary to boundary."
+      },
+      "ProtectedSites": {
+        "properties": {
+          "radius_m": {
+            "type": "integer",
+            "title": "Radius M"
+          },
+          "sites": {
+            "items": {
+              "$ref": "#/components/schemas/ProtectedSite"
+            },
+            "type": "array",
+            "title": "Sites"
+          },
+          "captured_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Captured At"
+          },
+          "attribution": {
+            "type": "string",
+            "title": "Attribution"
+          }
+        },
+        "type": "object",
+        "required": [
+          "radius_m",
+          "sites",
+          "captured_at",
+          "attribution"
+        ],
+        "title": "ProtectedSites",
+        "description": "Protected sites within radius_m of the settlement boundary, nearest first."
       },
       "Ready": {
         "properties": {

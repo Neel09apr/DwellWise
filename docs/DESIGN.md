@@ -137,10 +137,12 @@ erDiagram
     uuid snapshot_id FK
   }
   protected_site {
-    text site_code PK
-    text designation "SAC | SPA | NHA"
+    text designation PK "SAC | SPA | NHA"
+    text site_code PK "an NHA can share its code with a SAC"
     text name
-    geometry boundary "EPSG:2157"
+    text url "the site's NPWS page"
+    geometry boundary "EPSG:2157, simplified to about 10 m"
+    uuid snapshot_id FK
   }
   snapshot {
     uuid id PK
@@ -182,6 +184,14 @@ Rules carried over from the problem domain:
 - **Planning activity is not construction.** A grant is not a start on site.
   Construction starts need commencement notices, which are a separate source
   with their own licence check (open question below).
+- **Protected sites are near the town, not the site.** The brief lists SACs,
+  SPAs and NHAs whose boundary lies within 5 km of the settlement boundary, with
+  the shortest distance between the two boundaries, banded "touches or overlaps
+  the town", "within 1 km" and "within 5 km". It describes the town's
+  surroundings; it is not an Appropriate Assessment screening and says so.
+  Proposed NHAs are not in v1. Boundaries are fetched simplified to about 10 m,
+  which cuts the SPA download from 47 MB to 4 MB and is far finer than the bands.
+  A site published as several features is merged into one.
 - **Coordinates** are stored in Irish Transverse Mercator (EPSG:2157) and
   reprojected only for display.
 
@@ -216,7 +226,7 @@ file, which makes backfills and bug fixes cheap. What to do when it fails:
 | Uisce Éireann wastewater capacity registers | Plant status per settlement | No licence stated; quoted with attribution and edition date |
 | National Planning Applications (Department of Housing, ArcGIS REST) | Applications and decisions | CC BY 4.0 |
 | Tailte Éireann settlement boundaries | Settlement polygons | CC BY 4.0, attribution "© Tailte Éireann" |
-| NPWS protected sites | SAC, SPA and NHA boundaries | CC BY 4.0 |
+| NPWS designated areas (ArcGIS REST, the service named on npws.ie) | SAC, SPA and NHA boundaries, one source each | CC BY 4.0 |
 
 ## 7. API
 
@@ -229,7 +239,7 @@ Versioned under `/v1`, JSON only, one error shape `{"error": {"code", "message"}
 | `GET /metrics` | Prometheus metrics: request counts and latency by route, data age |
 | `GET /v1/settlements?q=` | Search settlements |
 | `GET /v1/stats/applications?county=&residential=&from=&to=` | Planning activity: counts by decision class, per county and per month, with the snapshot's capture date. No county means all of Ireland |
-| `GET /v1/settlements/{id}/brief?units=&type=` | Assemble the brief: capacity, applications, protected sites, alternatives, each with source and capture date. First slice live: planning precedents (residential applications in the boundary over five years: counts by decision class, the ten most recent, all applications for context); the other sections are listed as `pending`. `units` and `type` arrive with the capacity section |
+| `GET /v1/settlements/{id}/brief?units=&type=` | Assemble the brief: capacity, applications, protected sites, alternatives, each with source and capture date. First slice live: planning precedents (residential applications in the boundary over five years: counts by decision class, the ten most recent, all applications for context); protected sites (SACs, SPAs and NHAs within 5 km of the boundary, nearest first); the other sections are listed as `pending`. `units` and `type` arrive with the capacity section |
 | `POST /v1/settlements/{id}/brief/summary` | Optional AI summary over the brief's facts; rate-limited and cached |
 
 Inside the API: routers (HTTP only) → services (brief assembly, rules above)

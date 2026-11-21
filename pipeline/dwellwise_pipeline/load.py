@@ -110,8 +110,33 @@ def load_planning(cur, rows: list[dict], snapshot_id: str) -> dict:
     return {"duplicates_dropped": len(rows) - cur.rowcount, "decisions_unrecognised": unrecognised}
 
 
+def load_protected(cur, rows: list[dict], snapshot_id: str) -> dict:
+    """Replace one designation's sites. A site published as several features becomes one row."""
+    designations = {r["designation"] for r in rows}
+    if len(designations) != 1:
+        raise LoadError(f"one designation per run, got {sorted(designations)}")
+    cur.execute(
+        "create temp table stage_protected (designation text, site_code text, name text, url text, "
+        "boundary geometry(MultiPolygon, 2157)) on commit drop"
+    )
+    cur.executemany(
+        f"insert into stage_protected values (%s, %s, %s, %s, {GEOM})",  # noqa: S608 - constant GEOM
+        [(r["designation"], r["site_code"], r["name"], r["url"], r["geometry"]) for r in rows],
+    )
+    cur.execute("delete from dw.protected_site where designation = %s", (designations.pop(),))
+    cur.execute(
+        "insert into dw.protected_site (designation, site_code, name, url, boundary, snapshot_id) "
+        "select designation, site_code, min(name), min(url), "
+        "ST_Multi(ST_CollectionExtract(ST_Union(boundary), 3)), %s "
+        "from stage_protected group by designation, site_code",
+        (snapshot_id,),
+    )
+    return {"features_merged": len(rows) - cur.rowcount}
+
+
 LOADERS: dict[str, Callable[..., dict]] = {
     "county": load_counties,
     "settlement": load_settlements,
     "planning_application": load_planning,
+    "protected_site": load_protected,
 }
