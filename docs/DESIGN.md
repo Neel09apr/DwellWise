@@ -336,7 +336,7 @@ the Grafana alerts.
   repository's description and features, Dependabot alerts and security
   updates, secret scanning with push protection, the `main` ruleset and the
   environments. The ruleset: changes reach `main` only by pull request, with
-  the CI jobs that always run as required checks (path-filtered workflows are
+  the seven CI jobs that always run (lint and tests, scans, the Floci and kind jobs) as required checks (path-filtered workflows are
   not required: a check that never runs would block the merge), no force
   pushes, no deletion, nobody can bypass. No approving review is required,
   because GitHub does not let an author approve their own pull request.

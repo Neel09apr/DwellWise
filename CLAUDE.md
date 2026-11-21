@@ -107,10 +107,10 @@ deploy/        Helm chart for the app, installed on a throwaway kind cluster in 
 | 7. Supply chain: SBOM, signed images, Scorecard | Merged (PR #32); images signed, nightly verifies before running (21 Nov) |
 | 2. Delivery: GitHub settings as Terraform (ruleset on main, Dependabot alerts) | Merged (PR #33); applied 21 Nov |
 | 5. Brief: wastewater section 01 as a link to the county register (F3) | Merged (PR #34); live 21 Nov |
-| 1. Foundation: AWS Terraform applied to the Floci emulator in CI | Merged (PR #35); green on main |
+| 1. Foundation: AWS Terraform applied to the Floci emulator in CI | Merged (PR #35); a required check |
 | 2. Delivery: Supabase settings as Terraform (SSL enforcement); legacy public tables dropped | Merged (PRs #36, #37); SSL enforced, all Terraform state over TLS (21 Nov) |
-| 8. Kubernetes: Helm chart on a throwaway kind cluster, Pod Security restricted | Merged (PR #38); green on main |
-| 6. Operate: SLOs on Grafana Synthetic Monitoring, error budget and burn alerts, incident write-ups | In review |
+| 8. Kubernetes: Helm chart on a throwaway kind cluster, Pod Security restricted | Merged (PR #38); a required check |
+| 6. Operate: SLOs on Grafana Synthetic Monitoring, error budget and burn alerts, incident write-ups | Merged (PR #39); checks live, alerts verified 21 Nov |
 
 
 ## Next
@@ -118,7 +118,8 @@ deploy/        Helm chart for the app, installed on a throwaway kind cluster in 
 1. Brief sections fill in as each data source lands (planning precedents first); the UI keeps its hierarchy (see `app/web/src/styles.css`).
 2. Wastewater capacity: the registers may not be republished (DESIGN.md §6), so
    section 01 links to them and section 04 waits. Revisit only if the licence changes.
-3. Error tracking (Sentry, free tier); make the Floci and kind jobs required checks.
+3. Error tracking (Sentry, free tier).
+4. Rotate the Supabase database password (exposed in a local session log on 17 Nov), then write it up in docs/incidents/.
 4. Render stays on its Blueprint until the provider can update free services (DESIGN.md §11).
 
 ## Verify a change
