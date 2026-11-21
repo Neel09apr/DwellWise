@@ -30,6 +30,11 @@ updates:
     groups:
       web:
         patterns: ["*"]
+    ignore:
+      # openapi-typescript (generates the API types) supports TypeScript 5 only;
+      # TypeScript 7 broke the whole group in Nov 2026. Lift once it supports 7.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: docker
     directory: /app
