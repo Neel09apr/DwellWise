@@ -261,19 +261,29 @@ is generated from it, so the two cannot drift.
 
 | SLI | SLO | Measured by |
 |---|---|---|
-| Availability | 99.0% of probes succeed, monthly | External uptime probe every 10 minutes (`ops/probe.py`, scheduled GitHub Actions) |
+| Availability | 99.0% of `/health` checks pass, rolling 14 days | Grafana Synthetic Monitoring, every 2 minutes from two locations (Terraform) |
 | Latency | p95 under 800 ms for `/v1/…/brief` and `/v1/stats/…`, warm | API metrics |
-| Freshness | Data age under 48 h | `/ready` and pipeline metrics |
+| Freshness | 99.0% of `/ready` checks pass, rolling 14 days (every source under 48 h) | The same probes every 10 minutes; `dwellwise_data_age_hours` |
 | Pipeline success | 95% of nightly runs succeed per 30 days | Snapshot log |
 
-**Free-tier trade-off, stated up front.** Render's free service sleeps after
-15 minutes idle and takes tens of seconds to wake. The probe runs every 10
-minutes, which keeps it awake (one service uses about 730 of the 750 free
-hours a month), and each check retries three times, 20 seconds apart, so a cold
-start is not counted as an outage. The SLO is 99.0%, not 99.9%. The error
-budget and any breach are written up honestly rather than hidden.
+The objectives, the error budget, the burn-rate alerts and the policy when the
+budget runs out are in [`docs/slo.md`](slo.md); write-ups in
+[`docs/incidents/`](incidents/).
 
-**Incidents are GitHub issues.** When a check fails all its attempts, the probe
+**Free-tier trade-off, stated up front.** Render's free service sleeps after
+15 minutes idle and takes tens of seconds to wake. The synthetic `/health` check
+every 2 minutes keeps it awake (one service uses about 730 of the 750 free hours
+a month). The SLO is 99.0%, not 99.9%, over 14 days because Grafana Cloud's free
+tier keeps 14 days of metrics. The error budget and any breach are written up
+honestly rather than hidden.
+
+**Why not GitHub's cron.** Availability was first measured by `ops/probe.py` on
+a scheduled workflow every 10 minutes. GitHub fired none of its scheduled runs
+in the first five hours (write-up in `docs/incidents/`), so the SLI moved to
+Grafana's probes, which run on a fixed schedule and alert if they stop
+("Synthetic checks missing"). The GitHub probe stays as a backup.
+
+**Incidents are GitHub issues.** When a check fails all its attempts, the GitHub probe (when it runs)
 opens an issue labelled `incident` (one per check: API down, data stale,
 dashboard API failing) linking its runbook, and closes it with the outage length
 when the check passes again. The issue list is the public incident log. Latency
@@ -281,7 +291,8 @@ over a check's budget is reported as "slow" in the run summary, never as down.
 **Grafana Cloud, as code.** Its hosted scraper reads `/metrics` every minute
 (bearer token). `terraform/stacks/observability` defines the scrape job, a
 service dashboard (requests, p95 latency against the SLO, server errors, data
-age) and four alerts emailed to the owner: slow responses (p95 of `/v1` over
+age, and the SLO panels) and alerts emailed to the owner, among them the two
+error-budget burn alerts and the probe heartbeat described in `docs/slo.md`: slow responses (p95 of `/v1` over
 0.8 s for 10 minutes), server errors (over 5% for 10 minutes, `/ready` excluded
 because its 503 means stale data), data stale (over 48 hours) and metrics
 missing (nothing for 20 minutes). Each alert links its runbook.

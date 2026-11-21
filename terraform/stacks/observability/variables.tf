@@ -48,3 +48,20 @@ variable "service_url" {
   type        = string
   default     = "https://dwellwise.onrender.com"
 }
+
+variable "sm_access_token" {
+  description = "Synthetic Monitoring access token (Grafana > Testing & synthetics > Synthetics > Config)."
+  type        = string
+  sensitive   = true
+}
+
+variable "sm_url" {
+  description = "Synthetic Monitoring API URL for the stack's region (same Config page)."
+  type        = string
+}
+
+variable "probe_locations" {
+  description = "Public probe locations that check the service. Two, so one probe's own network trouble is not an outage."
+  type        = list(string)
+  default     = ["Frankfurt", "London"]
+}

@@ -43,7 +43,7 @@ flowchart LR
 | Container | Multi-stage image, non-root user, health check; CI builds and smoke-tests it | What runs on Render is what CI tested |
 | Scanning | Trivy (IaC and Dockerfiles, HIGH/CRITICAL fail), gitleaks over full history, findings in the Security tab | Problems are caught before merge |
 | Delivery | Terraform plan on pull request, apply after a required approval, weekly drift check; the repository's own settings and `main` ruleset are Terraform too, applied with a one-hour GitHub App token | Every infrastructure change is reviewed as a plan; nothing reaches main without passing CI |
-| Monitoring | Uptime probe every 10 minutes opening and closing incident issues; Grafana Cloud scrape, dashboard and four SLO-based alerts, all Terraform; runbooks | Outages are noticed, recorded and handled the same way every time |
+| Monitoring | Grafana Synthetic Monitoring probes `/health` and `/ready` from two locations; SLOs over 14 days with an error budget, multiwindow burn-rate alerts and a probe heartbeat; scrape, dashboard and alerts all Terraform; runbooks; blameless incident write-ups | Outages are measured against a stated objective and handled the same way every time |
 | Kubernetes | Helm chart: non-root, read-only root filesystem, no capabilities, seccomp, limits, NetworkPolicy, no service-account token; every pull request installs it on a throwaway kind cluster that enforces Pod Security `restricted` and runs `helm test` | The same image is ready for a cluster, checked against the strictest built-in pod policy |
 | Supply chain | Both images scanned by Trivy, pushed to GHCR, signed keyless with cosign and given an attested SPDX SBOM; the nightly pipeline runs only a digest whose signature it has verified; OpenSSF Scorecard weekly; Actions pinned to commit SHAs; provider checksums locked; Dependabot | A tampered or unscanned image never receives database credentials |
 
@@ -111,10 +111,10 @@ SECURITY.md               reporting and security controls
 - [x] AWS modules applied to the Floci emulator in CI on every pull request
 - [x] Supabase security settings as Terraform (SSL enforcement); Terraform state connections require TLS
 - [ ] Render as Terraform: blocked upstream (the provider cannot update free services); the Blueprint stays
-- [x] Uptime probe every 10 minutes; incidents opened and closed as GitHub issues; runbooks
+- [x] Uptime probe with incidents opened and closed as GitHub issues (now a backup: GitHub's cron proved unreliable); runbooks
 - [x] Grafana Cloud dashboard and alerts as Terraform, state in Postgres, applied by CI
 - [ ] Error tracking (Sentry)
-- [ ] SRE practice: SLO reporting and error budget, incident write-ups
+- [x] SRE practice: SLOs on synthetic checks, error budget and burn-rate alerts ([docs/slo.md](docs/slo.md)), incident write-ups ([docs/incidents/](docs/incidents/))
 - [x] Supply chain: SBOM, signed container images, OpenSSF Scorecard
 - [x] Kubernetes: Helm chart installed on a throwaway kind cluster in CI under Pod Security `restricted`, with `helm test`
 

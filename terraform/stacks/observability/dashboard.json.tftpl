@@ -1,24 +1,54 @@
 {
   "title": "DwellWise service",
   "uid": "dwellwise-service",
-  "tags": ["dwellwise"],
+  "tags": [
+    "dwellwise"
+  ],
   "timezone": "utc",
   "refresh": "5m",
-  "time": { "from": "now-24h", "to": "now" },
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
   "schemaVersion": 39,
   "panels": [
     {
       "id": 1,
       "type": "stat",
       "title": "Oldest data source (hours)",
-      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 5 },
-      "datasource": { "type": "prometheus", "uid": "${prometheus_uid}" },
-      "targets": [{ "refId": "A", "expr": "max(dwellwise_data_age_hours)" }],
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 6,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_uid}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max(dwellwise_data_age_hours)"
+        }
+      ],
       "fieldConfig": {
         "defaults": {
           "unit": "h",
           "decimals": 1,
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "text", "value": null }, { "color": "red", "value": 48 }] }
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 48
+              }
+            ]
+          }
         }
       }
     },
@@ -26,14 +56,39 @@
       "id": 2,
       "type": "stat",
       "title": "p95 latency, /v1 (last hour)",
-      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 5 },
-      "datasource": { "type": "prometheus", "uid": "${prometheus_uid}" },
-      "targets": [{ "refId": "A", "expr": "histogram_quantile(0.95, sum by (le) (rate(dwellwise_http_request_duration_seconds_bucket{route=~\"/v1/.*\"}[1h])))" }],
+      "gridPos": {
+        "x": 6,
+        "y": 0,
+        "w": 6,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_uid}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(dwellwise_http_request_duration_seconds_bucket{route=~\"/v1/.*\"}[1h])))"
+        }
+      ],
       "fieldConfig": {
         "defaults": {
           "unit": "s",
           "decimals": 2,
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "text", "value": null }, { "color": "red", "value": 0.8 }] }
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0.8
+              }
+            ]
+          }
         }
       }
     },
@@ -41,41 +96,129 @@
       "id": 3,
       "type": "stat",
       "title": "Server errors (last hour)",
-      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 5 },
-      "datasource": { "type": "prometheus", "uid": "${prometheus_uid}" },
-      "targets": [{ "refId": "A", "expr": "sum(increase(dwellwise_http_requests_total{status=~\"5..\",route!=\"/ready\"}[1h]))" }],
-      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } }
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 6,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_uid}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(dwellwise_http_requests_total{status=~\"5..\",route!=\"/ready\"}[1h]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0
+        }
+      }
     },
     {
       "id": 4,
       "type": "stat",
       "title": "Requests (last hour)",
-      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 5 },
-      "datasource": { "type": "prometheus", "uid": "${prometheus_uid}" },
-      "targets": [{ "refId": "A", "expr": "sum(increase(dwellwise_http_requests_total[1h]))" }],
-      "fieldConfig": { "defaults": { "unit": "short", "decimals": 0 } }
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 6,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_uid}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(increase(dwellwise_http_requests_total[1h]))"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0
+        }
+      }
     },
     {
       "id": 5,
       "type": "timeseries",
       "title": "Requests per minute, by route",
-      "gridPos": { "x": 0, "y": 5, "w": 12, "h": 8 },
-      "datasource": { "type": "prometheus", "uid": "${prometheus_uid}" },
-      "targets": [{ "refId": "A", "expr": "sum by (route) (rate(dwellwise_http_requests_total[5m])) * 60", "legendFormat": "{{route}}" }],
-      "fieldConfig": { "defaults": { "unit": "short", "custom": { "lineWidth": 2 } } }
+      "gridPos": {
+        "x": 0,
+        "y": 5,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_uid}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (route) (rate(dwellwise_http_requests_total[5m])) * 60",
+          "legendFormat": "{{route}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "lineWidth": 2
+          }
+        }
+      }
     },
     {
       "id": 6,
       "type": "timeseries",
       "title": "p95 latency, /v1 routes (SLO 0.8 s)",
-      "gridPos": { "x": 12, "y": 5, "w": 12, "h": 8 },
-      "datasource": { "type": "prometheus", "uid": "${prometheus_uid}" },
-      "targets": [{ "refId": "A", "expr": "histogram_quantile(0.95, sum by (le, route) (rate(dwellwise_http_request_duration_seconds_bucket{route=~\"/v1/.*\"}[10m])))", "legendFormat": "{{route}}" }],
+      "gridPos": {
+        "x": 12,
+        "y": 5,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_uid}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le, route) (rate(dwellwise_http_request_duration_seconds_bucket{route=~\"/v1/.*\"}[10m])))",
+          "legendFormat": "{{route}}"
+        }
+      ],
       "fieldConfig": {
         "defaults": {
           "unit": "s",
-          "custom": { "lineWidth": 2, "thresholdsStyle": { "mode": "line" } },
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "transparent", "value": null }, { "color": "red", "value": 0.8 }] }
+          "custom": {
+            "lineWidth": 2,
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "transparent",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0.8
+              }
+            ]
+          }
         }
       }
     },
@@ -83,25 +226,310 @@
       "id": 7,
       "type": "timeseries",
       "title": "Server errors per minute (excluding /ready)",
-      "gridPos": { "x": 0, "y": 13, "w": 12, "h": 8 },
-      "datasource": { "type": "prometheus", "uid": "${prometheus_uid}" },
-      "targets": [{ "refId": "A", "expr": "sum by (route) (rate(dwellwise_http_requests_total{status=~\"5..\",route!=\"/ready\"}[5m])) * 60", "legendFormat": "{{route}}" }],
-      "fieldConfig": { "defaults": { "unit": "short", "custom": { "lineWidth": 2 } } }
+      "gridPos": {
+        "x": 0,
+        "y": 13,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_uid}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (route) (rate(dwellwise_http_requests_total{status=~\"5..\",route!=\"/ready\"}[5m])) * 60",
+          "legendFormat": "{{route}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "lineWidth": 2
+          }
+        }
+      }
     },
     {
       "id": 8,
       "type": "timeseries",
       "title": "Data age by source (limit 48 h)",
-      "gridPos": { "x": 12, "y": 13, "w": 12, "h": 8 },
-      "datasource": { "type": "prometheus", "uid": "${prometheus_uid}" },
-      "targets": [{ "refId": "A", "expr": "max by (source) (dwellwise_data_age_hours)", "legendFormat": "{{source}}" }],
+      "gridPos": {
+        "x": 12,
+        "y": 13,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_uid}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max by (source) (dwellwise_data_age_hours)",
+          "legendFormat": "{{source}}"
+        }
+      ],
       "fieldConfig": {
         "defaults": {
           "unit": "h",
-          "custom": { "lineWidth": 2, "thresholdsStyle": { "mode": "line" } },
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "transparent", "value": null }, { "color": "red", "value": 48 }] }
+          "custom": {
+            "lineWidth": 2,
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "transparent",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 48
+              }
+            ]
+          }
         }
       }
+    },
+    {
+      "id": 9,
+      "type": "stat",
+      "title": "Availability, rolling 14 days (SLO 99%)",
+      "description": "Share of synthetic /health checks that passed, from two probe locations. Grafana Cloud free keeps 14 days of metrics, so the window is 14 days.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_uid}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 21,
+        "w": 8,
+        "h": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_uid}"
+          },
+          "expr": "sum(increase(probe_all_success_sum{job=\"dwellwise-health\"}[14d])) / sum(increase(probe_all_success_count{job=\"dwellwise-health\"}[14d]))",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 0.99
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value"
+      }
+    },
+    {
+      "id": 10,
+      "type": "stat",
+      "title": "Error budget left, 14 days",
+      "description": "Budget = 1% of checks may fail (about 3.4 hours in 14 days). Below zero means the SLO is breached.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_uid}"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 21,
+        "w": 8,
+        "h": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_uid}"
+          },
+          "expr": "1 - (1 - (sum(increase(probe_all_success_sum{job=\"dwellwise-health\"}[14d])) / sum(increase(probe_all_success_count{job=\"dwellwise-health\"}[14d])))) / 0.01",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.25
+              },
+              {
+                "color": "green",
+                "value": 0.5
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value"
+      }
+    },
+    {
+      "id": 11,
+      "type": "stat",
+      "title": "Freshness, rolling 14 days (/ready passing)",
+      "description": "Share of synthetic /ready checks that passed: database reachable and every source under 48 hours old.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_uid}"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 21,
+        "w": 8,
+        "h": 5
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_uid}"
+          },
+          "expr": "sum(increase(probe_all_success_sum{job=\"dwellwise-ready\"}[14d])) / sum(increase(probe_all_success_count{job=\"dwellwise-ready\"}[14d]))",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "green",
+                "value": 0.99
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ]
+        },
+        "colorMode": "value"
+      }
+    },
+    {
+      "id": 12,
+      "type": "timeseries",
+      "title": "Availability burn rate (1 = spending the budget exactly on schedule)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_uid}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 26,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_uid}"
+          },
+          "legendFormat": "1h",
+          "expr": "(1 - (sum(increase(probe_all_success_sum{job=\"dwellwise-health\"}[1h])) / sum(increase(probe_all_success_count{job=\"dwellwise-health\"}[1h])))) / 0.01"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${prometheus_uid}"
+          },
+          "legendFormat": "6h",
+          "expr": "(1 - (sum(increase(probe_all_success_sum{job=\"dwellwise-health\"}[6h])) / sum(increase(probe_all_success_count{job=\"dwellwise-health\"}[6h])))) / 0.01"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none",
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 6
+              },
+              {
+                "color": "red",
+                "value": 14.4
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "description": "Alerts: 14.4 over 1h and 10m (fast), 6 over 6h and 30m (slow)."
     }
   ]
 }

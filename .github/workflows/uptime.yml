@@ -1,8 +1,8 @@
-# External uptime probe. Every 10 minutes it checks the live service; when a
-# check fails it opens a GitHub issue labelled "incident" (one per check), and
-# closes it with the outage length once the check passes again. The issue list
-# is the public incident log. Probing this often also keeps Render's free
-# service from sleeping.
+# Backup uptime probe. Scheduled every 10 minutes, but GitHub's cron is best
+# effort and may run late or not at all, so the SLO is measured by Grafana
+# Synthetic Monitoring instead (docs/slo.md). When it does run and a check
+# fails, it opens a GitHub issue labelled "incident" (one per check), and closes
+# it with the outage length once the check passes again.
 name: uptime
 
 on:
