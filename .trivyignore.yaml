@@ -32,7 +32,8 @@ misconfigurations:
       trusted registries does not include ghcr.io.
   - id: KSV-0110
     paths:
-      - "deploy/helm/dwellwise/templates"
+      - "deploy/helm/dwellwise/templates/*.yaml"
+      - "deploy/helm/dwellwise/templates/tests/*.yaml"
     statement: >-
       The chart sets no namespace on purpose: the installer chooses it with
       helm install -n. CI installs into a dedicated namespace that enforces Pod
