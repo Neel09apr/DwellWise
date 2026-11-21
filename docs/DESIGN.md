@@ -333,15 +333,20 @@ the Grafana alerts.
   run mints a one-hour token, read-only for plans, so no personal token exists.
 - **Supabase settings:** `terraform/stacks/supabase`, applied by
   `.github/workflows/supabase-settings.yml` (same plan/apply/weekly pattern,
-  state in `terraform_supabase`). It manages only `supabase_settings`: SSL
-  enforcement on, and auth sign-ups disabled (the app has no user accounts).
+  state in `terraform_supabase`). It manages only `supabase_settings`, and of
+  that only SSL enforcement (on). Turning it on showed that Terraform's pg state
+  backend did not use TLS, so `ops/dburl.py` now adds `sslmode=require`.
+  Disabling auth sign-ups (the app has no user accounts) needs the
+  `project_admin_write` permission, which would let the CI token change any
+  project setting; it was switched off once in the dashboard instead, a recorded
+  exception to "no click-ops".
   The project resource is deliberately not managed: the provider resets the
   database password when the configured value differs from state, and an
   imported project has none, so adopting it could rotate the live password.
   Credentials: a scoped Supabase access token in the `supabase-settings`
   environment, limited to this one project, expiring after 90 days, read-only
-  except for SSL enforcement and auth config (read-write), and with no access
-  to SQL, backups, API key secrets, the JWT secret or signing keys. Supabase has
+  except for SSL enforcement (read-write), and with no access to SQL, backups,
+  API key secrets, the JWT secret or signing keys. Supabase has
   no OIDC exchange, so it is a stored token, rotated when it expires. On 21 November 2026 the
   last legacy objects in `public` were dropped (six tables and a view left by the
   old app, readable with the anon key through the Data API; two held a copy of

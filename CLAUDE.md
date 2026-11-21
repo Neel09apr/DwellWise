@@ -104,7 +104,7 @@ ops/           uptime probe (stdlib Python), run every 10 minutes by .github/wor
 | 2. Delivery: GitHub settings as Terraform (ruleset on main, Dependabot alerts) | Merged (PR #33); applied 21 Nov |
 | 5. Brief: wastewater section 01 as a link to the county register (F3) | Merged (PR #34); live 21 Nov |
 | 1. Foundation: AWS Terraform applied to the Floci emulator in CI | Merged (PR #35); green on main |
-| 2. Delivery: Supabase settings as Terraform (SSL enforcement, no sign-ups); legacy public tables dropped | In review |
+| 2. Delivery: Supabase settings as Terraform (SSL enforcement); legacy public tables dropped | Merged (PR #36); SSL enforced 21 Nov, state-TLS fix in review |
 | 8. Kubernetes: Helm chart on a throwaway cluster | Not started |
 
 

@@ -107,7 +107,7 @@ SECURITY.md               reporting and security controls
 - [ ] Nearby alternatives (section 04): needs capacity data that may not be republished
 - [x] GitHub settings as Terraform: `main` ruleset, Dependabot alerts, secret scanning
 - [x] AWS modules applied to the Floci emulator in CI on every pull request
-- [x] Supabase security settings as Terraform (SSL enforcement, sign-ups off)
+- [x] Supabase security settings as Terraform (SSL enforcement); Terraform state connections require TLS
 - [ ] Render as Terraform: blocked upstream (the provider cannot update free services); the Blueprint stays
 - [x] Uptime probe every 10 minutes; incidents opened and closed as GitHub issues; runbooks
 - [x] Grafana Cloud dashboard and alerts as Terraform, state in Postgres, applied by CI
