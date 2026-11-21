@@ -331,6 +331,23 @@ the Grafana alerts.
   because GitHub does not let an author approve their own pull request.
   Credentials come from a GitHub App installed on this repository only; each
   run mints a one-hour token, read-only for plans, so no personal token exists.
+- **Supabase settings:** `terraform/stacks/supabase`, applied by
+  `.github/workflows/supabase-settings.yml` (same plan/apply/weekly pattern,
+  state in `terraform_supabase`). It manages only `supabase_settings`: SSL
+  enforcement on, and auth sign-ups disabled (the app has no user accounts).
+  The project resource is deliberately not managed: the provider resets the
+  database password when the configured value differs from state, and an
+  imported project has none, so adopting it could rotate the live password.
+  The Management API has no short-lived or read-only token, so a personal access
+  token sits in the `supabase-settings` environment. On 21 November 2026 the
+  last legacy objects in `public` were dropped (six tables and a view left by the
+  old app, readable with the anon key through the Data API; two held a copy of
+  the capacity register, which may not be republished). `public` is now empty
+  and the anon role has no access to `dw`.
+- **Render:** stays on its Blueprint (`render.yaml`), which is Render's own
+  configuration as code. The Terraform provider cannot update free-tier web
+  services (render-oss/terraform-provider-render#80, open as of v1.9.1) and the
+  API refuses to create them, so Terraform would fail on its first change.
 - **Observability:** `.github/workflows/observability.yml` plans the Grafana
   stack on pull requests and applies it on merge. Its state sits in the
   project's Postgres (Terraform's `pg` backend, schema `terraform_observability`),
@@ -368,7 +385,8 @@ the Grafana alerts.
 | Cloud account | None: GitHub, Render, Supabase, Grafana Cloud | AWS free plan | No account that can bill; AWS is kept for another project. The AWS Terraform is applied to the Floci emulator in CI instead |
 | Pipeline runtime | Scheduled GitHub Actions | Lambda + EventBridge Scheduler | No cloud account needed; free on a public repo; runs replayable from the raw store |
 | CI credentials for GitHub settings | GitHub App, one-hour installation token per run (read-only for plans) | Fine-grained personal access token | No long-lived personal token; scoped to one repository; least privilege per run |
-| Terraform state for Grafana and GitHub | Postgres `pg` backend in Supabase | HCP Terraform, S3 | Free, already there, has locking; no extra account. Kept in its own schema |
+| Render configuration | Blueprint (`render.yaml`) | Terraform `render-oss/render` | The provider cannot update free-tier services (issue #80); a Blueprint is Render's native config as code |
+| Terraform state for Grafana, GitHub and Supabase | Postgres `pg` backend in Supabase | HCP Terraform, S3 | Free, already there, has locking; no extra account. Kept in its own schema |
 | App hosting | Render free | AWS App Runner or ECS | No free tier on those; Render is free with Docker |
 | Database | Supabase (Postgres + PostGIS) | Amazon RDS | Free without expiry; PostGIS included |
 | State locking (AWS modules) | S3-native lock file | DynamoDB table | One less resource; Terraform 1.10+ |
