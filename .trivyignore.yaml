@@ -22,3 +22,19 @@ misconfigurations:
       Vulnerability alerts are enabled by the github_repository_vulnerability_alerts
       resource in the same file. The provider deprecated the inline
       vulnerability_alerts argument this check looks for.
+  - id: KSV-0125
+    paths:
+      - "deploy/helm/dwellwise/templates/deployment.yaml"
+      - "deploy/helm/dwellwise/templates/tests/smoke.yaml"
+    statement: >-
+      The image comes from this repository's own GHCR packages, pinned by digest
+      and signed keyless by the images workflow; Trivy's built-in list of
+      trusted registries does not include ghcr.io.
+  - id: KSV-0110
+    paths:
+      - "deploy/helm/dwellwise/templates/*.yaml"
+      - "deploy/helm/dwellwise/templates/tests/*.yaml"
+    statement: >-
+      The chart sets no namespace on purpose: the installer chooses it with
+      helm install -n. CI installs into a dedicated namespace that enforces Pod
+      Security "restricted"; Trivy renders the chart into "default".

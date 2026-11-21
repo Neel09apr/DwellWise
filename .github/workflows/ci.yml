@@ -241,6 +241,73 @@ jobs:
           .github/floci/check.sh "$STATE_BUCKET" \
             "$(terraform -chdir=terraform/stacks/data output -raw snapshots_bucket)"
 
+  kubernetes:
+    name: Helm chart on a throwaway kind cluster
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CHART: deploy/helm/dwellwise
+      NS: dwellwise
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
+        with:
+          version: v4.3.1
+
+      - name: Lint the chart
+        run: helm lint --strict "$CHART"
+
+      - uses: helm/kind-action@ea822c7bf1874f08e5a491df991c228edffc3376 # v1.15.2
+        with:
+          version: v0.33.0
+          cluster_name: dwellwise
+
+      - name: Build the app image and load it into the cluster
+        run: |
+          docker build -t dwellwise-app:ci app
+          kind load docker-image dwellwise-app:ci --name dwellwise
+
+      # The namespace rejects any pod that breaks the "restricted" Pod Security profile.
+      - name: Namespace enforcing Pod Security "restricted"
+        run: |
+          set -euo pipefail
+          kubectl create namespace "$NS"
+          kubectl label namespace "$NS" pod-security.kubernetes.io/enforce=restricted pod-security.kubernetes.io/warn=restricted
+          # Placeholder metrics token; no DATABASE_URL, so /ready reports 503 by design.
+          kubectl -n "$NS" create secret generic dwellwise --from-literal=METRICS_TOKEN=ci-placeholder
+
+      - name: Install
+        run: |
+          helm install dwellwise "$CHART" -n "$NS" --wait --timeout 4m \
+            --set image.repository=dwellwise-app --set image.digest= --set image.tag=ci --set image.pullPolicy=Never
+
+      - name: helm test (smoke check from inside the cluster)
+        run: helm test dwellwise -n "$NS" --logs
+
+      - name: Check the running pod
+        run: |
+          set -euo pipefail
+          pod=$(kubectl -n "$NS" get pod -l app.kubernetes.io/name=dwellwise -o jsonpath='{.items[0].metadata.name}')
+          [ "$(kubectl -n "$NS" exec "$pod" -- id -u)" = "10001" ]
+          # Read-only root filesystem. (A bare "! cmd" would never fail the step under set -e.)
+          if kubectl -n "$NS" exec "$pod" -- touch /srv/x 2>/dev/null; then echo "::error::root filesystem is writable"; exit 1; fi
+          kubectl -n "$NS" port-forward svc/dwellwise 8080:80 > /dev/null &
+          for _ in $(seq 1 20); do curl -fsS localhost:8080/health && break; sleep 1; done
+          echo
+          curl -fsS localhost:8080/ | grep -q '<div id="root">'
+          [ "$(curl -s -o /dev/null -w '%{http_code}' localhost:8080/ready)" = "503" ]
+          echo "pod $pod: uid 10001, read-only root, web app served, /ready 503 without a database"
+
+      - name: Diagnostics on failure
+        if: failure()
+        run: |
+          kubectl -n "$NS" get all,networkpolicy,events -o wide || true
+          kubectl -n "$NS" describe pods || true
+          kubectl -n "$NS" logs -l app.kubernetes.io/name=dwellwise --tail=100 || true
+
   trivy:
     name: Trivy IaC scan
     runs-on: ubuntu-latest

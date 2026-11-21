@@ -1,0 +1,38 @@
+# helm test: the Service answers /health. Uses the app's own image, so the test
+# trusts no extra image and passes the same restricted Pod Security profile.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ .Release.Name }}-smoke
+  labels:
+    # Not the app's selector labels: the app's NetworkPolicy must not limit this pod's egress.
+    app.kubernetes.io/name: dwellwise-smoke
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  annotations:
+    helm.sh/hook: test
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  restartPolicy: Never
+  automountServiceAccountToken: false
+  securityContext:
+    runAsNonRoot: true
+    seccompProfile:
+      type: RuntimeDefault
+  containers:
+    - name: smoke
+      image: {{ include "dwellwise.image" . }}
+      imagePullPolicy: {{ .Values.image.pullPolicy }}
+      command:
+        - python
+        - -c
+        - |
+          import json, urllib.request
+          url = "http://{{ .Release.Name }}.{{ .Release.Namespace }}.svc:{{ .Values.service.port }}/health"
+          body = json.load(urllib.request.urlopen(url, timeout=5))
+          assert body.get("status") == "ok", body
+          print("ok", url, body)
+      resources:
+        limits: { cpu: 100m, memory: 64Mi }
+        requests: { cpu: 50m, memory: 32Mi }
+      securityContext:
+        {{- include "dwellwise.containerSecurity" . | nindent 8 }}

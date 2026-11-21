@@ -44,6 +44,7 @@ flowchart LR
 | Scanning | Trivy (IaC and Dockerfiles, HIGH/CRITICAL fail), gitleaks over full history, findings in the Security tab | Problems are caught before merge |
 | Delivery | Terraform plan on pull request, apply after a required approval, weekly drift check; the repository's own settings and `main` ruleset are Terraform too, applied with a one-hour GitHub App token | Every infrastructure change is reviewed as a plan; nothing reaches main without passing CI |
 | Monitoring | Uptime probe every 10 minutes opening and closing incident issues; Grafana Cloud scrape, dashboard and four SLO-based alerts, all Terraform; runbooks | Outages are noticed, recorded and handled the same way every time |
+| Kubernetes | Helm chart: non-root, read-only root filesystem, no capabilities, seccomp, limits, NetworkPolicy, no service-account token; every pull request installs it on a throwaway kind cluster that enforces Pod Security `restricted` and runs `helm test` | The same image is ready for a cluster, checked against the strictest built-in pod policy |
 | Supply chain | Both images scanned by Trivy, pushed to GHCR, signed keyless with cosign and given an attested SPDX SBOM; the nightly pipeline runs only a digest whose signature it has verified; OpenSSF Scorecard weekly; Actions pinned to commit SHAs; provider checksums locked; Dependabot | A tampered or unscanned image never receives database credentials |
 
 ## AWS modules (tested against an emulator, not deployed)
@@ -81,6 +82,7 @@ pipeline/                 nightly ingestion: fetch, raw copy, validate, load
 terraform/                stacks/observability (Grafana), stacks/github (repo settings), stacks/supabase (security settings); AWS modules (emulator-tested)
 docs/DESIGN.md            system design: requirements, architecture, SLOs, decisions
 render.yaml               Render blueprint (free plan, Frankfurt)
+deploy/helm/dwellwise/    Helm chart, installed on a throwaway kind cluster in CI
 .github/workflows/
   ci.yml                  lint, test (PostGIS), build, scan
   terraform.yml           plan on PR, apply on approval, weekly drift check
@@ -114,7 +116,7 @@ SECURITY.md               reporting and security controls
 - [ ] Error tracking (Sentry)
 - [ ] SRE practice: SLO reporting and error budget, incident write-ups
 - [x] Supply chain: SBOM, signed container images, OpenSSF Scorecard
-- [ ] Kubernetes: Helm chart deployed to a throwaway cluster in CI
+- [x] Kubernetes: Helm chart installed on a throwaway kind cluster in CI under Pod Security `restricted`, with `helm test`
 
 ## Licence
 
