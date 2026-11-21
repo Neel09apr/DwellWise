@@ -19,5 +19,7 @@ variable "required_checks" {
     "App API, web and image",
     "Trivy IaC scan",
     "Secret scan",
+    "AWS Terraform on the Floci emulator",
+    "Helm chart on a throwaway kind cluster",
   ]
 }
