@@ -302,7 +302,12 @@ the Grafana alerts.
   stack on pull requests and applies it on merge. Its state sits in the
   project's Postgres (Terraform's `pg` backend, schema `terraform_observability`),
   so no state service or extra account is needed; tokens are secrets of the
-  `observability` environment.
+  `observability` environment. The stack's `terraform` service account has the
+  **Admin** role: with Editor, Grafana Cloud let it create a folder but refused
+  to read it back (`folders:read`), which broke the first apply. Admin is what
+  Grafana documents for provisioning; on a one-person stack the wider scope
+  (it could also manage users) is an accepted trade-off. A narrower custom role
+  is the upgrade path if the stack ever has more users.
 - **Nightly:** `.github/workflows/pipeline.yml` builds the same pipeline image
   CI scans and runs it at 03:17 UTC: migrate, every source in order, prune.
   Database and Storage credentials are secrets of the `nightly` environment, so

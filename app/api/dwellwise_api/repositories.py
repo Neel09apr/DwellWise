@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import date
+
 from psycopg.rows import dict_row
 
 
@@ -76,18 +78,36 @@ def loaded_sources(conn) -> dict[str, dict]:
         return {row["source"]: row for row in cur.fetchall()}
 
 
-def application_counts(conn, county: str | None, residential: bool | None, start, end) -> list[dict]:
-    """Applications received in [start, end), counted per county, month and decision class."""
+def application_stats_data(conn, county: str | None, residential: bool | None, start, end) -> dict:
+    """Everything the stats endpoint needs, in one round trip.
+
+    Returns the county names, the counts of applications received in
+    [start, end) per county, month and decision class, and when planning last
+    loaded. One query matters here: Render (Frankfurt) to Supabase (Ireland)
+    costs about 25 ms per round trip.
+    """
     with conn.cursor(row_factory=dict_row) as cur:
         cur.execute(
             """
-            select county, date_trunc('month', received)::date as month, decision_class, count(*)::int as n
-            from dw.planning_application
-            where received >= %(start)s and received < %(end)s
-              and (%(county)s::text is null or county = %(county)s)
-              and (%(residential)s::boolean is null or residential = %(residential)s)
-            group by 1, 2, 3
+            with counts as (
+                select county, date_trunc('month', received)::date as month, decision_class,
+                       count(*)::int as n
+                from dw.planning_application
+                where received >= %(start)s and received < %(end)s
+                  and (%(county)s::text is null or county = %(county)s)
+                  and (%(residential)s::boolean is null or residential = %(residential)s)
+                group by 1, 2, 3
+            )
+            select
+                (select coalesce(json_agg(name order by name), '[]') from dw.county) as counties,
+                (select coalesce(json_agg(json_build_object(
+                    'county', county, 'month', month, 'decision_class', decision_class, 'n', n)), '[]')
+                 from counts) as rows,
+                (select max(fetched_at) from dw.snapshot where source = 'planning' and status = 'loaded')
+                    as captured_at
             """,
             {"start": start, "end": end, "county": county, "residential": residential},
         )
-        return cur.fetchall()
+        data = cur.fetchone()
+    rows = [{**r, "month": date.fromisoformat(r["month"])} for r in data["rows"]]
+    return {"counties": data["counties"], "rows": rows, "captured_at": data["captured_at"]}
