@@ -5,6 +5,7 @@ export type County = Schemas["County"];
 export type SettlementSummary = Schemas["SettlementSummary"];
 export type SettlementDetail = Schemas["SettlementDetail"];
 export type ApplicationStats = Schemas["ApplicationStats"];
+export type Brief = Schemas["Brief"];
 
 /** Every API error carries {error: {code, message}}; this keeps the status too. */
 export class ApiError extends Error {
@@ -20,7 +21,10 @@ export class ApiError extends Error {
 async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
   let response: Response;
   try {
-    response = await fetch(path, { headers: { Accept: "application/json" }, signal });
+    response = await fetch(path, {
+      headers: { Accept: "application/json" },
+      signal,
+    });
   } catch (error) {
     if (error instanceof DOMException && error.name === "AbortError") throw error;
     throw new ApiError(0, "The DwellWise service could not be reached.");
@@ -41,6 +45,8 @@ export const api = {
     get<SettlementSummary[]>(`/v1/settlements?${new URLSearchParams({ q })}`, signal),
   settlement: (code: string, signal?: AbortSignal) =>
     get<SettlementDetail>(`/v1/settlements/${encodeURIComponent(code)}`, signal),
+  brief: (code: string, signal?: AbortSignal) =>
+    get<Brief>(`/v1/settlements/${encodeURIComponent(code)}/brief`, signal),
   applicationStats: ({ county, residential }: { county?: string; residential?: boolean }, signal?: AbortSignal) => {
     const params = new URLSearchParams();
     if (county) params.set("county", county);

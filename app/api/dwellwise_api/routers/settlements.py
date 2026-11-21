@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 
+from .. import brief as briefs
 from .. import services
 from ..db import get_conn
-from ..schemas import ErrorBody, SettlementDetail, SettlementSummary
+from ..schemas import Brief, ErrorBody, SettlementDetail, SettlementSummary
 
 router = APIRouter(prefix="/v1/settlements", tags=["settlements"])
 
@@ -30,6 +32,18 @@ def get_settlement(
     code: Annotated[str, Path(pattern=r"^[0-9A-Za-z_-]{1,20}$", description="CSO settlement code")],
 ) -> SettlementDetail:
     found = services.detail(conn, code)
+    if found is None:
+        raise HTTPException(404, f"No settlement has the code {code}.")
+    return found
+
+
+@router.get("/{code}/brief", response_model=Brief, responses={404: {"model": ErrorBody}})
+def get_brief(
+    conn: Conn,
+    code: Annotated[str, Path(pattern=r"^[0-9A-Za-z_-]{1,20}$", description="CSO settlement code")],
+) -> Brief:
+    """The pre-planning brief: the sections whose data has landed, and which are still pending."""
+    found = briefs.brief(conn, code, date.today())
     if found is None:
         raise HTTPException(404, f"No settlement has the code {code}.")
     return found

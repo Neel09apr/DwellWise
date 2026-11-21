@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 
 from pydantic import BaseModel
 
@@ -76,3 +76,33 @@ class ApplicationStats(BaseModel):
     totals: DecisionCounts
     months: list[MonthCounts]
     counties: list[CountyCounts]
+
+
+class PrecedentApplication(BaseModel):
+    """One planning application, as the council published it. Never an applicant name or address."""
+
+    authority: str
+    application_number: str
+    received: date
+    decided: date | None
+    decision: str | None  # the council's own wording
+    decision_class: str
+    units_stated: int | None
+
+
+class Precedents(BaseModel):
+    """Residential applications (stating new dwellings) inside the settlement boundary."""
+
+    since: date
+    years: int
+    residential: DecisionCounts
+    all_applications: int  # every application in the boundary, for context
+    recent: list[PrecedentApplication]
+    captured_at: datetime | None
+    attribution: str
+
+
+class Brief(BaseModel):
+    code: str
+    precedents: Precedents
+    pending: list[str]  # sections whose data source has not landed yet

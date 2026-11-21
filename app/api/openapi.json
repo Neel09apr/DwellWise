@@ -282,6 +282,62 @@
         }
       }
     },
+    "/v1/settlements/{code}/brief": {
+      "get": {
+        "tags": [
+          "settlements"
+        ],
+        "summary": "Get Brief",
+        "description": "The pre-planning brief: the sections whose data has landed, and which are still pending.",
+        "operationId": "get_brief_v1_settlements__code__brief_get",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-Za-z_-]{1,20}$",
+              "description": "CSO settlement code",
+              "title": "Code"
+            },
+            "description": "CSO settlement code"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Brief"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/stats/applications": {
       "get": {
         "tags": [
@@ -484,6 +540,31 @@
         ],
         "title": "ApplicationStats"
       },
+      "Brief": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "precedents": {
+            "$ref": "#/components/schemas/Precedents"
+          },
+          "pending": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Pending"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "precedents",
+          "pending"
+        ],
+        "title": "Brief"
+      },
       "County": {
         "properties": {
           "name": {
@@ -682,6 +763,128 @@
           "month"
         ],
         "title": "MonthCounts"
+      },
+      "PrecedentApplication": {
+        "properties": {
+          "authority": {
+            "type": "string",
+            "title": "Authority"
+          },
+          "application_number": {
+            "type": "string",
+            "title": "Application Number"
+          },
+          "received": {
+            "type": "string",
+            "format": "date",
+            "title": "Received"
+          },
+          "decided": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decided"
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision"
+          },
+          "decision_class": {
+            "type": "string",
+            "title": "Decision Class"
+          },
+          "units_stated": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Units Stated"
+          }
+        },
+        "type": "object",
+        "required": [
+          "authority",
+          "application_number",
+          "received",
+          "decided",
+          "decision",
+          "decision_class",
+          "units_stated"
+        ],
+        "title": "PrecedentApplication",
+        "description": "One planning application, as the council published it. Never an applicant name or address."
+      },
+      "Precedents": {
+        "properties": {
+          "since": {
+            "type": "string",
+            "format": "date",
+            "title": "Since"
+          },
+          "years": {
+            "type": "integer",
+            "title": "Years"
+          },
+          "residential": {
+            "$ref": "#/components/schemas/DecisionCounts"
+          },
+          "all_applications": {
+            "type": "integer",
+            "title": "All Applications"
+          },
+          "recent": {
+            "items": {
+              "$ref": "#/components/schemas/PrecedentApplication"
+            },
+            "type": "array",
+            "title": "Recent"
+          },
+          "captured_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Captured At"
+          },
+          "attribution": {
+            "type": "string",
+            "title": "Attribution"
+          }
+        },
+        "type": "object",
+        "required": [
+          "since",
+          "years",
+          "residential",
+          "all_applications",
+          "recent",
+          "captured_at",
+          "attribution"
+        ],
+        "title": "Precedents",
+        "description": "Residential applications (stating new dwellings) inside the settlement boundary."
       },
       "Ready": {
         "properties": {
