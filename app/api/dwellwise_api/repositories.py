@@ -111,3 +111,34 @@ def application_stats_data(conn, county: str | None, residential: bool | None, s
         data = cur.fetchone()
     rows = [{**r, "month": date.fromisoformat(r["month"])} for r in data["rows"]]
     return {"counties": data["counties"], "rows": rows, "captured_at": data["captured_at"]}
+
+
+def settlement_precedents(conn, code: str, since, limit: int) -> dict:
+    """The planning precedents section for one settlement, in one round trip."""
+    with conn.cursor(row_factory=dict_row) as cur:
+        cur.execute(
+            """
+            with apps as (
+                select authority, application_number, received, decided, decision, decision_class,
+                       units_stated, residential
+                from dw.planning_application
+                where settlement = %(code)s and received >= %(since)s
+            )
+            select
+                exists (select 1 from dw.settlement where code = %(code)s) as found,
+                (select coalesce(json_object_agg(decision_class, n), '{}')
+                 from (select decision_class, count(*) as n from apps where residential group by 1) c)
+                    as residential,
+                (select count(*)::int from apps) as all_total,
+                (select coalesce(json_agg(r), '[]') from (
+                    select authority, application_number, received, decided, decision, decision_class,
+                           units_stated
+                    from apps where residential
+                    order by received desc, application_number
+                    limit %(limit)s) r) as recent,
+                (select max(fetched_at) from dw.snapshot where source = 'planning' and status = 'loaded')
+                    as captured_at
+            """,
+            {"code": code, "since": since, "limit": limit},
+        )
+        return cur.fetchone()

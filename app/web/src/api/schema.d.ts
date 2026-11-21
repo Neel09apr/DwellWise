@@ -121,6 +121,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/settlements/{code}/brief": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Brief
+         * @description The pre-planning brief: the sections whose data has landed, and which are still pending.
+         */
+        get: operations["get_brief_v1_settlements__code__brief_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/stats/applications": {
         parameters: {
             query?: never;
@@ -164,6 +184,14 @@ export interface components {
             months: components["schemas"]["MonthCounts"][];
             /** Counties */
             counties: components["schemas"]["CountyCounts"][];
+        };
+        /** Brief */
+        Brief: {
+            /** Code */
+            code: string;
+            precedents: components["schemas"]["Precedents"];
+            /** Pending */
+            pending: string[];
         };
         /** County */
         County: {
@@ -244,6 +272,51 @@ export interface components {
             total: number;
             /** Month */
             month: string;
+        };
+        /**
+         * PrecedentApplication
+         * @description One planning application, as the council published it. Never an applicant name or address.
+         */
+        PrecedentApplication: {
+            /** Authority */
+            authority: string;
+            /** Application Number */
+            application_number: string;
+            /**
+             * Received
+             * Format: date
+             */
+            received: string;
+            /** Decided */
+            decided: string | null;
+            /** Decision */
+            decision: string | null;
+            /** Decision Class */
+            decision_class: string;
+            /** Units Stated */
+            units_stated: number | null;
+        };
+        /**
+         * Precedents
+         * @description Residential applications (stating new dwellings) inside the settlement boundary.
+         */
+        Precedents: {
+            /**
+             * Since
+             * Format: date
+             */
+            since: string;
+            /** Years */
+            years: number;
+            residential: components["schemas"]["DecisionCounts"];
+            /** All Applications */
+            all_applications: number;
+            /** Recent */
+            recent: components["schemas"]["PrecedentApplication"][];
+            /** Captured At */
+            captured_at: string | null;
+            /** Attribution */
+            attribution: string;
         };
         /** Ready */
         Ready: {
@@ -478,6 +551,47 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SettlementDetail"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_brief_v1_settlements__code__brief_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description CSO settlement code */
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Brief"];
                 };
             };
             /** @description Not Found */

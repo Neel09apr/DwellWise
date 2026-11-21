@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { decidedShare, monthLabel } from "./planningText";
+import { decidedShare, decisionLabel, monthLabel } from "./planningText";
 
 describe("monthLabel", () => {
   it("names the month and keeps the year", () => {
@@ -16,5 +16,18 @@ describe("decidedShare", () => {
   });
   it("is null when nothing has been decided", () => {
     expect(decidedShare(0, 0)).toBeNull();
+  });
+});
+
+describe("decisionLabel", () => {
+  it("keeps the council's own wording", () => {
+    expect(decisionLabel("CONDITIONAL", "granted")).toBe("CONDITIONAL");
+    expect(decisionLabel("  Grant Permission  ", "granted")).toBe("Grant Permission");
+  });
+  it("shows the class when the wording is a placeholder or missing", () => {
+    expect(decisionLabel("N/A", "pending")).toBe("Pending");
+    expect(decisionLabel("n/a", "pending")).toBe("Pending");
+    expect(decisionLabel("", "withdrawn")).toBe("Withdrawn");
+    expect(decisionLabel(null, "pending")).toBe("Pending");
   });
 });

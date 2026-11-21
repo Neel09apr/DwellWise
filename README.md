@@ -92,7 +92,8 @@ SECURITY.md               reporting and security controls
 - [ ] Deploy to Render
 - [x] Planning applications since 2020 and the national planning dashboard
 - [x] Nightly pipeline on GitHub Actions, gzipped raw copies in Supabase Storage, 7-day retention
-- [ ] Capacity registers and protected sites; the settlement brief
+- [x] Settlement brief, first section: planning precedents
+- [ ] Capacity registers and protected sites; the remaining brief sections
 - [ ] AWS modules applied to the Floci emulator in CI; Terraform for Render, Supabase and GitHub
 - [x] Uptime probe every 10 minutes; incidents opened and closed as GitHub issues; runbooks
 - [x] Grafana Cloud dashboard and alerts as Terraform, state in Postgres, applied by CI

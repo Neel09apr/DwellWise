@@ -2,16 +2,33 @@ import { useParams } from "react-router-dom";
 
 import { api } from "../api/client";
 import { Breadcrumbs } from "../components/Breadcrumbs";
+import { PlanningPrecedents } from "../components/PlanningPrecedents";
 import { Failure, Loading } from "../components/Status";
 import { countySlug, titleCase } from "../text";
 import { useResource } from "../useResource";
 
 /** The brief's sections in order (docs/DESIGN.md F3–F6). Each fills in when its data source lands. */
 const SECTIONS = [
-  { id: "wastewater", title: "Wastewater capacity", about: "Spare capacity at the treatment plant serving the town." },
-  { id: "precedents", title: "Planning precedents", about: "Recent residential planning applications and decisions." },
-  { id: "protected", title: "Protected sites nearby", about: "SAC, SPA and NHA sites within 1 km and 5 km." },
-  { id: "alternatives", title: "Nearby alternatives", about: "Nearby settlements with spare capacity, by distance." },
+  {
+    id: "wastewater",
+    title: "Wastewater capacity",
+    about: "Spare capacity at the treatment plant serving the town.",
+  },
+  {
+    id: "precedents",
+    title: "Planning precedents",
+    about: "Residential planning applications in the town over the last five years.",
+  },
+  {
+    id: "protected",
+    title: "Protected sites nearby",
+    about: "SAC, SPA and NHA sites within 1 km and 5 km.",
+  },
+  {
+    id: "alternatives",
+    title: "Nearby alternatives",
+    about: "Nearby settlements with spare capacity, by distance.",
+  },
 ];
 
 const number = (i: number) => String(i + 1).padStart(2, "0");
@@ -93,7 +110,11 @@ export function SettlementPage() {
             {section.title}
           </h2>
           <p className="muted">{section.about}</p>
-          <p className="pending">Not loaded yet. This section fills in when its public data source is added.</p>
+          {section.id === "precedents" ? (
+            <PlanningPrecedents code={s.code} />
+          ) : (
+            <p className="pending">Not loaded yet. This section fills in when its public data source is added.</p>
+          )}
         </section>
       ))}
 
@@ -107,7 +128,10 @@ export function SettlementPage() {
             <li key={src.name}>
               <span>{src.attribution}</span>
               <span className="row-meta">
-                captured {new Date(src.captured_at).toLocaleDateString("en-IE", { dateStyle: "medium" })}
+                captured{" "}
+                {new Date(src.captured_at).toLocaleDateString("en-IE", {
+                  dateStyle: "medium",
+                })}
               </span>
             </li>
           ))}

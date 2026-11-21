@@ -20,15 +20,16 @@ SQUARE = "ST_Multi(ST_Transform(ST_MakeEnvelope(%s, %s, %s, %s, 4326), 2157))"
 
 INSERT_APPLICATION = (
     "insert into dw.planning_application (authority, application_number, received, decision_class, "
-    "county, residential, location, snapshot_id) values ('Test Council', %s, %s, %s, %s, %s, "
-    "ST_Transform(ST_SetSRID(ST_MakePoint(%s, %s), 4326), 2157), %s)"
+    "county, residential, location, settlement, snapshot_id) values ('Test Council', %s, %s, %s, %s, %s, "
+    "ST_Transform(ST_SetSRID(ST_MakePoint(%s, %s), 4326), 2157), %s, %s)"
 )
-APPLICATIONS = [  # number, county, received, class, residential
-    ("K1", "KILDARE", "2026-10-05", "granted", True),
-    ("K2", "KILDARE", "2026-10-20", "refused", False),
-    ("K3", "KILDARE", "2026-09-01", "pending", True),
-    ("M1", "MAYO", "2026-10-10", "granted", False),
-    ("M2", "MAYO", "2025-01-15", "granted", True),  # outside the ranges asked for below
+APPLICATIONS = [  # number, county, received, class, residential, settlement
+    ("K1", "KILDARE", "2026-10-05", "granted", True, "1"),
+    ("K2", "KILDARE", "2026-10-20", "refused", False, "1"),
+    ("K3", "KILDARE", "2026-09-01", "pending", True, "1"),
+    ("K4", "KILDARE", "2019-06-01", "granted", True, "1"),  # older than the brief's five years
+    ("M1", "MAYO", "2026-10-10", "granted", False, None),
+    ("M2", "MAYO", "2025-01-15", "granted", True, "3"),  # outside the stats ranges asked for below
 ]
 
 
@@ -39,8 +40,10 @@ def seed_planning(conn) -> None:
         "values (%s, 'planning', now(), 'test://', 'x', 5, 'loaded')",
         (snap,),
     )
-    for number, county, received, cls, residential in APPLICATIONS:
-        conn.execute(INSERT_APPLICATION, (number, received, cls, county, residential, -7.0, 53.0, snap))
+    for number, county, received, cls, residential, settlement in APPLICATIONS:
+        conn.execute(
+            INSERT_APPLICATION, (number, received, cls, county, residential, -7.0, 53.0, settlement, snap)
+        )
 
 
 @pytest.fixture
@@ -100,7 +103,7 @@ def test_detail_has_location_area_and_sources(client):
     assert body["name"] == "Castlebar" and body["county"] == "MAYO"
     assert 53.85 < body["latitude"] < 53.87 and -9.31 < body["longitude"] < -9.28
     assert body["area_km2"] > 0
-    assert [s["name"] for s in body["sources"]] == ["settlements"]
+    assert [s["name"] for s in body["sources"]] == ["settlements", "planning"]
 
 
 def test_unknown_code_is_a_404_in_the_error_shape(client):
@@ -178,3 +181,22 @@ def test_metrics_report_data_age_without_anyone_calling_ready(client):
     body = client.get("/metrics").text
     assert 'dwellwise_data_age_hours{source="planning"}' in body
     assert 'dwellwise_data_age_hours{source="settlements"}' in body
+
+
+def test_the_brief_counts_recent_residential_applications_in_the_town(client):
+    body = client.get("/v1/settlements/1/brief").json()
+    p = body["precedents"]
+    assert p["years"] == 5
+    assert (p["residential"]["granted"], p["residential"]["pending"], p["residential"]["total"]) == (1, 1, 2)
+    assert p["all_applications"] == 3  # K4 is older than five years
+    assert [a["application_number"] for a in p["recent"]] == ["K1", "K3"]  # newest first, residential only
+    assert body["pending"] == ["wastewater", "protected", "alternatives"]
+
+
+def test_a_town_without_applications_has_an_empty_section_not_an_error(client):
+    p = client.get("/v1/settlements/4/brief").json()["precedents"]
+    assert (p["residential"]["total"], p["all_applications"], p["recent"]) == (0, 0, [])
+
+
+def test_the_brief_for_an_unknown_settlement_is_a_404(client):
+    assert client.get("/v1/settlements/999/brief").status_code == 404

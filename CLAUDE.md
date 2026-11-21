@@ -96,6 +96,7 @@ ops/           uptime probe (stdlib Python), run every 10 minutes by .github/wor
 | 4–5. API and web app | Merged (PR #6); live at https://dwellwise.onrender.com since 17 Nov |
 | 5. National planning dashboard (F9) | Merged (PR #19); live 17 Nov |
 | 3. Data: nightly pipeline on GitHub Actions | Merged (PR #20); running nightly since 17 Nov |
+| 5. Brief: planning precedents section (F4) | Merged (PR #24); live 21 Nov |
 | 6. Operate: uptime probe, incidents as issues, runbooks | Merged (PR #21); probing every 10 minutes |
 | 6. Operate: Grafana Cloud dashboards and alerts (Terraform) | Merged (PR #22); applied 21 Nov; all four alerts verified, alert email delivered |
 | 7. Supply chain: SBOM, signed images, Scorecard | Not started |
@@ -104,7 +105,7 @@ ops/           uptime probe (stdlib Python), run every 10 minutes by .github/wor
 
 ## Next
 
-1. Brief sections fill in as each data source lands; the UI keeps its hierarchy (see `app/web/src/styles.css`).
+1. Brief sections fill in as each data source lands (planning precedents first); the UI keeps its hierarchy (see `app/web/src/styles.css`).
 2. Pipeline sources: wastewater capacity registers, protected sites; then the
    brief endpoint.
 3. CI job that applies the AWS Terraform to the Floci emulator.

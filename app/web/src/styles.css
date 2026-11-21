@@ -104,6 +104,11 @@ h1 { font: 600 clamp(1.9rem, 5vw, 2.6rem)/1.15 var(--serif); letter-spacing: -0.
 .section { padding: 2rem 0 0; scroll-margin-top: 1rem; }
 .section h2 { display: flex; align-items: baseline; font: 600 1.3rem var(--serif); margin-bottom: 0.4rem; }
 .section > p { margin: 0.3rem 0 0 2.2rem; }
+.section-body { margin: 0.75rem 0 0 2.2rem; }
+.section-body .counts { margin-top: 1.25rem; }
+.counts td.wording, .counts th.wording { text-align: left; }
+.counts td.wording + td.wording { font-family: var(--sans); }
+.section-body .counts th[scope="row"] { white-space: nowrap; }
 .pending { font-size: 0.9rem; color: var(--muted); padding-left: 0.75rem; border-left: 2px solid var(--rule); }
 .sources { list-style: none; margin: 0.75rem 0 0 2.2rem; padding: 0; }
 .sources li { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: 0.45rem 0; border-bottom: 1px solid var(--rule); font-size: 0.9rem; color: var(--prose); }
@@ -135,7 +140,7 @@ h1 { font: 600 clamp(1.9rem, 5vw, 2.6rem)/1.15 var(--serif); letter-spacing: -0.
 @media (max-width: 520px) {
   .counts th:nth-child(5), .counts td:nth-child(5) { display: none; }
   .chart-label { font-size: 21px; } /* the chart scales to half size here; keeps labels near 11px */
-  .section > p, .sources { margin-left: 0; }
+  .section > p, .sources, .section-body { margin-left: 0; }
   .letter { grid-template-columns: 1.75rem 1fr; gap: 0 0.75rem; }
 }
 
