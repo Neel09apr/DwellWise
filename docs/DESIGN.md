@@ -45,10 +45,10 @@ and print.
 |---|---|
 | F1 | search for a settlement by name and county |
 | F2 | enter a proposal: number of homes, houses or apartments |
-| F3 | see wastewater capacity status for the settlement, in the register's own words, with the register edition date |
+| F3 | see wastewater capacity status for the settlement, in the register's own words, with the register edition date. **For now a link** to the county's Uisce Éireann register, since its terms do not allow republishing (§6) |
 | F4 | see recent residential planning applications in the settlement and their decisions |
 | F5 | see protected sites (SAC, SPA, NHA) within 1 km and 5 km |
-| F6 | see nearby settlements with spare capacity, by distance |
+| F6 | see nearby settlements with spare capacity, by distance. **Deferred:** it needs the capacity register's data (F3) |
 | F7 | read an optional plain-English summary written over those facts |
 | F8 | edit the brief, keep it in the browser, and print or export it |
 | F9 | see planning activity for Ireland and each county: applications granted, refused and pending, by month, with the date the data was captured |
@@ -223,7 +223,7 @@ file, which makes backfills and bug fixes cheap. What to do when it fails:
 
 | Source | What | Licence |
 |---|---|---|
-| Uisce Éireann wastewater capacity registers | Plant status per settlement | No licence stated; quoted with attribution and edition date |
+| Uisce Éireann wastewater capacity registers | Plant status per settlement | **Not reusable.** Not among Uisce Éireann's CC BY 4.0 open datasets, and the water.ie terms forbid republishing without written consent (checked 21 November 2026). The brief links to the county register instead of loading it |
 | National Planning Applications (Department of Housing, ArcGIS REST) | Applications and decisions | CC BY 4.0 |
 | Tailte Éireann settlement boundaries | Settlement polygons | CC BY 4.0, attribution "© Tailte Éireann" |
 | NPWS designated areas (ArcGIS REST, the service named on npws.ie) | SAC, SPA and NHA boundaries, one source each | CC BY 4.0 |

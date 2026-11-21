@@ -101,15 +101,16 @@ ops/           uptime probe (stdlib Python), run every 10 minutes by .github/wor
 | 6. Operate: uptime probe, incidents as issues, runbooks | Merged (PR #21); probing every 10 minutes |
 | 6. Operate: Grafana Cloud dashboards and alerts (Terraform) | Merged (PR #22); applied 21 Nov; all four alerts verified, alert email delivered |
 | 7. Supply chain: SBOM, signed images, Scorecard | Merged (PR #32); images signed, nightly verifies before running (21 Nov) |
-| 2. Delivery: GitHub settings as Terraform (ruleset on main, Dependabot alerts) | In review |
+| 2. Delivery: GitHub settings as Terraform (ruleset on main, Dependabot alerts) | Merged (PR #33); applied 21 Nov |
+| 5. Brief: wastewater section 01 as a link to the county register (F3) | In review |
 | 8. Kubernetes: Helm chart on a throwaway cluster | Not started |
 
 
 ## Next
 
 1. Brief sections fill in as each data source lands (planning precedents first); the UI keeps its hierarchy (see `app/web/src/styles.css`).
-2. Pipeline sources: wastewater capacity registers (licence check first), for
-   brief sections 01 and 04.
+2. Wastewater capacity: the registers may not be republished (DESIGN.md §6), so
+   section 01 links to them and section 04 waits. Revisit only if the licence changes.
 3. CI job that applies the AWS Terraform to the Floci emulator.
 4. Terraform for Render and Supabase settings, applied by CI (GitHub is done).
 
