@@ -103,7 +103,7 @@ def test_detail_has_location_area_and_sources(client):
     assert body["name"] == "Castlebar" and body["county"] == "MAYO"
     assert 53.85 < body["latitude"] < 53.87 and -9.31 < body["longitude"] < -9.28
     assert body["area_km2"] > 0
-    assert [s["name"] for s in body["sources"]] == ["settlements"]
+    assert [s["name"] for s in body["sources"]] == ["settlements", "planning"]
 
 
 def test_unknown_code_is_a_404_in_the_error_shape(client):
@@ -200,8 +200,3 @@ def test_a_town_without_applications_has_an_empty_section_not_an_error(client):
 
 def test_the_brief_for_an_unknown_settlement_is_a_404(client):
     assert client.get("/v1/settlements/999/brief").status_code == 404
-
-
-def test_settlement_pages_credit_the_planning_source(client):
-    names = [s["name"] for s in client.get("/v1/settlements/3").json()["sources"]]
-    assert "planning" in names
