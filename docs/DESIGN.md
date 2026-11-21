@@ -92,7 +92,7 @@ flowchart LR
 | Database | Settlements, capacity, applications, protected sites, snapshot log; PostGIS for spatial joins | Supabase free (500 MB) |
 | Pipeline (`pipeline/`) | Fetch each source, store the raw file, validate, transform, load | Scheduled GitHub Actions job running the pipeline container, nightly |
 | Raw store | Dated, immutable copies of every fetched file | Supabase Storage bucket through its S3-compatible API |
-| Infrastructure (`terraform/`) | Terraform for Render, Supabase and GitHub settings, applied by CI; the AWS modules are kept, to be tested against the Floci emulator, never deployed | GitHub Actions |
+| Infrastructure (`terraform/`) | Terraform for Render, Supabase and GitHub settings, applied by CI; the AWS modules are kept and applied to the Floci emulator on every pull request, never deployed | GitHub Actions |
 
 **Why this split.** The API only reads, so it can scale and fail
 independently of ingestion. The pipeline is the only writer, so every change
@@ -305,7 +305,14 @@ the Grafana alerts.
 ## 11. Environments and delivery
 
 - **Pull request:** lint, test, type-check, Terraform plan, security scans, and
-  the AWS modules applied to a throwaway Floci emulator.
+  the AWS modules applied to a throwaway Floci emulator (a service container in
+  the CI job). A CI-only `floci_override.tf` points the provider at it; the
+  stacks themselves are unchanged. The job applies the bootstrap, then the data
+  stack with S3-native state locking in the bootstrap bucket, requires a second
+  plan with no changes, and asserts the bucket and role controls with the AWS CLI
+  (`.github/floci/check.sh`). An emulator is not AWS: it proves the code applies,
+  converges and sets what it says, not that real IAM would evaluate the
+  policies the same way.
 - **Merge to main:** `.github/workflows/images.yml` builds both images,
   scans them with Trivy, pushes them to GHCR, signs each digest with cosign
   (keyless) and attests its SBOM; on pull requests it builds and scans without
@@ -358,7 +365,7 @@ the Grafana alerts.
 | Decision | Chosen | Instead of | Because |
 |---|---|---|---|
 | Brief engine | Deterministic facts + optional AI summary | AI agent choosing tools | Testable, reliable on free quotas, monitorable |
-| Cloud account | None: GitHub, Render, Supabase, Grafana Cloud | AWS free plan | No account that can bill; AWS is kept for another project. The AWS Terraform will be tested against the Floci emulator instead |
+| Cloud account | None: GitHub, Render, Supabase, Grafana Cloud | AWS free plan | No account that can bill; AWS is kept for another project. The AWS Terraform is applied to the Floci emulator in CI instead |
 | Pipeline runtime | Scheduled GitHub Actions | Lambda + EventBridge Scheduler | No cloud account needed; free on a public repo; runs replayable from the raw store |
 | CI credentials for GitHub settings | GitHub App, one-hour installation token per run (read-only for plans) | Fine-grained personal access token | No long-lived personal token; scoped to one repository; least privilege per run |
 | Terraform state for Grafana and GitHub | Postgres `pg` backend in Supabase | HCP Terraform, S3 | Free, already there, has locking; no extra account. Kept in its own schema |
@@ -370,7 +377,7 @@ the Grafana alerts.
 ## 14. Milestones
 
 1. **Foundation** (done): keyless CI, scanning, AWS modules (written, not deployed;
-   to be tested against the Floci emulator in CI).
+   applied to the Floci emulator on every pull request).
 2. **Delivery** (done): plan on pull request, apply on approval, drift check.
    Moves to the Render, Supabase and GitHub providers.
 3. **Data:** pipeline core with counties and settlements (done); nightly run on

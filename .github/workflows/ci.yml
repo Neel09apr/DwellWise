@@ -176,6 +176,71 @@ jobs:
           [ "$(curl -s -o /dev/null -w '%{http_code}' localhost:8000/ready)" = "503" ]
           docker rm -f app
 
+  floci:
+    name: AWS Terraform on the Floci emulator
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      floci:
+        image: floci/floci:2.4.0 # AWS emulator (MIT); throwaway, inside the runner
+        ports: ["4566:4566"]
+    env:
+      # Emulator placeholders, not credentials: Floci accepts any non-empty value.
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_REGION: eu-west-1
+      AWS_ENDPOINT_URL: http://localhost:4566 # the AWS CLI in check.sh
+      TF_IN_AUTOMATION: "true"
+      TF_INPUT: "false"
+      TF_VAR_alert_email: alerts@example.invalid
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_version: "1.15.5"
+          terraform_wrapper: false
+
+      - name: Wait for Floci, point the AWS roots at it
+        run: |
+          set -euo pipefail
+          for _ in $(seq 1 30); do aws sts get-caller-identity > /dev/null 2>&1 && break; sleep 1; done
+          aws sts get-caller-identity
+          for dir in terraform/bootstrap terraform/stacks/data; do cp .github/floci/floci_override.tf "$dir/"; done
+
+      - name: Apply the bootstrap (state bucket, OIDC roles, boundary, budget)
+        run: |
+          terraform -chdir=terraform/bootstrap init
+          terraform -chdir=terraform/bootstrap apply -auto-approve -no-color
+
+      - name: Apply the data stack, its state in the bootstrap bucket with S3-native locking
+        run: |
+          set -euo pipefail
+          bucket=$(terraform -chdir=terraform/bootstrap output -raw state_bucket)
+          echo "STATE_BUCKET=$bucket" >> "$GITHUB_ENV"
+          terraform -chdir=terraform/stacks/data init \
+            -backend-config="bucket=$bucket" -backend-config="key=data/terraform.tfstate" \
+            -backend-config="region=$AWS_REGION" -backend-config="use_lockfile=true" \
+            -backend-config='endpoints={s3="http://localhost:4566"}' -backend-config="use_path_style=true" \
+            -backend-config="skip_credentials_validation=true" -backend-config="skip_requesting_account_id=true"
+          terraform -chdir=terraform/stacks/data apply -auto-approve -no-color
+
+      - name: A second plan changes nothing
+        run: |
+          set -euo pipefail
+          for dir in terraform/bootstrap terraform/stacks/data; do
+            terraform -chdir="$dir" plan -detailed-exitcode -no-color > "$RUNNER_TEMP/plan.txt" \
+              || { cat "$RUNNER_TEMP/plan.txt"; echo "::error::$dir does not converge"; exit 1; }
+            echo "$dir: no changes"
+          done
+
+      - name: Check the controls on what was built
+        run: |
+          .github/floci/check.sh "$STATE_BUCKET" \
+            "$(terraform -chdir=terraform/stacks/data output -raw snapshots_bucket)"
+
   trivy:
     name: Trivy IaC scan
     runs-on: ubuntu-latest
