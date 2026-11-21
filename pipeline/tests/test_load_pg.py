@@ -135,12 +135,18 @@ def test_protected_sites_merge_split_sites_and_replace_only_their_designation(co
     split = [site("000001", "Bog SAC", -8.5), site("000001", "Bog SAC", -8.4)]  # one site, two features
     result = run_source(sac, store, conn, fetch=lambda *a: {"features": split})
     run_source(nha, store, conn, fetch=lambda *a: {"features": [site("000001", "Bog NHA", -8.5)]})
-    # A new SAC edition replaces the SACs and leaves the NHA alone.
-    run_source(sac, store, conn, fetch=lambda *a: {"features": [site("000002", "Fen SAC", -8.3)]})
+    # A new SAC edition replaces the SACs and leaves the NHA alone. Two features, so the
+    # row count stays within the drift check of the first run's two.
+    edition = [site("000002", "Fen SAC", -8.3), site("000003", "Moss SAC", -8.2)]
+    run_source(sac, store, conn, fetch=lambda *a: {"features": edition})
 
     got = conn.execute(
         "select designation, site_code, name, ST_NumGeometries(boundary), ST_SRID(boundary) "
         "from dw.protected_site order by designation, site_code"
     ).fetchall()
-    assert got == [("NHA", "000001", "Bog NHA", 1, 2157), ("SAC", "000002", "Fen SAC", 1, 2157)]
+    assert got == [
+        ("NHA", "000001", "Bog NHA", 1, 2157),
+        ("SAC", "000002", "Fen SAC", 1, 2157),
+        ("SAC", "000003", "Moss SAC", 1, 2157),
+    ]
     assert result.detail == {"features_merged": 1}
