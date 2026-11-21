@@ -44,6 +44,7 @@ Grafana Cloud metrics and alerts come with the monitoring milestone; see the roa
 | Container | Multi-stage image, non-root user, health check; CI builds and smoke-tests it | What runs on Render is what CI tested |
 | Scanning | Trivy (IaC and Dockerfiles, HIGH/CRITICAL fail), gitleaks over full history, findings in the Security tab | Problems are caught before merge |
 | Delivery | Terraform plan on pull request, apply after a required approval, weekly drift check | Every infrastructure change is reviewed as a plan |
+| Monitoring | Uptime probe every 10 minutes opening and closing incident issues; Grafana Cloud scrape, dashboard and four SLO-based alerts, all Terraform; runbooks | Outages are noticed, recorded and handled the same way every time |
 | Supply chain | Actions pinned to commit SHAs; provider checksums locked; Dependabot | Tag hijacking cannot change what CI runs |
 
 ## AWS modules (not deployed)
@@ -94,7 +95,8 @@ SECURITY.md               reporting and security controls
 - [ ] Capacity registers and protected sites; the settlement brief
 - [ ] AWS modules applied to the Floci emulator in CI; Terraform for Render, Supabase and GitHub
 - [x] Uptime probe every 10 minutes; incidents opened and closed as GitHub issues; runbooks
-- [ ] Monitoring: Grafana Cloud dashboards and alerts (Terraform), error tracking
+- [x] Grafana Cloud dashboard and alerts as Terraform, state in Postgres, applied by CI
+- [ ] Error tracking (Sentry)
 - [ ] SRE practice: SLO reporting and error budget, incident write-ups
 - [ ] Supply chain: SBOM, signed container images, OpenSSF Scorecard
 - [ ] Kubernetes: Helm chart deployed to a throwaway cluster in CI

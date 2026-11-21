@@ -268,7 +268,13 @@ opens an issue labelled `incident` (one per check: API down, data stale,
 dashboard API failing) linking its runbook, and closes it with the outage length
 when the check passes again. The issue list is the public incident log. Latency
 over a check's budget is reported as "slow" in the run summary, never as down.
-Grafana Cloud adds latency and error-rate dashboards and alerts from `/metrics`.
+**Grafana Cloud, as code.** Its hosted scraper reads `/metrics` every minute
+(bearer token). `terraform/stacks/observability` defines the scrape job, a
+service dashboard (requests, p95 latency against the SLO, server errors, data
+age) and four alerts emailed to the owner: slow responses (p95 of `/v1` over
+0.8 s for 10 minutes), server errors (over 5% for 10 minutes, `/ready` excluded
+because its 503 means stale data), data stale (over 48 hours) and metrics
+missing (nothing for 20 minutes). Each alert links its runbook.
 
 Each alert has a runbook in `docs/runbooks/`: API down, data stale, pipeline
 failed; database near its 500 MB limit and Storage near its 1 GB limit come with
@@ -292,6 +298,11 @@ the Grafana alerts.
   the AWS modules applied to a throwaway Floci emulator.
 - **Merge to main:** build and sign the image, Terraform apply (Render,
   Supabase, GitHub) after approval, deploy to Render.
+- **Observability:** `.github/workflows/observability.yml` plans the Grafana
+  stack on pull requests and applies it on merge. Its state sits in the
+  project's Postgres (Terraform's `pg` backend, schema `terraform_observability`),
+  so no state service or extra account is needed; tokens are secrets of the
+  `observability` environment.
 - **Nightly:** `.github/workflows/pipeline.yml` builds the same pipeline image
   CI scans and runs it at 03:17 UTC: migrate, every source in order, prune.
   Database and Storage credentials are secrets of the `nightly` environment, so
@@ -318,6 +329,7 @@ the Grafana alerts.
 | Brief engine | Deterministic facts + optional AI summary | AI agent choosing tools | Testable, reliable on free quotas, monitorable |
 | Cloud account | None: GitHub, Render, Supabase, Grafana Cloud | AWS free plan | No account that can bill; AWS is kept for another project. The AWS Terraform will be tested against the Floci emulator instead |
 | Pipeline runtime | Scheduled GitHub Actions | Lambda + EventBridge Scheduler | No cloud account needed; free on a public repo; runs replayable from the raw store |
+| Terraform state for Grafana | Postgres `pg` backend in Supabase | HCP Terraform, S3 | Free, already there, has locking; no extra account. Kept in its own schema |
 | App hosting | Render free | AWS App Runner or ECS | No free tier on those; Render is free with Docker |
 | Database | Supabase (Postgres + PostGIS) | Amazon RDS | Free without expiry; PostGIS included |
 | State locking (AWS modules) | S3-native lock file | DynamoDB table | One less resource; Terraform 1.10+ |

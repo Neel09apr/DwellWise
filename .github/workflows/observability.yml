@@ -1,0 +1,90 @@
+# Grafana Cloud as code: plan on pull request, apply on merge to main.
+# Secrets live in the "observability" environment. Until it is configured the
+# workflow only prints a notice, so pull requests are never blocked by it.
+name: observability
+
+on:
+  pull_request:
+    paths: ["terraform/stacks/observability/**", ".github/workflows/observability.yml"]
+  push:
+    branches: [main]
+    paths: ["terraform/stacks/observability/**", ".github/workflows/observability.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: observability
+  cancel-in-progress: false # never cancel a run that may hold the state lock
+
+env:
+  TF_IN_AUTOMATION: "true"
+  TF_INPUT: "false"
+  STACK_DIR: terraform/stacks/observability
+
+jobs:
+  terraform:
+    name: ${{ github.event_name == 'pull_request' && 'Plan' || 'Apply' }} Grafana Cloud
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: observability
+    env:
+      TF_VAR_grafana_url: ${{ vars.GRAFANA_URL }}
+      TF_VAR_stack_id: ${{ vars.GRAFANA_STACK_ID }}
+      TF_VAR_connections_api_url: ${{ vars.GRAFANA_CONNECTIONS_API_URL }}
+      TF_VAR_grafana_auth: ${{ secrets.GRAFANA_SA_TOKEN }}
+      TF_VAR_cloud_access_policy_token: ${{ secrets.GRAFANA_CLOUD_TOKEN }}
+      TF_VAR_metrics_token: ${{ secrets.METRICS_TOKEN }}
+      TF_VAR_alert_email: ${{ secrets.ALERT_EMAIL }}
+    steps:
+      - name: Is Grafana configured?
+        id: ready
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          missing=""
+          for name in TF_VAR_grafana_url TF_VAR_stack_id TF_VAR_connections_api_url TF_VAR_grafana_auth \
+                      TF_VAR_cloud_access_policy_token TF_VAR_metrics_token TF_VAR_alert_email DATABASE_URL; do
+            [ -n "${!name}" ] || missing="$missing ${name#TF_VAR_}"
+          done
+          if [ -n "$missing" ]; then
+            echo "::notice title=Grafana not configured::Missing in the observability environment:$missing"
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.ready.outputs.ok == 'true'
+        with:
+          persist-credentials: false
+
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        if: steps.ready.outputs.ok == 'true'
+        with:
+          terraform_version: "1.15.5"
+          terraform_wrapper: false
+
+      - name: State connection
+        if: steps.ready.outputs.ok == 'true'
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          # Percent-encode a raw password (it may contain @), as the app does; mask the result.
+          conn=$(python3 ops/dburl.py)
+          echo "::add-mask::$conn"
+          echo "PG_CONN_STR=$conn" >> "$GITHUB_ENV"
+
+      - name: Init
+        if: steps.ready.outputs.ok == 'true'
+        run: terraform -chdir="$STACK_DIR" init
+
+      - name: Plan
+        if: steps.ready.outputs.ok == 'true' && github.event_name == 'pull_request'
+        run: terraform -chdir="$STACK_DIR" plan -lock-timeout=2m -no-color
+
+      - name: Apply
+        if: steps.ready.outputs.ok == 'true' && github.event_name != 'pull_request'
+        run: terraform -chdir="$STACK_DIR" apply -auto-approve -lock-timeout=2m -no-color
