@@ -97,7 +97,8 @@ SECURITY.md               reporting and security controls
 - [x] Nightly pipeline on GitHub Actions, gzipped raw copies in Supabase Storage, 7-day retention
 - [x] Settlement brief, first section: planning precedents
 - [x] Protected sites (SAC, SPA, NHA) within 5 km: brief section 03
-- [ ] Capacity registers; the remaining brief sections
+- [x] Brief section 01: link to the county's wastewater capacity register (its terms do not allow copying it)
+- [ ] Nearby alternatives (section 04): needs capacity data that may not be republished
 - [x] GitHub settings as Terraform: `main` ruleset, Dependabot alerts, secret scanning
 - [ ] AWS modules applied to the Floci emulator in CI; Terraform for Render and Supabase
 - [x] Uptime probe every 10 minutes; incidents opened and closed as GitHub issues; runbooks

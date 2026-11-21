@@ -4,6 +4,7 @@ import { api, type Brief } from "../api/client";
 import { Breadcrumbs } from "../components/Breadcrumbs";
 import { PlanningPrecedents } from "../components/PlanningPrecedents";
 import { ProtectedSites } from "../components/ProtectedSites";
+import { WastewaterRegister } from "../components/WastewaterRegister";
 import { Failure, Loading } from "../components/Status";
 import { countySlug, titleCase } from "../text";
 import { type Resource, useResource } from "../useResource";
@@ -33,9 +34,16 @@ const SECTIONS = [
 ];
 
 type BriefState = Resource<Brief>;
+type SectionProps = {
+  id: string;
+  title: string;
+  brief: BriefState;
+  settlement: { name: string; county?: string | null };
+};
 
 /** A section's content: its data once the brief arrives, or a note that its source has not landed. */
-function SectionBody({ id, title, brief }: { id: string; title: string; brief: BriefState }) {
+function SectionBody({ id, title, brief, settlement }: SectionProps) {
+  if (id === "wastewater") return <WastewaterRegister name={settlement.name} county={settlement.county} />;
   if (id !== "precedents" && id !== "protected")
     return <p className="pending">Not loaded yet. This section fills in when its public data source is added.</p>;
   if (brief.kind === "loading") return <Loading what={title.toLowerCase()} />;
@@ -127,7 +135,7 @@ export function SettlementPage() {
             {section.title}
           </h2>
           <p className="muted">{section.about}</p>
-          <SectionBody id={section.id} title={section.title} brief={brief} />
+          <SectionBody id={section.id} title={section.title} brief={brief} settlement={s} />
         </section>
       ))}
 
