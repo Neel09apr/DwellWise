@@ -72,6 +72,9 @@ If it does neither, it is drift.
 8. **Security defaults.** No long-lived cloud keys. Least privilege. Non-root
    containers. Every scanner suppression is scoped and gives its reason.
 9. **Tests that can fail.** A new check is mutation-tested before it is trusted.
+11. **Verify before claiming.** A scheduled job is "running" only after a scheduled
+    run is seen; a requirement (TLS, a permission) is enforced only after every
+    client is tested against it. Both lessons are in `docs/incidents/`.
 
 ## Layout
 
@@ -82,7 +85,7 @@ pipeline/      nightly ingestion (GitHub Actions): fetch, gzipped raw copy, vali
 terraform/     stacks/observability (Grafana Cloud), stacks/github (repository settings), stacks/supabase (project security settings), applied by CI, state in Postgres; AWS bootstrap, stacks/data, modules (not deployed)
 docs/          DESIGN.md; runbooks and decision records as they are written
 .github/       CI: lint, tests (PostGIS), Trivy, gitleaks, plan/apply; images (GHCR, cosign, SBOM); Scorecard; nightly pipeline; uptime probe
-ops/           uptime probe (stdlib Python), run every 10 minutes by .github/workflows/uptime.yml
+ops/           backup uptime probe (stdlib Python, .github/workflows/uptime.yml; GitHub's cron is best effort); dburl.py
 deploy/        Helm chart for the app, installed on a throwaway kind cluster in CI
 ```
 
@@ -99,14 +102,15 @@ deploy/        Helm chart for the app, installed on a throwaway kind cluster in 
 | 3. Data: nightly pipeline on GitHub Actions | Merged (PR #20); running nightly since 17 Nov |
 | 5. Brief: planning precedents section (F4) | Merged (PR #24); live 21 Nov |
 | 3/5. Data and brief: protected sites (SAC, SPA, NHA) and section 03 (F5) | Merged (PR #31); loaded and live 21 Nov |
-| 6. Operate: uptime probe, incidents as issues, runbooks | Merged (PR #21); probing every 10 minutes |
+| 6. Operate: uptime probe, incidents as issues, runbooks | Merged (PR #21); its schedule never fired, now a backup (see docs/incidents/) |
 | 6. Operate: Grafana Cloud dashboards and alerts (Terraform) | Merged (PR #22); applied 21 Nov; all four alerts verified, alert email delivered |
 | 7. Supply chain: SBOM, signed images, Scorecard | Merged (PR #32); images signed, nightly verifies before running (21 Nov) |
 | 2. Delivery: GitHub settings as Terraform (ruleset on main, Dependabot alerts) | Merged (PR #33); applied 21 Nov |
 | 5. Brief: wastewater section 01 as a link to the county register (F3) | Merged (PR #34); live 21 Nov |
 | 1. Foundation: AWS Terraform applied to the Floci emulator in CI | Merged (PR #35); green on main |
 | 2. Delivery: Supabase settings as Terraform (SSL enforcement); legacy public tables dropped | Merged (PRs #36, #37); SSL enforced, all Terraform state over TLS (21 Nov) |
-| 8. Kubernetes: Helm chart on a throwaway kind cluster, Pod Security restricted | In review |
+| 8. Kubernetes: Helm chart on a throwaway kind cluster, Pod Security restricted | Merged (PR #38); green on main |
+| 6. Operate: SLOs on Grafana Synthetic Monitoring, error budget and burn alerts, incident write-ups | In review |
 
 
 ## Next
@@ -114,7 +118,7 @@ deploy/        Helm chart for the app, installed on a throwaway kind cluster in 
 1. Brief sections fill in as each data source lands (planning precedents first); the UI keeps its hierarchy (see `app/web/src/styles.css`).
 2. Wastewater capacity: the registers may not be republished (DESIGN.md §6), so
    section 01 links to them and section 04 waits. Revisit only if the licence changes.
-3. Roadmap complete once Kubernetes merges; then SRE practice (SLO report, error budget, incident write-ups) and error tracking.
+3. Error tracking (Sentry, free tier); make the Floci and kind jobs required checks.
 4. Render stays on its Blueprint until the provider can update free services (DESIGN.md §11).
 
 ## Verify a change

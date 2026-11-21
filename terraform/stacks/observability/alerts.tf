@@ -30,6 +30,39 @@ locals {
       runbook   = "docs/runbooks/data-stale.md"
       no_data   = "OK" # covered by "Metrics missing"
     }
+    # Error-budget burn (docs/slo.md). Burn rate = error rate / the 1% budget.
+    # Multiwindow: the long window shows it matters, the short one that it is
+    # still happening, so a blip that has ended does not page. The short windows
+    # are 10m and 30m: checks run every 2 minutes and rate() needs two samples.
+    burn_fast = {
+      name      = "Error budget burning fast"
+      expr      = "((1 - sum(rate(probe_all_success_sum{job=\"dwellwise-health\"}[1h])) / sum(rate(probe_all_success_count{job=\"dwellwise-health\"}[1h]))) / 0.01 > 14.4) and ((1 - sum(rate(probe_all_success_sum{job=\"dwellwise-health\"}[10m])) / sum(rate(probe_all_success_count{job=\"dwellwise-health\"}[10m]))) / 0.01 > 14.4)"
+      threshold = 14.4
+      for       = "2m"
+      summary   = "Availability is burning the 14-day error budget 14x faster than allowed: about 4% of it an hour, all of it in a day."
+      runbook   = "docs/runbooks/api-down.md"
+      no_data   = "OK" # the query is empty while the budget is safe
+    }
+    burn_slow = {
+      name      = "Error budget burning slowly"
+      expr      = "((1 - sum(rate(probe_all_success_sum{job=\"dwellwise-health\"}[6h])) / sum(rate(probe_all_success_count{job=\"dwellwise-health\"}[6h]))) / 0.01 > 6) and ((1 - sum(rate(probe_all_success_sum{job=\"dwellwise-health\"}[30m])) / sum(rate(probe_all_success_count{job=\"dwellwise-health\"}[30m]))) / 0.01 > 6)"
+      threshold = 6
+      for       = "15m"
+      summary   = "Availability is burning the 14-day error budget 6x faster than allowed: it would be gone in under 2.5 days."
+      runbook   = "docs/runbooks/api-down.md"
+      no_data   = "OK"
+    }
+    # The monitor's own heartbeat: if the probes stop reporting, the burn alerts
+    # see no data and stay quiet, the way the GitHub probe failed silently.
+    probes_missing = {
+      name      = "Synthetic checks missing"
+      expr      = "absent_over_time(probe_all_success_count{job=\"dwellwise-health\"}[15m])"
+      threshold = 0
+      for       = "5m"
+      summary   = "No synthetic /health results for 15 minutes: availability is not being measured."
+      runbook   = "docs/runbooks/api-down.md"
+      no_data   = "OK" # the query is empty while results arrive
+    }
     missing = {
       name      = "Metrics missing"
       expr      = "absent_over_time(dwellwise_http_requests_total[20m])"
