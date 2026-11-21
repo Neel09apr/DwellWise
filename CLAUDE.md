@@ -97,7 +97,7 @@ ops/           uptime probe (stdlib Python), run every 10 minutes by .github/wor
 | 5. National planning dashboard (F9) | Merged (PR #19); live 17 Nov |
 | 3. Data: nightly pipeline on GitHub Actions | Merged (PR #20); running nightly since 17 Nov |
 | 6. Operate: uptime probe, incidents as issues, runbooks | Merged (PR #21); probing every 10 minutes |
-| 6. Operate: Grafana Cloud dashboards and alerts (Terraform) | In review; applies once the `observability` environment is set up |
+| 6. Operate: Grafana Cloud dashboards and alerts (Terraform) | Merged (PR #22); applied by CI |
 | 7. Supply chain: SBOM, signed images, Scorecard | Not started |
 | 8. Kubernetes: Helm chart on a throwaway cluster | Not started |
 
