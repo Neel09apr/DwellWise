@@ -1,6 +1,6 @@
 # The nightly pipeline: one short-lived container per run, started by a
 # scheduled GitHub Actions workflow. No HEALTHCHECK on purpose: see .trivyignore.yaml.
-FROM python:3.13-slim
+FROM python:3.15-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 WORKDIR /srv
