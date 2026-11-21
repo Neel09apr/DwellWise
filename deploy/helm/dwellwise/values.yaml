@@ -1,9 +1,11 @@
-# The signed image the images workflow publishes on main. Prefer a digest:
-# a tag can move, a digest cannot (cosign signs the digest).
+# Pinned by digest: a tag can move, a digest cannot, and cosign signs the digest.
+# This is the app image the images workflow built and signed on main at 8b06d3f
+# (21 Nov 2026). Bump it to deploy a newer build; verify it first with the
+# cosign command in SECURITY.md.
 image:
   repository: ghcr.io/neel09apr/dwellwise-app
-  tag: latest
-  digest: "" # e.g. sha256:...; wins over tag when set
+  digest: sha256:872e47e90627030de96ac3328e70ccfb434d6442eccce2009f152dd521446ae1
+  tag: "" # used only when digest is empty (CI's locally built image)
   pullPolicy: IfNotPresent
 
 replicaCount: 1

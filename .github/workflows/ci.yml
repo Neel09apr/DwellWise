@@ -282,7 +282,7 @@ jobs:
       - name: Install
         run: |
           helm install dwellwise "$CHART" -n "$NS" --wait --timeout 4m \
-            --set image.repository=dwellwise-app --set image.tag=ci --set image.pullPolicy=Never
+            --set image.repository=dwellwise-app --set image.digest= --set image.tag=ci --set image.pullPolicy=Never
 
       - name: helm test (smoke check from inside the cluster)
         run: helm test dwellwise -n "$NS" --logs
