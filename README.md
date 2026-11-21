@@ -46,14 +46,19 @@ flowchart LR
 | Monitoring | Uptime probe every 10 minutes opening and closing incident issues; Grafana Cloud scrape, dashboard and four SLO-based alerts, all Terraform; runbooks | Outages are noticed, recorded and handled the same way every time |
 | Supply chain | Both images scanned by Trivy, pushed to GHCR, signed keyless with cosign and given an attested SPDX SBOM; the nightly pipeline runs only a digest whose signature it has verified; OpenSSF Scorecard weekly; Actions pinned to commit SHAs; provider checksums locked; Dependabot | A tampered or unscanned image never receives database credentials |
 
-## AWS modules (not deployed)
+## AWS modules (tested against an emulator, not deployed)
 
 `terraform/` holds AWS modules written to production standards: GitHub OIDC
 with a read-only plan role and an apply role limited to `dwellwise-*`
 resources behind a permissions boundary, an encrypted and versioned S3 state
 bucket with native locking, a reusable `secure-bucket` module, and a $1 budget
-alarm. No AWS account is used, so they are not deployed. Next they will be
-applied to the Floci emulator in CI, so they are tested rather than only linted.
+alarm. No AWS account is used, so they are not deployed. Instead, every pull
+request applies them to the [Floci](https://github.com/floci-io/floci) AWS
+emulator: the bootstrap, then the data stack with its state in the bootstrap's
+bucket (S3-native locking). A second plan must show no changes, and a script
+checks the result: versioning, public access blocked, encryption, HTTPS-only
+policy, and CI roles that trust exact GitHub subjects only. They are tested,
+not only linted.
 
 ## Cost
 
@@ -100,7 +105,8 @@ SECURITY.md               reporting and security controls
 - [x] Brief section 01: link to the county's wastewater capacity register (its terms do not allow copying it)
 - [ ] Nearby alternatives (section 04): needs capacity data that may not be republished
 - [x] GitHub settings as Terraform: `main` ruleset, Dependabot alerts, secret scanning
-- [ ] AWS modules applied to the Floci emulator in CI; Terraform for Render and Supabase
+- [x] AWS modules applied to the Floci emulator in CI on every pull request
+- [ ] Terraform for Render and Supabase
 - [x] Uptime probe every 10 minutes; incidents opened and closed as GitHub issues; runbooks
 - [x] Grafana Cloud dashboard and alerts as Terraform, state in Postgres, applied by CI
 - [ ] Error tracking (Sentry)
