@@ -78,7 +78,7 @@ app/api/                  FastAPI: /v1, health, readiness, metrics; serves the w
 app/web/                  React + TypeScript web app
 app/Dockerfile            one image for API and web
 pipeline/                 nightly ingestion: fetch, raw copy, validate, load
-terraform/                stacks/observability (Grafana), stacks/github (repo settings); AWS modules (not deployed)
+terraform/                stacks/observability (Grafana), stacks/github (repo settings), stacks/supabase (security settings); AWS modules (emulator-tested)
 docs/DESIGN.md            system design: requirements, architecture, SLOs, decisions
 render.yaml               Render blueprint (free plan, Frankfurt)
 .github/workflows/
@@ -88,6 +88,7 @@ render.yaml               Render blueprint (free plan, Frankfurt)
   pipeline.yml            nightly pipeline: verify the signed image, then run it
   scorecard.yml           OpenSSF Scorecard, weekly and on merge
   github-settings.yml     repository settings as Terraform: plan on PR and weekly, apply on merge
+  supabase-settings.yml   Supabase security settings as Terraform, same pattern
 SECURITY.md               reporting and security controls
 ```
 
@@ -106,7 +107,8 @@ SECURITY.md               reporting and security controls
 - [ ] Nearby alternatives (section 04): needs capacity data that may not be republished
 - [x] GitHub settings as Terraform: `main` ruleset, Dependabot alerts, secret scanning
 - [x] AWS modules applied to the Floci emulator in CI on every pull request
-- [ ] Terraform for Render and Supabase
+- [x] Supabase security settings as Terraform (SSL enforcement, sign-ups off)
+- [ ] Render as Terraform: blocked upstream (the provider cannot update free services); the Blueprint stays
 - [x] Uptime probe every 10 minutes; incidents opened and closed as GitHub issues; runbooks
 - [x] Grafana Cloud dashboard and alerts as Terraform, state in Postgres, applied by CI
 - [ ] Error tracking (Sentry)
