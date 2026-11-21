@@ -9,3 +9,16 @@ misconfigurations:
       workflow starts one container per run, which exits when done, and the
       exit code is the health signal. Long-running containers must still
       define one.
+  - id: GIT-0001
+    paths:
+      - "terraform/stacks/github/main.tf"
+    statement: >-
+      The repository is public on purpose: it is a portfolio project, and
+      public repositories get GitHub Actions minutes and Scorecard for free.
+  - id: GIT-0003
+    paths:
+      - "terraform/stacks/github/main.tf"
+    statement: >-
+      Vulnerability alerts are enabled by the github_repository_vulnerability_alerts
+      resource in the same file. The provider deprecated the inline
+      vulnerability_alerts argument this check looks for.

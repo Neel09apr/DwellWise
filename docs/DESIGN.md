@@ -312,6 +312,18 @@ the Grafana alerts.
   pushing. Terraform apply (Render, Supabase, GitHub) after approval; Render
   deploys. OpenSSF Scorecard runs weekly and on merge (`scorecard.yml`) and
   publishes its result.
+- **GitHub settings:** `terraform/stacks/github`, applied by
+  `.github/workflows/github-settings.yml` (plan on pull request and weekly,
+  apply on merge; state in the `terraform_github` schema). It owns the
+  repository's description and features, Dependabot alerts and security
+  updates, secret scanning with push protection, the `main` ruleset and the
+  environments. The ruleset: changes reach `main` only by pull request, with
+  the CI jobs that always run as required checks (path-filtered workflows are
+  not required: a check that never runs would block the merge), no force
+  pushes, no deletion, nobody can bypass. No approving review is required,
+  because GitHub does not let an author approve their own pull request.
+  Credentials come from a GitHub App installed on this repository only; each
+  run mints a one-hour token, read-only for plans, so no personal token exists.
 - **Observability:** `.github/workflows/observability.yml` plans the Grafana
   stack on pull requests and applies it on merge. Its state sits in the
   project's Postgres (Terraform's `pg` backend, schema `terraform_observability`),
@@ -348,7 +360,8 @@ the Grafana alerts.
 | Brief engine | Deterministic facts + optional AI summary | AI agent choosing tools | Testable, reliable on free quotas, monitorable |
 | Cloud account | None: GitHub, Render, Supabase, Grafana Cloud | AWS free plan | No account that can bill; AWS is kept for another project. The AWS Terraform will be tested against the Floci emulator instead |
 | Pipeline runtime | Scheduled GitHub Actions | Lambda + EventBridge Scheduler | No cloud account needed; free on a public repo; runs replayable from the raw store |
-| Terraform state for Grafana | Postgres `pg` backend in Supabase | HCP Terraform, S3 | Free, already there, has locking; no extra account. Kept in its own schema |
+| CI credentials for GitHub settings | GitHub App, one-hour installation token per run (read-only for plans) | Fine-grained personal access token | No long-lived personal token; scoped to one repository; least privilege per run |
+| Terraform state for Grafana and GitHub | Postgres `pg` backend in Supabase | HCP Terraform, S3 | Free, already there, has locking; no extra account. Kept in its own schema |
 | App hosting | Render free | AWS App Runner or ECS | No free tier on those; Render is free with Docker |
 | Database | Supabase (Postgres + PostGIS) | Amazon RDS | Free without expiry; PostGIS included |
 | State locking (AWS modules) | S3-native lock file | DynamoDB table | One less resource; Terraform 1.10+ |

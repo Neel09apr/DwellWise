@@ -42,7 +42,7 @@ flowchart LR
 | Pipeline | Paged fetch, raw copy with SHA-256, validation (row floor, ±20% drift, required fields, geometry, no personal data), staged load swapped in one transaction | A bad source never replaces good data |
 | Container | Multi-stage image, non-root user, health check; CI builds and smoke-tests it | What runs on Render is what CI tested |
 | Scanning | Trivy (IaC and Dockerfiles, HIGH/CRITICAL fail), gitleaks over full history, findings in the Security tab | Problems are caught before merge |
-| Delivery | Terraform plan on pull request, apply after a required approval, weekly drift check | Every infrastructure change is reviewed as a plan |
+| Delivery | Terraform plan on pull request, apply after a required approval, weekly drift check; the repository's own settings and `main` ruleset are Terraform too, applied with a one-hour GitHub App token | Every infrastructure change is reviewed as a plan; nothing reaches main without passing CI |
 | Monitoring | Uptime probe every 10 minutes opening and closing incident issues; Grafana Cloud scrape, dashboard and four SLO-based alerts, all Terraform; runbooks | Outages are noticed, recorded and handled the same way every time |
 | Supply chain | Both images scanned by Trivy, pushed to GHCR, signed keyless with cosign and given an attested SPDX SBOM; the nightly pipeline runs only a digest whose signature it has verified; OpenSSF Scorecard weekly; Actions pinned to commit SHAs; provider checksums locked; Dependabot | A tampered or unscanned image never receives database credentials |
 
@@ -73,7 +73,7 @@ app/api/                  FastAPI: /v1, health, readiness, metrics; serves the w
 app/web/                  React + TypeScript web app
 app/Dockerfile            one image for API and web
 pipeline/                 nightly ingestion: fetch, raw copy, validate, load
-terraform/                AWS modules (not deployed); Render, Supabase and GitHub to come
+terraform/                stacks/observability (Grafana), stacks/github (repo settings); AWS modules (not deployed)
 docs/DESIGN.md            system design: requirements, architecture, SLOs, decisions
 render.yaml               Render blueprint (free plan, Frankfurt)
 .github/workflows/
@@ -82,6 +82,7 @@ render.yaml               Render blueprint (free plan, Frankfurt)
   images.yml              build and scan images; on main push to GHCR, sign, attest SBOM
   pipeline.yml            nightly pipeline: verify the signed image, then run it
   scorecard.yml           OpenSSF Scorecard, weekly and on merge
+  github-settings.yml     repository settings as Terraform: plan on PR and weekly, apply on merge
 SECURITY.md               reporting and security controls
 ```
 
@@ -97,7 +98,8 @@ SECURITY.md               reporting and security controls
 - [x] Settlement brief, first section: planning precedents
 - [x] Protected sites (SAC, SPA, NHA) within 5 km: brief section 03
 - [ ] Capacity registers; the remaining brief sections
-- [ ] AWS modules applied to the Floci emulator in CI; Terraform for Render, Supabase and GitHub
+- [x] GitHub settings as Terraform: `main` ruleset, Dependabot alerts, secret scanning
+- [ ] AWS modules applied to the Floci emulator in CI; Terraform for Render and Supabase
 - [x] Uptime probe every 10 minutes; incidents opened and closed as GitHub issues; runbooks
 - [x] Grafana Cloud dashboard and alerts as Terraform, state in Postgres, applied by CI
 - [ ] Error tracking (Sentry)

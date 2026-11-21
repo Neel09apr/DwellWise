@@ -1,0 +1,105 @@
+# The repository's own settings as code: plan on pull request, apply on merge.
+# Credentials: a GitHub App installed on this repository only. Each run swaps
+# its key for a one-hour installation token, read-only for plans. Secrets live in
+# the "github-settings" environment; until it is configured the workflow only
+# prints a notice, so pull requests are never blocked by it.
+name: github settings
+
+on:
+  pull_request:
+    paths: ["terraform/stacks/github/**", ".github/workflows/github-settings.yml"]
+  push:
+    branches: [main]
+    paths: ["terraform/stacks/github/**", ".github/workflows/github-settings.yml"]
+  schedule:
+    - cron: "41 5 * * 1" # Mondays: a plan that shows drift from click-ops
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-settings
+  cancel-in-progress: false # never cancel a run that may hold the state lock
+
+env:
+  TF_IN_AUTOMATION: "true"
+  TF_INPUT: "false"
+  STACK_DIR: terraform/stacks/github
+  APPLY: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+
+jobs:
+  terraform:
+    name: ${{ (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && 'Apply' || 'Plan' }} GitHub settings
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: github-settings
+    steps:
+      - name: Is the GitHub App configured?
+        id: ready
+        env:
+          CLIENT_ID: ${{ vars.GH_APP_CLIENT_ID }}
+          PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          missing=""
+          for name in CLIENT_ID PRIVATE_KEY DATABASE_URL; do
+            [ -n "${!name}" ] || missing="$missing $name"
+          done
+          if [ -n "$missing" ]; then
+            echo "::notice title=GitHub settings not configured::Missing in the github-settings environment:$missing"
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.ready.outputs.ok == 'true'
+        with:
+          persist-credentials: false
+
+      # Plans get a token that can only read; only the apply can change settings.
+      - name: App token
+        id: app
+        if: steps.ready.outputs.ok == 'true'
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.GH_APP_CLIENT_ID }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          repositories: ${{ github.event.repository.name }}
+          permission-administration: ${{ env.APPLY == 'true' && 'write' || 'read' }}
+          permission-environments: ${{ env.APPLY == 'true' && 'write' || 'read' }}
+          permission-metadata: read
+
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        if: steps.ready.outputs.ok == 'true'
+        with:
+          terraform_version: "1.15.5"
+          terraform_wrapper: false
+
+      - name: State connection
+        if: steps.ready.outputs.ok == 'true'
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          # Percent-encode a raw password (it may contain @), as the app does; mask the result.
+          conn=$(python3 ops/dburl.py)
+          echo "::add-mask::$conn"
+          echo "PG_CONN_STR=$conn" >> "$GITHUB_ENV"
+
+      - name: Init
+        if: steps.ready.outputs.ok == 'true'
+        run: terraform -chdir="$STACK_DIR" init
+
+      - name: Plan
+        if: steps.ready.outputs.ok == 'true' && env.APPLY != 'true'
+        env:
+          GITHUB_TOKEN: ${{ steps.app.outputs.token }}
+        run: terraform -chdir="$STACK_DIR" plan -lock-timeout=2m -no-color
+
+      - name: Apply
+        if: steps.ready.outputs.ok == 'true' && env.APPLY == 'true'
+        env:
+          GITHUB_TOKEN: ${{ steps.app.outputs.token }}
+        run: terraform -chdir="$STACK_DIR" apply -auto-approve -lock-timeout=2m -no-color
