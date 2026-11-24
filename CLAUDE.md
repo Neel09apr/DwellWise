@@ -89,7 +89,7 @@ ops/           backup uptime probe (stdlib Python, .github/workflows/uptime.yml;
 deploy/        Helm chart for the app, installed on a throwaway kind cluster in CI
 ```
 
-## Status (21 November 2026)
+## Status (24 November 2026)
 
 | Milestone (DESIGN.md §14) | State |
 |---|---|
@@ -111,7 +111,7 @@ deploy/        Helm chart for the app, installed on a throwaway kind cluster in 
 | 2. Delivery: Supabase settings as Terraform (SSL enforcement); legacy public tables dropped | Merged (PRs #36, #37); SSL enforced, all Terraform state over TLS (21 Nov) |
 | 8. Kubernetes: Helm chart on a throwaway kind cluster, Pod Security restricted | Merged (PR #38); a required check |
 | 6. Operate: SLOs on Grafana Synthetic Monitoring, error budget and burn alerts, incident write-ups | Merged (PR #39); checks live, alerts verified 21 Nov |
-| 6. Operate: error tracking (Sentry, API only) | In review |
+| 6. Operate: error tracking (Sentry, API only) | Merged (PR #46); live 24 Nov, release seen in Sentry |
 
 
 ## Next
