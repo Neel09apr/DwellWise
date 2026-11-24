@@ -35,9 +35,27 @@ If it does neither, it is drift.
   refused and pending, per county and month, refreshed nightly (F9).
 - The platform around it: Terraform, CI/CD, scanning, monitoring, SLOs.
 
+**In (v2)**, planned in `docs/DESIGN.md` §16, one milestone per pull request:
+
+- A live developments dashboard: recent applications per county and town, what
+  is new since the last nightly run, a map, and construction starts if the
+  commencement notices' licence allows.
+- Prices at area level only: the CSO price index (county, Eircode area) and, if
+  its licence allows, Property Price Register sales aggregated per town.
+- A cost and feasibility calculator: computed by code from the user's inputs and
+  cited published rates (development contributions), never by the model.
+- Constraint screening from openly licensed layers (protected sites, radon,
+  landslide, monuments), each licence checked before it is fetched.
+- An AI assistant that turns what the user wants into a ranked shortlist of
+  towns with trade-offs, using only DwellWise's own API as tools and citing
+  every number. It proposes evidence, never a planning outcome.
+- A UI redesign, after the v2 features settle.
+
 **Out**, unless this file is changed first:
 
-- Planning advice or a likelihood of permission.
+- Planning advice or a likelihood of permission, from code or from the model.
+- Valuing a particular site or property, and individual sale addresses.
+- Scraping listings or any source whose terms forbid reuse.
 - Flood data (OPW licence is CC-BY-NC-ND).
 - Applicant names or addresses, at any stage.
 - User accounts (drafts stay in the browser for v1).
@@ -120,6 +138,9 @@ deploy/        Helm chart for the app, installed on a throwaway kind cluster in 
 2. Wastewater capacity: the registers may not be republished (DESIGN.md §6), so
    section 01 links to them and section 04 waits. Revisit only if the licence changes.
 3. Render stays on its Blueprint until the provider can update free services (DESIGN.md §11).
+4. v2 (DESIGN.md §16), in order: M9 live developments dashboard, M10 prices,
+   M11 cost calculator, M12 AI platform layer, M13 scheme assistant, M14 UI redesign.
+   Check each source's licence and each AI provider's current terms before building on it.
 
 ## Verify a change
 

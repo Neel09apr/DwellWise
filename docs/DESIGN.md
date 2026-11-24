@@ -251,8 +251,9 @@ is generated from it, so the two cannot drift.
 - Input is the brief's facts as JSON with ids; output must cite those ids.
   A summary that cites an unknown id or a number not in the facts is
   rejected and the template summary is shown instead.
-- Provider-agnostic (any OpenAI-compatible API); Gemini's free tier by
-  default.
+- Provider-agnostic (any OpenAI-compatible API); Groq's free tier by
+  default (its prompts are not used for training), Gemini's or Cloudflare
+  Workers AI's free tier as fallbacks. See §16 for the v2 assistant.
 - Cached by a hash of the facts, so repeat views cost nothing.
 - If the quota is exhausted or the call fails, the brief is complete without
   it. The AI is never on the critical path.
@@ -433,6 +434,8 @@ workflow runs and stale-data alerts.
 | Database | Supabase (Postgres + PostGIS) | Amazon RDS | Free without expiry; PostGIS included |
 | State locking (AWS modules) | S3-native lock file | DynamoDB table | One less resource; Terraform 1.10+ |
 | Encryption at rest | SSE-S3 | Customer-managed KMS key | A KMS key costs ~$1/month; recorded as a reasoned scanner suppression |
+| v2 assistant | AI agent with DwellWise's own API as its only tools, numbers checked against tool output | Model answering from its own knowledge | Facts stay in code (rule 6); hallucinated numbers are caught by a test, not by a user. The brief itself stays deterministic |
+| Valuation | Area-level price indices and town aggregates | Per-site valuation | No free per-site data; sale addresses are personal data; area evidence fits a town-level brief |
 
 ## 14. Milestones
 
@@ -456,6 +459,15 @@ workflow runs and stale-data alerts.
 8. **Kubernetes:** Helm chart deployed to a throwaway kind cluster in CI on every
    pull request, under the Pod Security `restricted` profile.
 
+v2, detailed in §16:
+
+9. **Live developments dashboard.**
+10. **Prices** (area level).
+11. **Cost and feasibility calculator.**
+12. **AI platform layer.**
+13. **Scheme assistant.**
+14. **UI redesign.**
+
 ## 15. Open questions
 
 - Which register editions to keep: latest only, or history to show status
@@ -466,4 +478,71 @@ workflow runs and stale-data alerts.
   database; widen it once the table's size is measured.
 - Whether commencement notices (Building Control Management System) can be
   used, under what licence, to show construction starts beside planning
-  decisions. Not in v1 until checked.
+  decisions. Not in v1 until checked; M9 checks it first.
+- The Property Price Register's reuse terms. The PSRA encourages reuse of its
+  information, but no licence text was found for the register itself (checked
+  24 Nov 2026). M10 uses it only once the terms are confirmed, aggregated, and
+  without addresses.
+- Each free AI tier's current limits and data terms; published figures
+  disagree. Confirm in the provider's own documentation before M12.
+
+## 16. v2: live developments, prices, costs and an AI assistant
+
+Agreed 24 November 2026. The same constraints hold: $0 a month, open licences
+only, facts from code, one milestone per pull request. The AI proposes
+evidence; it never predicts a planning decision or values a site.
+
+**M9. Live developments dashboard.** The Ireland, county and settlement pages
+show recent applications (newest first), what is new since the last nightly
+run, and a map (MapLibre with free vector tiles whose terms allow it). Every view
+states when the data was captured and the newest application date in the
+source, so "as recent as last night" is shown, not assumed. Commencement
+notices add construction starts if their licence allows; otherwise the
+dashboard shows applications and decisions only. Data age stays under the
+existing freshness SLO.
+
+**M10. Prices, area level.** The CSO Residential Property Price Index (PxStat
+API, CC BY 4.0; county and Eircode routing area) as a trend per county and per
+settlement's routing area. Property Price Register sales, aggregated per town
+(count and median by year, no addresses, small groups suppressed), only once
+its terms are confirmed. A new brief section with the source and date of each
+figure. Not a valuation of any site.
+
+**M11. Cost and feasibility calculator.** Deterministic code: build cost per
+square metre, the council's development contribution charges (from its
+published scheme, cited with its date), professional fees, finance and a
+contingency. Every input is the user's or a cited published rate; the result
+shows its working. Stays in the browser like drafts.
+
+**M12. AI platform layer.** The engineering core of v2:
+
+- One thin client for OpenAI-compatible APIs; Groq free tier first, Gemini or
+  Cloudflare Workers AI as fallbacks. The key is a secret on Render; nothing
+  runs without it.
+- Tools are DwellWise's own API only: search settlements, read a brief,
+  national and county statistics, price index, cost calculator. No web access,
+  no free-form SQL.
+- Every number in an answer must appear in a tool result from the same run;
+  an answer that fails the check is rejected, not shown. Text from public
+  sources is treated as data, never as instructions.
+- An evaluation set of questions runs in CI against recorded tool results, so a
+  prompt or model change that breaks grounding fails the build.
+- Per-IP and daily limits, responses cached by input, a kill switch, and the
+  site fully usable with the AI off.
+- Token use, latency, refusals and failures as Prometheus metrics on the
+  Grafana dashboard, with an alert when the daily free quota is close.
+
+**M13. Scheme assistant.** The user describes a scheme ("eight homes in north
+Cork, near a town with spare treatment capacity"). The assistant asks what is
+missing, searches and compares towns through the tools, and returns a ranked
+shortlist with the trade-offs, links to each brief and a citation for every
+figure. It describes towns and evidence; it does not say whether permission
+would be granted.
+
+**M14. UI redesign.** After M9 to M13, so the design serves the finished
+features. Rule 10 (minimal, hierarchical, one accent) is revisited in that pull
+request.
+
+**Constraint screening** (with M10 or M13, as licences allow): radon (EPA),
+landslide susceptibility (GSI), recorded monuments (National Monuments
+Service), beside the protected sites already shown. Flood data stays out.
