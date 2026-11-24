@@ -55,7 +55,7 @@ def commencement_stats(
         str | None,
         Query(pattern=r"^[A-Za-z][A-Za-z \-]{1,30}$", description="County name; none means Ireland"),
     ] = None,
-    settlement: Annotated[str | None, Query(pattern=r"^\d{4,6}$", description="CSO settlement code")] = None,
+    settlement: Annotated[str | None, Query(pattern=r"^\d{1,6}$", description="CSO settlement code")] = None,
     start: Annotated[
         str | None, Query(alias="from", pattern=MONTH, description="First month, YYYY-MM")
     ] = None,

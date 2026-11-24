@@ -493,7 +493,7 @@
               "anyOf": [
                 {
                   "type": "string",
-                  "pattern": "^\\d{4,6}$"
+                  "pattern": "^\\d{1,6}$"
                 },
                 {
                   "type": "null"
