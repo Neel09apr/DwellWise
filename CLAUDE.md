@@ -119,7 +119,6 @@ deploy/        Helm chart for the app, installed on a throwaway kind cluster in 
 2. Wastewater capacity: the registers may not be republished (DESIGN.md §6), so
    section 01 links to them and section 04 waits. Revisit only if the licence changes.
 3. Error tracking (Sentry, free tier).
-4. Rotate the Supabase database password (exposed in a local session log on 17 Nov), then write it up in docs/incidents/.
 4. Render stays on its Blueprint until the provider can update free services (DESIGN.md §11).
 
 ## Verify a change
