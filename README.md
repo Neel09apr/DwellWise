@@ -113,7 +113,7 @@ SECURITY.md               reporting and security controls
 - [ ] Render as Terraform: blocked upstream (the provider cannot update free services); the Blueprint stays
 - [x] Uptime probe with incidents opened and closed as GitHub issues (now a backup: GitHub's cron proved unreliable); runbooks
 - [x] Grafana Cloud dashboard and alerts as Terraform, state in Postgres, applied by CI
-- [ ] Error tracking (Sentry)
+- [x] Error tracking: unhandled API errors to Sentry, tagged with the deployed commit, no secrets in events
 - [x] SRE practice: SLOs on synthetic checks, error budget and burn-rate alerts ([docs/slo.md](docs/slo.md)), incident write-ups ([docs/incidents/](docs/incidents/))
 - [x] Supply chain: SBOM, signed container images, OpenSSF Scorecard
 - [x] Kubernetes: Helm chart installed on a throwaway kind cluster in CI under Pod Security `restricted`, with `helm test`

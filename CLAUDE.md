@@ -111,6 +111,7 @@ deploy/        Helm chart for the app, installed on a throwaway kind cluster in 
 | 2. Delivery: Supabase settings as Terraform (SSL enforcement); legacy public tables dropped | Merged (PRs #36, #37); SSL enforced, all Terraform state over TLS (21 Nov) |
 | 8. Kubernetes: Helm chart on a throwaway kind cluster, Pod Security restricted | Merged (PR #38); a required check |
 | 6. Operate: SLOs on Grafana Synthetic Monitoring, error budget and burn alerts, incident write-ups | Merged (PR #39); checks live, alerts verified 21 Nov |
+| 6. Operate: error tracking (Sentry, API only) | In review |
 
 
 ## Next
@@ -118,8 +119,7 @@ deploy/        Helm chart for the app, installed on a throwaway kind cluster in 
 1. Brief sections fill in as each data source lands (planning precedents first); the UI keeps its hierarchy (see `app/web/src/styles.css`).
 2. Wastewater capacity: the registers may not be republished (DESIGN.md §6), so
    section 01 links to them and section 04 waits. Revisit only if the licence changes.
-3. Error tracking (Sentry, free tier).
-4. Render stays on its Blueprint until the provider can update free services (DESIGN.md §11).
+3. Render stays on its Blueprint until the provider can update free services (DESIGN.md §11).
 
 ## Verify a change
 
