@@ -9,6 +9,7 @@ import uuid
 from contextlib import asynccontextmanager
 from http import HTTPStatus
 
+import sentry_sdk
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse
@@ -37,8 +38,22 @@ def _error(status: int, message: str) -> JSONResponse:
     return JSONResponse({"error": {"code": code, "message": message}}, status_code=status)
 
 
+def init_error_tracking(settings: Settings) -> None:
+    """Send unhandled errors to Sentry when a DSN is set. No tracing: Grafana has latency."""
+    if not settings.sentry_dsn:
+        return
+    sentry_sdk.init(
+        dsn=settings.sentry_dsn,
+        release=settings.release,
+        environment="production",
+        include_local_variables=False,  # frame locals hold request headers and the database URL
+        traces_sample_rate=0,
+    )
+
+
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or Settings.from_env()
+    init_error_tracking(settings)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -68,7 +83,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.exception_handler(Exception)
     async def unexpected(_request: Request, exc: Exception) -> JSONResponse:
-        log.exception("unhandled error")  # details stay in the logs, never in the response
+        # Details go to the logs, and to Sentry through its FastAPI integration; never the response.
+        log.exception("unhandled error")
         return _error(500, "Something went wrong on our side.")
 
     @app.middleware("http")

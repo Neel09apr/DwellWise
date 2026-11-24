@@ -45,6 +45,8 @@ class Settings:
     web_dist: Path | None = None
     freshness_hours: float = 48
     metrics_token: str | None = None
+    sentry_dsn: str | None = None  # error tracking is off without it
+    release: str | None = None  # the deployed commit; Render sets RENDER_GIT_COMMIT
 
     @classmethod
     def from_env(cls, env: Mapping[str, str] | None = None) -> Settings:
@@ -57,4 +59,6 @@ class Settings:
             web_dist=Path(dist) if dist else None,
             freshness_hours=float(values.get("FRESHNESS_HOURS", 48)),
             metrics_token=values.get("METRICS_TOKEN") or None,
+            sentry_dsn=values.get("SENTRY_DSN") or None,
+            release=values.get("RENDER_GIT_COMMIT") or None,
         )

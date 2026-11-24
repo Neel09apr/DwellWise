@@ -13,3 +13,5 @@ services:
         sync: false
       - key: METRICS_TOKEN # scrapers send "Authorization: Bearer <token>"
         generateValue: true
+      - key: SENTRY_DSN # error tracking; off when unset
+        sync: false

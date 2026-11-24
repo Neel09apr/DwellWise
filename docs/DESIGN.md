@@ -301,6 +301,15 @@ Each alert has a runbook in `docs/runbooks/`: API down, data stale, pipeline
 failed; database near its 500 MB limit and Storage near its 1 GB limit come with
 the Grafana alerts.
 
+**Errors to Sentry.** Unhandled API errors (the 500s) go to Sentry's free tier,
+tagged with the deployed commit (`RENDER_GIT_COMMIT`), so each one arrives with
+its stack trace and the release that introduced it. Metrics say how many fail;
+Sentry says why. It is off unless `SENTRY_DSN` is set; tracing is off because
+Grafana covers latency; and frame local variables are not sent, because they
+hold request headers and the database URL (a test checks a bearer token never
+reaches an event). The pipeline is not wired in: its failures are failed
+workflow runs and stale-data alerts.
+
 ## 10. Security
 
 | Threat | Control |
@@ -312,6 +321,7 @@ the Grafana alerts.
 | Abuse of the AI endpoint | Per-IP and daily limits; cached responses; works without it |
 | Secrets in git | gitleaks on full history; push protection on |
 | Personal data | Applicant fields excluded at fetch and asserted absent at validation |
+| Secrets in error reports | Sentry gets no frame local variables and no default personal data; a test sends a bearer token and asserts it is absent from the event |
 
 ## 11. Environments and delivery
 
