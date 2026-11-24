@@ -24,3 +24,8 @@ export function byFirstLetter(items: SettlementSummary[]): [string, SettlementSu
   }
   return [...groups.entries()];
 }
+
+/** "2026-11-23" -> "23 Nov 2026", as every brief section writes dates. */
+export function dayLabel(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-IE", { dateStyle: "medium" });
+}

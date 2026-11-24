@@ -2,6 +2,7 @@ import { useParams } from "react-router-dom";
 
 import { api, type Brief } from "../api/client";
 import { Breadcrumbs } from "../components/Breadcrumbs";
+import { BuildingNow } from "../components/BuildingNow";
 import { PlanningPrecedents } from "../components/PlanningPrecedents";
 import { ProtectedSites } from "../components/ProtectedSites";
 import { WastewaterRegister } from "../components/WastewaterRegister";
@@ -38,7 +39,7 @@ type SectionProps = {
   id: string;
   title: string;
   brief: BriefState;
-  settlement: { name: string; county?: string | null };
+  settlement: { code: string; name: string; county?: string | null };
 };
 
 /** A section's content: its data once the brief arrives, or a note that its source has not landed. */
@@ -49,7 +50,10 @@ function SectionBody({ id, title, brief, settlement }: SectionProps) {
   if (brief.kind === "loading") return <Loading what={title.toLowerCase()} />;
   if (brief.kind === "error") return <Failure message={brief.message} />;
   return id === "precedents" ? (
-    <PlanningPrecedents precedents={brief.data.precedents} />
+    <>
+      <PlanningPrecedents precedents={brief.data.precedents} />
+      <BuildingNow settlement={settlement.code} />
+    </>
   ) : (
     <ProtectedSites protected={brief.data.protected} />
   );

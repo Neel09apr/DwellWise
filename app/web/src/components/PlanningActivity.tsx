@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import { api, type ApplicationStats } from "../api/client";
-import { countySlug, titleCase } from "../text";
+import { countySlug, dayLabel, titleCase } from "../text";
 import { useResource } from "../useResource";
 import { decidedShare, monthLabel } from "./planningText";
 import { Failure, Loading } from "./Status";
@@ -84,8 +84,9 @@ function Figures({
         invalid, exempt and split decisions.{" "}
         {stats.residential &&
           "Residential means the application states new dwellings. "}
-        {stats.captured_at &&
-          `Captured ${new Date(stats.captured_at).toLocaleDateString("en-IE")}. `}
+        {stats.newest_received &&
+          `The national dataset runs to ${dayLabel(stats.newest_received)}: councils publish with a delay. `}
+        {stats.captured_at && `Captured ${dayLabel(stats.captured_at)}. `}
         {stats.attribution}
       </p>
     </>

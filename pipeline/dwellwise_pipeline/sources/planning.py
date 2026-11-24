@@ -112,12 +112,18 @@ def _date(ms: int | None) -> str | None:
     return datetime.fromtimestamp(ms / 1000, UTC).date().isoformat() if ms is not None else None
 
 
+def _past(day: str | None, today: str) -> str | None:
+    """A decision date in the future is a typing error in the source (one says 2075): drop it."""
+    return day if day and day <= today else None
+
+
 def is_residential(units: int | None, one_off_house: str | None) -> bool:
     """True when the application states new dwellings: units, or a one-off house."""
     return bool(units and units > 0) or _norm(one_off_house) in ONE_OFF_HOUSE
 
 
 def transform(collection: dict) -> list[dict]:
+    today = datetime.now(UTC).date().isoformat()
     rows = []
     for f in collection["features"]:
         p = f["properties"]
@@ -131,7 +137,7 @@ def transform(collection: dict) -> list[dict]:
                 "authority": authority,
                 "application_number": p["ApplicationNumber"].strip(),
                 "received": _date(p["ReceivedDate"]),
-                "decided": _date(p.get("DecisionDate")),
+                "decided": _past(_date(p.get("DecisionDate")), today),
                 "decision": (p.get("Decision") or "").strip() or None,
                 "decision_class": cls,
                 "recognised": recognised,

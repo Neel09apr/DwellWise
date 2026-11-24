@@ -18,7 +18,7 @@ def test_settlements_keep_their_code_as_text_and_get_a_name_key(settlements):
 
 
 def test_counties_load_before_settlements():
-    assert list(SOURCES) == ["counties", "settlements", "planning", "sac", "spa", "nha"]
+    assert list(SOURCES) == ["counties", "settlements", "planning", "sac", "spa", "nha", "commencements"]
 
 
 def test_protected_sites_carry_their_designation_and_ask_for_simplified_boundaries():

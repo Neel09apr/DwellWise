@@ -6,6 +6,7 @@ export type SettlementSummary = Schemas["SettlementSummary"];
 export type SettlementDetail = Schemas["SettlementDetail"];
 export type ApplicationStats = Schemas["ApplicationStats"];
 export type Brief = Schemas["Brief"];
+export type CommencementStats = Schemas["CommencementStats"];
 
 /** Every API error carries {error: {code, message}}; this keeps the status too. */
 export class ApiError extends Error {
@@ -53,5 +54,12 @@ export const api = {
     if (residential) params.set("residential", "true");
     const query = params.toString();
     return get<ApplicationStats>(`/v1/stats/applications${query ? `?${query}` : ""}`, signal);
+  },
+  commencementStats: ({ county, settlement }: { county?: string; settlement?: string }, signal?: AbortSignal) => {
+    const params = new URLSearchParams();
+    if (county) params.set("county", county);
+    if (settlement) params.set("settlement", settlement);
+    const query = params.toString();
+    return get<CommencementStats>(`/v1/stats/commencements${query ? `?${query}` : ""}`, signal);
   },
 };

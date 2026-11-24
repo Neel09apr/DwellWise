@@ -130,6 +130,7 @@ deploy/        Helm chart for the app, installed on a throwaway kind cluster in 
 | 8. Kubernetes: Helm chart on a throwaway kind cluster, Pod Security restricted | Merged (PR #38); a required check |
 | 6. Operate: SLOs on Grafana Synthetic Monitoring, error budget and burn alerts, incident write-ups | Merged (PR #39); checks live, alerts verified 21 Nov |
 | 6. Operate: error tracking (Sentry, API only) | Merged (PR #46); live 24 Nov, release seen in Sentry |
+| v2 M9a: construction starts (commencement notices) on the Ireland, county and town pages; planning shows its source's lag | In review |
 
 
 ## Next

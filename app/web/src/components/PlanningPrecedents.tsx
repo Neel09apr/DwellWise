@@ -1,5 +1,6 @@
 import type { Brief } from "../api/client";
 import { decidedShare, decisionLabel } from "./planningText";
+import { dayLabel } from "../text";
 
 const FIGURES = [
   { key: "granted", label: "Granted" },
@@ -10,7 +11,7 @@ const FIGURES = [
 ] as const;
 
 const fmt = new Intl.NumberFormat("en-IE");
-const day = (iso: string) => new Date(iso).toLocaleDateString("en-IE", { dateStyle: "medium" });
+const day = dayLabel;
 
 /** Brief section 02: recent residential planning applications in the town (F4). */
 export function PlanningPrecedents({ precedents: p }: { precedents: Brief["precedents"] }) {

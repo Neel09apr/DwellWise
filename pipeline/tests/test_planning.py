@@ -122,6 +122,11 @@ def test_transform_trims_maps_and_converts_dates():
     assert (row["decision_class"], row["recognised"], row["residential"]) == ("granted", True, True)
 
 
+def test_a_decision_date_in_the_future_is_dropped():
+    (row,) = SOURCES["planning"].transform(collection([feature(DecisionDate=3342297600000)]))  # 2075-12-03
+    assert row["decided"] is None
+
+
 def test_an_unknown_authority_is_reported_before_load():
     problems = check(collection([feature(), feature(PlanningAuthority="Narnia County Council")]))
     assert problems == ["unknown planning authorities: Narnia County Council"]

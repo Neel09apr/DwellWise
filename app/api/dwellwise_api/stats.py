@@ -72,6 +72,7 @@ def application_stats(
         from_month=f"{first:%Y-%m}",
         to_month=f"{last:%Y-%m}",
         captured_at=data["captured_at"],
+        newest_received=data.get("newest_received"),
         attribution=ATTRIBUTION,
         totals=DecisionCounts(**_counts(rows)),
         months=months,

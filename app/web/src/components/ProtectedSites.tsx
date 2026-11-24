@@ -1,7 +1,8 @@
 import type { Brief } from "../api/client";
 import { DESIGNATIONS, distanceLabel } from "./protectedText";
+import { dayLabel } from "../text";
 
-const day = (iso: string) => new Date(iso).toLocaleDateString("en-IE", { dateStyle: "medium" });
+const day = dayLabel;
 
 /** Brief section 03: SACs, SPAs and NHAs near the town boundary, nearest first (F5). */
 export function ProtectedSites({ protected: p }: { protected: Brief["protected"] }) {

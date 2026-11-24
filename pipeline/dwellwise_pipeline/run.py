@@ -51,13 +51,13 @@ def run_source(
     store,
     conn=None,
     *,
-    fetch: Callable[..., dict] = fetch_features,
+    fetch: Callable[..., dict] | None = None,
     now: datetime | None = None,
 ) -> RunResult:
     """Run one source. With no connection it stops after validation (a dry run)."""
     fetched_at = now or datetime.now(UTC)
     run_id = str(uuid.uuid4())
-    collection = fetch(
+    collection = (fetch or source.fetch or fetch_features)(
         source.layer_url, list(source.out_fields), source.order_by, source.where, source.max_offset
     )
 
