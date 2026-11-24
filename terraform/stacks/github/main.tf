@@ -30,12 +30,15 @@ resource "github_repository" "this" {
 
   lifecycle {
     prevent_destroy = true
-    # GitHub omits these four fields when a GitHub App token reads the repository,
-    # even with administration: write, so every plan read them as false and showed
-    # a change to true. The repository already has all four set (checked with an
-    # owner token, 24 Nov 2026). Values above set them on create; drift in them is
-    # not detected. Revisit if the provider reads them for App tokens.
-    ignore_changes = [allow_merge_commit, allow_squash_merge, allow_rebase_merge, delete_branch_on_merge]
+    # GitHub omits the merge settings when a GitHub App token reads the repository,
+    # even with administration: write, so every plan read them as unset and showed
+    # changes. The repository already has the values above (checked with an owner
+    # token, 24 Nov 2026). Drift in these eight is not detected. Revisit if the
+    # provider reads them for App tokens.
+    ignore_changes = [
+      allow_merge_commit, allow_squash_merge, allow_rebase_merge, delete_branch_on_merge,
+      merge_commit_title, merge_commit_message, squash_merge_commit_title, squash_merge_commit_message,
+    ]
   }
 }
 
