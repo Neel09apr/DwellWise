@@ -134,9 +134,45 @@ def load_protected(cur, rows: list[dict], snapshot_id: str) -> dict:
     return {"features_merged": len(rows) - cur.rowcount}
 
 
+COMMENCEMENT_COLUMNS = (
+    "notice_number", "local_authority", "county", "submitted", "commenced", "expected_end",
+    "homes", "scheme_homes", "homes_completed", "planning_ref", "project_name", "geometry",
+)  # fmt: skip
+
+
+def load_commencements(cur, rows: list[dict], snapshot_id: str) -> dict:
+    """COPY into staging, then replace the table, placing each notice in its settlement."""
+    cur.execute("select count(*) from dw.settlement")
+    if cur.fetchone()[0] == 0:
+        raise LoadError("load settlements before commencements: each notice is placed in one")
+    cur.execute(
+        "create temp table stage_commencement (notice_number text, local_authority text, county text, "
+        "submitted date, commenced date, expected_end date, homes integer, scheme_homes integer, "
+        "homes_completed integer, planning_ref text, project_name text, geometry text) on commit drop"
+    )
+    with cur.copy(f"copy stage_commencement ({', '.join(COMMENCEMENT_COLUMNS)}) from stdin") as copy:
+        for r in rows:
+            copy.write_row(tuple(r[c] for c in COMMENCEMENT_COLUMNS))
+    cur.execute("delete from dw.commencement")
+    cur.execute(
+        "insert into dw.commencement (notice_number, local_authority, county, submitted, commenced, "
+        "expected_end, homes, scheme_homes, homes_completed, planning_ref, project_name, location, "
+        "settlement, snapshot_id) "
+        "select c.notice_number, c.local_authority, c.county, c.submitted, c.commenced, c.expected_end, "
+        "c.homes, c.scheme_homes, c.homes_completed, c.planning_ref, c.project_name, c.location, "
+        "(select s.code from dw.settlement s where ST_Contains(s.boundary, c.location) limit 1), %s "
+        "from (select *, ST_Transform(ST_SetSRID(ST_GeomFromGeoJSON(geometry), 4326), 2157) as location "
+        "from stage_commencement) c",
+        (snapshot_id,),
+    )
+    cur.execute("select count(*) filter (where settlement is not null) from dw.commencement")
+    return {"in_a_settlement": cur.fetchone()[0]}
+
+
 LOADERS: dict[str, Callable[..., dict]] = {
     "county": load_counties,
     "settlement": load_settlements,
     "planning_application": load_planning,
     "protected_site": load_protected,
+    "commencement": load_commencements,
 }

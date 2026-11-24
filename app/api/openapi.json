@@ -456,6 +456,126 @@
           }
         }
       }
+    },
+    "/v1/stats/commencements": {
+      "get": {
+        "tags": [
+          "stats"
+        ],
+        "summary": "Commencement Stats",
+        "description": "Homes whose construction started each month, from commencement notices, and the newest schemes.",
+        "operationId": "commencement_stats_v1_stats_commencements_get",
+        "parameters": [
+          {
+            "name": "county",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[A-Za-z][A-Za-z \\-]{1,30}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "County name; none means Ireland",
+              "title": "County"
+            },
+            "description": "County name; none means Ireland"
+          },
+          {
+            "name": "settlement",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{1,6}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "CSO settlement code",
+              "title": "Settlement"
+            },
+            "description": "CSO settlement code"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "First month, YYYY-MM",
+              "title": "From"
+            },
+            "description": "First month, YYYY-MM"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Last month, YYYY-MM",
+              "title": "To"
+            },
+            "description": "Last month, YYYY-MM"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommencementStats"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -504,6 +624,18 @@
             ],
             "title": "Captured At"
           },
+          "newest_received": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Newest Received"
+          },
           "attribution": {
             "type": "string",
             "title": "Attribution"
@@ -533,6 +665,7 @@
           "from_month",
           "to_month",
           "captured_at",
+          "newest_received",
           "attribution",
           "totals",
           "months",
@@ -568,6 +701,126 @@
           "pending"
         ],
         "title": "Brief"
+      },
+      "CommencementMonth": {
+        "properties": {
+          "notices": {
+            "type": "integer",
+            "title": "Notices"
+          },
+          "homes": {
+            "type": "integer",
+            "title": "Homes"
+          },
+          "month": {
+            "type": "string",
+            "title": "Month"
+          }
+        },
+        "type": "object",
+        "required": [
+          "notices",
+          "homes",
+          "month"
+        ],
+        "title": "CommencementMonth"
+      },
+      "CommencementStats": {
+        "properties": {
+          "county": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "County"
+          },
+          "settlement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Settlement"
+          },
+          "from_month": {
+            "type": "string",
+            "title": "From Month"
+          },
+          "to_month": {
+            "type": "string",
+            "title": "To Month"
+          },
+          "captured_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Captured At"
+          },
+          "newest_submitted": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Newest Submitted"
+          },
+          "attribution": {
+            "type": "string",
+            "title": "Attribution"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/HomesCount"
+          },
+          "last_7_days": {
+            "$ref": "#/components/schemas/HomesCount"
+          },
+          "months": {
+            "items": {
+              "$ref": "#/components/schemas/CommencementMonth"
+            },
+            "type": "array",
+            "title": "Months"
+          },
+          "recent_schemes": {
+            "items": {
+              "$ref": "#/components/schemas/Scheme"
+            },
+            "type": "array",
+            "title": "Recent Schemes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "county",
+          "settlement",
+          "from_month",
+          "to_month",
+          "captured_at",
+          "newest_submitted",
+          "attribution",
+          "totals",
+          "last_7_days",
+          "months",
+          "recent_schemes"
+        ],
+        "title": "CommencementStats"
       },
       "County": {
         "properties": {
@@ -724,6 +977,24 @@
           "status"
         ],
         "title": "Health"
+      },
+      "HomesCount": {
+        "properties": {
+          "notices": {
+            "type": "integer",
+            "title": "Notices"
+          },
+          "homes": {
+            "type": "integer",
+            "title": "Homes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "notices",
+          "homes"
+        ],
+        "title": "HomesCount"
       },
       "MonthCounts": {
         "properties": {
@@ -996,6 +1267,109 @@
           "checks"
         ],
         "title": "Ready"
+      },
+      "Scheme": {
+        "properties": {
+          "notice_number": {
+            "type": "string",
+            "title": "Notice Number"
+          },
+          "project_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project Name"
+          },
+          "settlement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Settlement"
+          },
+          "county": {
+            "type": "string",
+            "title": "County"
+          },
+          "local_authority": {
+            "type": "string",
+            "title": "Local Authority"
+          },
+          "homes": {
+            "type": "integer",
+            "title": "Homes"
+          },
+          "scheme_homes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scheme Homes"
+          },
+          "commenced": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Commenced"
+          },
+          "expected_end": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected End"
+          },
+          "planning_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planning Ref"
+          }
+        },
+        "type": "object",
+        "required": [
+          "notice_number",
+          "project_name",
+          "settlement",
+          "county",
+          "local_authority",
+          "homes",
+          "scheme_homes",
+          "commenced",
+          "expected_end",
+          "planning_ref"
+        ],
+        "title": "Scheme",
+        "description": "A commencement notice for five homes or more. Smaller ones are counted, never listed."
       },
       "SettlementDetail": {
         "properties": {

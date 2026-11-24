@@ -161,6 +161,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/stats/commencements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Commencement Stats
+         * @description Homes whose construction started each month, from commencement notices, and the newest schemes.
+         */
+        get: operations["commencement_stats_v1_stats_commencements_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -177,6 +197,8 @@ export interface components {
             to_month: string;
             /** Captured At */
             captured_at: string | null;
+            /** Newest Received */
+            newest_received: string | null;
             /** Attribution */
             attribution: string;
             totals: components["schemas"]["DecisionCounts"];
@@ -193,6 +215,38 @@ export interface components {
             protected: components["schemas"]["ProtectedSites"];
             /** Pending */
             pending: string[];
+        };
+        /** CommencementMonth */
+        CommencementMonth: {
+            /** Notices */
+            notices: number;
+            /** Homes */
+            homes: number;
+            /** Month */
+            month: string;
+        };
+        /** CommencementStats */
+        CommencementStats: {
+            /** County */
+            county: string | null;
+            /** Settlement */
+            settlement: string | null;
+            /** From Month */
+            from_month: string;
+            /** To Month */
+            to_month: string;
+            /** Captured At */
+            captured_at: string | null;
+            /** Newest Submitted */
+            newest_submitted: string | null;
+            /** Attribution */
+            attribution: string;
+            totals: components["schemas"]["HomesCount"];
+            last_7_days: components["schemas"]["HomesCount"];
+            /** Months */
+            months: components["schemas"]["CommencementMonth"][];
+            /** Recent Schemes */
+            recent_schemes: components["schemas"]["Scheme"][];
         };
         /** County */
         County: {
@@ -256,6 +310,13 @@ export interface components {
         Health: {
             /** Status */
             status: string;
+        };
+        /** HomesCount */
+        HomesCount: {
+            /** Notices */
+            notices: number;
+            /** Homes */
+            homes: number;
         };
         /** MonthCounts */
         MonthCounts: {
@@ -359,6 +420,32 @@ export interface components {
             checks: {
                 [key: string]: string;
             };
+        };
+        /**
+         * Scheme
+         * @description A commencement notice for five homes or more. Smaller ones are counted, never listed.
+         */
+        Scheme: {
+            /** Notice Number */
+            notice_number: string;
+            /** Project Name */
+            project_name: string | null;
+            /** Settlement */
+            settlement: string | null;
+            /** County */
+            county: string;
+            /** Local Authority */
+            local_authority: string;
+            /** Homes */
+            homes: number;
+            /** Scheme Homes */
+            scheme_homes: number | null;
+            /** Commenced */
+            commenced: string | null;
+            /** Expected End */
+            expected_end: string | null;
+            /** Planning Ref */
+            planning_ref: string | null;
         };
         /** SettlementDetail */
         SettlementDetail: {
@@ -672,6 +759,53 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApplicationStats"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    commencement_stats_v1_stats_commencements_get: {
+        parameters: {
+            query?: {
+                /** @description County name; none means Ireland */
+                county?: string | null;
+                /** @description CSO settlement code */
+                settlement?: string | null;
+                /** @description First month, YYYY-MM */
+                from?: string | null;
+                /** @description Last month, YYYY-MM */
+                to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommencementStats"];
                 };
             };
             /** @description Not Found */

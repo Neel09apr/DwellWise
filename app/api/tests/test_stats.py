@@ -99,6 +99,7 @@ ROW = {
         {"county": "MAYO", "month": "2026-10-01", "decision_class": "refused", "n": 1},
     ],
     "captured_at": None,
+    "newest_received": None,
 }
 
 

@@ -16,7 +16,7 @@ from ..schemas import Health, Ready
 router = APIRouter(tags=["health"])
 
 # Sources the app cannot work without. Each must have loaded within FRESHNESS_HOURS.
-REQUIRED_SOURCES = ("counties", "settlements", "planning", "sac", "spa", "nha")
+REQUIRED_SOURCES = ("counties", "settlements", "planning", "sac", "spa", "nha", "commencements")
 
 
 @router.get("/health", response_model=Health)

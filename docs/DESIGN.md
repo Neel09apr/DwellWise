@@ -227,6 +227,18 @@ file, which makes backfills and bug fixes cheap. What to do when it fails:
 | National Planning Applications (Department of Housing, ArcGIS REST) | Applications and decisions | CC BY 4.0 |
 | Tailte Éireann settlement boundaries | Settlement polygons | CC BY 4.0, attribution "© Tailte Éireann" |
 | NPWS designated areas (ArcGIS REST, the service named on npws.ie) | SAC, SPA and NHA boundaries, one source each | CC BY 4.0 |
+| Building Commencement and Completion Data, National Building Control Office (one CSV, refreshed each morning) | Residential commencement notices since 2020, one row per notice (M9) | CC BY 4.0 |
+
+**Commencement notices (M9).** The file is about 280 MB with one row per
+building. The source streams it and keeps only residential notices received
+since 2020, one feature per notice, with the fields in `dw.commencement`; the
+raw copy is that projection (about 3 MB), not the whole file, because the rest
+holds street names, Eircodes and project names that identify one-off homes. A
+project name is kept only for notices of five homes or more, and the API lists
+nothing smaller. Two councils are spelt differently from the planning dataset
+and are mapped by name; an unknown council or an impossible start date rejects
+the run. This is the source that is fresh to the previous night: the planning
+dataset itself runs about ten days behind, and the dashboard says so.
 
 ## 7. API
 
@@ -476,9 +488,9 @@ v2, detailed in §16:
 - How far back to load planning applications. v1 loads applications received
   from 1 January 2020 (about 264,000 of 513,000), to stay well inside the 500 MB
   database; widen it once the table's size is measured.
-- Whether commencement notices (Building Control Management System) can be
-  used, under what licence, to show construction starts beside planning
-  decisions. Not in v1 until checked; M9 checks it first.
+- ~~Whether commencement notices can be used.~~ Settled 24 Nov 2026: the
+  National Building Control Office publishes them nationally under CC BY 4.0,
+  refreshed daily (the Department's yearly files are CC BY-SA and stop in 2021).
 - The Property Price Register's reuse terms. The PSRA encourages reuse of its
   information, but no licence text was found for the register itself (checked
   24 Nov 2026). M10 uses it only once the terms are confirmed, aggregated, and

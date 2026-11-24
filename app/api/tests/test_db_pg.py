@@ -228,3 +228,49 @@ def test_the_brief_lists_protected_sites_within_5_km_nearest_first(client):
 
 def test_a_town_far_from_protected_sites_has_an_empty_list(client):
     assert client.get("/v1/settlements/3/brief").json()["protected"]["sites"] == []
+
+
+def seed_commencements(conn) -> None:
+    snap = str(uuid.uuid4())
+    conn.execute(
+        "insert into dw.snapshot (id, source, fetched_at, raw_uri, sha256, rows_loaded, status) "
+        "values (%s, 'commencements', now(), 'test://', 'x', 3, 'loaded')",
+        (snap,),
+    )
+    for number, name, homes, commenced, settlement in [  # all in Kildare
+        ("CN1", "Athy Meadows", 9, "2026-10-12", "1"),
+        ("CN2", None, 1, "2026-10-20", "1"),  # a one-off house: counted, never listed
+        ("CN3", "Old Scheme", 20, "2025-02-01", None),  # outside the months asked for, still listed
+    ]:
+        conn.execute(
+            "insert into dw.commencement (notice_number, local_authority, county, submitted, commenced, "
+            "homes, project_name, location, settlement, snapshot_id) values (%s, 'Kildare County Council', "
+            "'KILDARE', current_date - 2, %s, %s, %s, ST_Transform(ST_SetSRID(ST_MakePoint(-6.99, 53.005), "
+            "4326), 2157), %s, %s)",
+            (number, commenced, homes, name, settlement, snap),
+        )
+
+
+def test_commencements_count_homes_and_list_only_schemes_of_five_or_more(client):
+    with psycopg.connect(URL, autocommit=True) as conn:
+        seed_commencements(conn)
+    body = client.get(
+        "/v1/stats/commencements", params={"county": "kildare", "from": "2026-09", "to": "2026-10"}
+    ).json()
+    assert body["totals"] == {"notices": 2, "homes": 10}
+    assert [(m["month"], m["homes"]) for m in body["months"]] == [("2026-09", 0), ("2026-10", 10)]
+    assert body["last_7_days"] == {"notices": 3, "homes": 30}
+    assert [s["notice_number"] for s in body["recent_schemes"]] == ["CN1", "CN3"]
+    assert body["recent_schemes"][0]["settlement"] == "Athy"
+    assert body["captured_at"] and body["newest_submitted"]
+
+    town = client.get(
+        "/v1/stats/commencements", params={"settlement": "1", "from": "2026-10", "to": "2026-10"}
+    )
+    assert town.json()["totals"] == {"notices": 2, "homes": 10}
+    assert client.get("/v1/stats/commencements", params={"settlement": "9999"}).status_code == 404
+
+
+def test_planning_stats_say_how_recent_the_source_is(client):
+    body = client.get("/v1/stats/applications", params={"county": "mayo"}).json()
+    assert body["newest_received"] == "2026-10-10"

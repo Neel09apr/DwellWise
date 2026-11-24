@@ -72,10 +72,49 @@ class ApplicationStats(BaseModel):
     from_month: str
     to_month: str
     captured_at: datetime | None
+    newest_received: date | None  # the source lags: its newest application, not our capture time
     attribution: str
     totals: DecisionCounts
     months: list[MonthCounts]
     counties: list[CountyCounts]
+
+
+class HomesCount(BaseModel):
+    notices: int
+    homes: int
+
+
+class CommencementMonth(HomesCount):
+    month: str  # YYYY-MM, by commencement date
+
+
+class Scheme(BaseModel):
+    """A commencement notice for five homes or more. Smaller ones are counted, never listed."""
+
+    notice_number: str
+    project_name: str | None
+    settlement: str | None
+    county: str
+    local_authority: str
+    homes: int
+    scheme_homes: int | None
+    commenced: date | None
+    expected_end: date | None
+    planning_ref: str | None
+
+
+class CommencementStats(BaseModel):
+    county: str | None
+    settlement: str | None  # CSO code
+    from_month: str
+    to_month: str
+    captured_at: datetime | None
+    newest_submitted: date | None
+    attribution: str
+    totals: HomesCount
+    last_7_days: HomesCount  # notices received in the week before the capture
+    months: list[CommencementMonth]
+    recent_schemes: list[Scheme]
 
 
 class PrecedentApplication(BaseModel):

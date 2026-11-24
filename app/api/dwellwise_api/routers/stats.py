@@ -5,9 +5,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from .. import stats
+from .. import building, stats
 from ..db import get_conn
-from ..schemas import ApplicationStats, ErrorBody
+from ..schemas import ApplicationStats, CommencementStats, ErrorBody
 
 router = APIRouter(prefix="/v1/stats", tags=["stats"])
 
@@ -41,4 +41,31 @@ def application_stats(
         raise HTTPException(422, str(exc)) from exc
     if found is None:
         raise HTTPException(404, f"No county is called {county}.")
+    return found
+
+
+@router.get(
+    "/commencements",
+    response_model=CommencementStats,
+    responses={404: {"model": ErrorBody}, 422: {"model": ErrorBody}},
+)
+def commencement_stats(
+    conn: Conn,
+    county: Annotated[
+        str | None,
+        Query(pattern=r"^[A-Za-z][A-Za-z \-]{1,30}$", description="County name; none means Ireland"),
+    ] = None,
+    settlement: Annotated[str | None, Query(pattern=r"^\d{1,6}$", description="CSO settlement code")] = None,
+    start: Annotated[
+        str | None, Query(alias="from", pattern=MONTH, description="First month, YYYY-MM")
+    ] = None,
+    end: Annotated[str | None, Query(alias="to", pattern=MONTH, description="Last month, YYYY-MM")] = None,
+) -> CommencementStats:
+    """Homes whose construction started each month, from commencement notices, and the newest schemes."""
+    try:
+        found = building.commencement_stats(conn, county, settlement, start, end, date.today())
+    except stats.RangeError as exc:
+        raise HTTPException(422, str(exc)) from exc
+    if found is None:
+        raise HTTPException(404, "No such county or settlement.")
     return found

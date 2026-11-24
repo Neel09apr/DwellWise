@@ -104,13 +104,73 @@ def application_stats_data(conn, county: str | None, residential: bool | None, s
                     'county', county, 'month', month, 'decision_class', decision_class, 'n', n)), '[]')
                  from counts) as rows,
                 (select max(fetched_at) from dw.snapshot where source = 'planning' and status = 'loaded')
-                    as captured_at
+                    as captured_at,
+                (select max(received) from dw.planning_application
+                 where (%(county)s::text is null or county = %(county)s)
+                   and (%(residential)s::boolean is null or residential = %(residential)s))
+                    as newest_received
             """,
             {"start": start, "end": end, "county": county, "residential": residential},
         )
         data = cur.fetchone()
     rows = [{**r, "month": date.fromisoformat(r["month"])} for r in data["rows"]]
-    return {"counties": data["counties"], "rows": rows, "captured_at": data["captured_at"]}
+    return {
+        "counties": data["counties"],
+        "rows": rows,
+        "captured_at": data["captured_at"],
+        "newest_received": data["newest_received"],
+    }
+
+
+def commencement_data(conn, county: str | None, settlement: str | None, start, end, named_from: int) -> dict:
+    """Everything the commencements endpoint needs, in one round trip.
+
+    Homes started per month (by commencement date) in [start, end), notices
+    received in the week before the last capture, and the newest named schemes
+    (at least ``named_from`` homes; smaller notices are never listed).
+    """
+    with conn.cursor(row_factory=dict_row) as cur:
+        cur.execute(
+            """
+            with scope as (
+                select c.*, s.name as settlement_name from dw.commencement c
+                left join dw.settlement s on s.code = c.settlement
+                where (%(county)s::text is null or c.county = %(county)s)
+                  and (%(settlement)s::text is null or c.settlement = %(settlement)s)
+            ), captured as (
+                select max(fetched_at) as at from dw.snapshot
+                where source = 'commencements' and status = 'loaded'
+            )
+            select
+                (%(county)s::text is null or exists (select 1 from dw.county where name = %(county)s))
+                    as county_known,
+                (%(settlement)s::text is null
+                 or exists (select 1 from dw.settlement where code = %(settlement)s))
+                    as settlement_known,
+                (select at from captured) as captured_at,
+                (select max(submitted) from scope) as newest_submitted,
+                (select coalesce(json_agg(m order by m.month), '[]') from (
+                    select to_char(date_trunc('month', commenced), 'YYYY-MM') as month,
+                           count(*)::int as notices, coalesce(sum(homes), 0)::int as homes
+                    from scope where commenced >= %(start)s and commenced < %(end)s group by 1) m) as months,
+                (select json_build_object('notices', count(*), 'homes', coalesce(sum(homes), 0))
+                 from scope, captured
+                 where submitted > (captured.at at time zone 'UTC')::date - 7) as last_7_days,
+                (select coalesce(json_agg(r), '[]') from (
+                    select notice_number, project_name, settlement_name as settlement, county,
+                           local_authority, homes, scheme_homes, commenced, expected_end, planning_ref
+                    from scope where homes >= %(named_from)s
+                    order by submitted desc, notice_number limit 10) r) as recent_schemes
+            """,
+            {
+                "county": county,
+                "settlement": settlement,
+                "start": start,
+                "end": end,
+                "named_from": named_from,
+            },
+        )
+        return cur.fetchone()
 
 
 def settlement_brief(conn, code: str, since, limit: int, radius_m: int) -> dict:
