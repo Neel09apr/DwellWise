@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import date
 
 from . import repositories as repo
+from .place import Place
 from .schemas import ApplicationStats, CountyCounts, DecisionCounts, MonthCounts
 
 CLASSES = ("granted", "refused", "pending", "withdrawn", "other")
@@ -48,14 +49,12 @@ def _counts(rows: list[dict]) -> dict:
 
 
 def application_stats(
-    conn, county: str | None, residential: bool | None, start: str | None, end: str | None, today: date
-) -> ApplicationStats | None:
-    """None when the county does not exist."""
+    conn, place: Place, residential: bool | None, start: str | None, end: str | None, today: date
+) -> ApplicationStats:
+    """Ireland or one county (``Place`` has resolved it). Each county in scope gets a row."""
     first, last = month_range(start, end, today)
-    name = county.strip().upper() if county else None
+    name = place.county
     data = repo.application_stats_data(conn, name, residential, first, add_months(last, 1))
-    if name and name not in data["counties"]:
-        return None
     rows = data["rows"]
 
     months, day = [], first
@@ -63,8 +62,9 @@ def application_stats(
         months.append(MonthCounts(month=f"{day:%Y-%m}", **_counts([r for r in rows if r["month"] == day])))
         day = add_months(day, 1)
 
-    names = [name] if name else data["counties"]
-    counties = [CountyCounts(county=n, **_counts([r for r in rows if r["county"] == n])) for n in names]
+    counties = [
+        CountyCounts(county=n, **_counts([r for r in rows if r["county"] == n])) for n in place.counties
+    ]
 
     return ApplicationStats(
         county=name,

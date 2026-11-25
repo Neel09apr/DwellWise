@@ -151,7 +151,7 @@
           "settlements"
         ],
         "summary": "Search Settlements",
-        "description": "Settlements whose name contains the query; exact and prefix matches first.",
+        "description": "Settlements whose name contains the query; exact and prefix matches first. ``county`` limits it.",
         "operationId": "search_settlements_v1_settlements_get",
         "parameters": [
           {
@@ -168,25 +168,6 @@
             "description": "Part of a settlement name"
           },
           {
-            "name": "county",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "maxLength": 40
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Limit to one county",
-              "title": "County"
-            },
-            "description": "Limit to one county"
-          },
-          {
             "name": "limit",
             "in": "query",
             "required": false,
@@ -197,6 +178,25 @@
               "default": 10,
               "title": "Limit"
             }
+          },
+          {
+            "name": "county",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[A-Za-z][A-Za-z \\-]{1,30}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "County name; none means Ireland",
+              "title": "County"
+            },
+            "description": "County name; none means Ireland"
           }
         ],
         "responses": {
@@ -213,6 +213,16 @@
                 }
               }
             }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Not Found"
           },
           "422": {
             "description": "Validation Error",
@@ -241,7 +251,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "pattern": "^[0-9A-Za-z_-]{1,20}$",
+              "pattern": "^\\d{1,6}$",
               "description": "CSO settlement code",
               "title": "Code"
             },
@@ -297,7 +307,7 @@
             "required": true,
             "schema": {
               "type": "string",
-              "pattern": "^[0-9A-Za-z_-]{1,20}$",
+              "pattern": "^\\d{1,6}$",
               "description": "CSO settlement code",
               "title": "Code"
             },
@@ -347,25 +357,6 @@
         "description": "Planning applications received each month, counted by their current decision class.",
         "operationId": "application_stats_v1_stats_applications_get",
         "parameters": [
-          {
-            "name": "county",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "pattern": "^[A-Za-z][A-Za-z \\-]{1,30}$"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "County name; none means Ireland",
-              "title": "County"
-            },
-            "description": "County name; none means Ireland"
-          },
           {
             "name": "residential",
             "in": "query",
@@ -421,6 +412,25 @@
               "title": "To"
             },
             "description": "Last month, YYYY-MM"
+          },
+          {
+            "name": "county",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[A-Za-z][A-Za-z \\-]{1,30}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "County name; none means Ireland",
+              "title": "County"
+            },
+            "description": "County name; none means Ireland"
           }
         ],
         "responses": {
@@ -467,44 +477,6 @@
         "operationId": "commencement_stats_v1_stats_commencements_get",
         "parameters": [
           {
-            "name": "county",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "pattern": "^[A-Za-z][A-Za-z \\-]{1,30}$"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "County name; none means Ireland",
-              "title": "County"
-            },
-            "description": "County name; none means Ireland"
-          },
-          {
-            "name": "settlement",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "pattern": "^\\d{1,6}$"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "CSO settlement code",
-              "title": "Settlement"
-            },
-            "description": "CSO settlement code"
-          },
-          {
             "name": "from",
             "in": "query",
             "required": false,
@@ -541,6 +513,44 @@
               "title": "To"
             },
             "description": "Last month, YYYY-MM"
+          },
+          {
+            "name": "county",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[A-Za-z][A-Za-z \\-]{1,30}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "County name; none means Ireland",
+              "title": "County"
+            },
+            "description": "County name; none means Ireland"
+          },
+          {
+            "name": "settlement",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{1,6}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "CSO settlement code",
+              "title": "Settlement"
+            },
+            "description": "CSO settlement code"
           }
         ],
         "responses": {
@@ -710,14 +720,14 @@
             "description": "Not Found"
           },
           "422": {
-            "description": "Validation Error",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
-            }
+            },
+            "description": "Unprocessable Content"
           }
         }
       }

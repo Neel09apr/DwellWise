@@ -19,12 +19,6 @@ def list_counties(conn) -> list[dict]:
         return cur.fetchall()
 
 
-def county_exists(conn, name: str) -> bool:
-    with conn.cursor() as cur:
-        cur.execute("select 1 from dw.county where name = %s", (name,))
-        return cur.fetchone() is not None
-
-
 def county_settlements(conn, name: str) -> list[dict]:
     with conn.cursor(row_factory=dict_row) as cur:
         cur.execute("select code, name, county from dw.settlement where county = %s order by name", (name,))
@@ -99,7 +93,6 @@ def application_stats_data(conn, county: str | None, residential: bool | None, s
                 group by 1, 2, 3
             )
             select
-                (select coalesce(json_agg(name order by name), '[]') from dw.county) as counties,
                 (select coalesce(json_agg(json_build_object(
                     'county', county, 'month', month, 'decision_class', decision_class, 'n', n)), '[]')
                  from counts) as rows,
@@ -115,7 +108,6 @@ def application_stats_data(conn, county: str | None, residential: bool | None, s
         data = cur.fetchone()
     rows = [{**r, "month": date.fromisoformat(r["month"])} for r in data["rows"]]
     return {
-        "counties": data["counties"],
         "rows": rows,
         "captured_at": data["captured_at"],
         "newest_received": data["newest_received"],
@@ -142,11 +134,6 @@ def commencement_data(conn, county: str | None, settlement: str | None, start, e
                 where source = 'commencements' and status = 'loaded'
             )
             select
-                (%(county)s::text is null or exists (select 1 from dw.county where name = %(county)s))
-                    as county_known,
-                (%(settlement)s::text is null
-                 or exists (select 1 from dw.settlement where code = %(settlement)s))
-                    as settlement_known,
                 (select at from captured) as captured_at,
                 (select max(submitted) from scope) as newest_submitted,
                 (select coalesce(json_agg(m order by m.month), '[]') from (
@@ -247,8 +234,6 @@ def development_points(conn, county: str | None, min_homes: int, days: int, spar
                   and (%(county)s::text is null or a.county = %(county)s)
             )
             select
-                (%(county)s::text is null or exists (select 1 from dw.county where name = %(county)s))
-                    as county_known,
                 (select coalesce(json_agg(json_build_object(
                     'kind', kind, 'label', label, 'authority', authority, 'homes', homes, 'day', day,
                     'settlement', settlement, 'status', status, 'reference', reference,
@@ -274,25 +259,20 @@ def price_data(conn, county: str | None, settlement: str | None, since) -> dict:
 
     Candidates: the Eircode routing key most of the town's commencement notices
     carry (with how many), the county's CSO areas (exact name, or "<county> ..."
-    for counties split into city and county), and the national row ('-').
+    for counties split into city and county), and the national row ('-'). For a
+    settlement, ``county`` is its own county (``Place`` supplies it).
     """
     with conn.cursor(row_factory=dict_row) as cur:
         cur.execute(
             """
-            with s as (select code, county from dw.settlement where code = %(settlement)s),
-            key as (
+            with key as (
                 select routing_key, count(*)::int as notices, (sum(count(*)) over ())::int as with_eircode
                 from dw.commencement
                 where %(settlement)s::text is not null and settlement = %(settlement)s
                   and routing_key is not null
                 group by routing_key order by count(*) desc, routing_key limit 1
-            ),
-            target as (select coalesce(%(county)s, (select county from s)) as county)
+            )
             select
-                (%(county)s::text is null or exists (select 1 from dw.county where name = %(county)s))
-                    as county_known,
-                (%(settlement)s::text is null or exists (select 1 from s)) as settlement_known,
-                (select county from target) as county,
                 (select row_to_json(key) from key) as key,
                 (select max(fetched_at) from dw.snapshot where source = 'prices' and status = 'loaded')
                     as captured_at,
@@ -301,8 +281,8 @@ def price_data(conn, county: str | None, settlement: str | None, since) -> dict:
                     where month >= %(since)s and (
                         (kind = 'eircode' and code = (select routing_key from key))
                         or (kind = 'region' and (code = '-'
-                            or upper(name) = (select county from target)
-                            or upper(name) like (select county from target) || ' %%')))
+                            or upper(name) = %(county)s
+                            or upper(name) like %(county)s || ' %%')))
                 ) p) as rows
             """,
             {"county": county, "settlement": settlement, "since": since},

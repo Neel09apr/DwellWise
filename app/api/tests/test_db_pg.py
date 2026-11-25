@@ -332,3 +332,16 @@ def test_prices_follow_the_towns_routing_key_or_fall_back_to_the_county(client):
     assert [a["name"] for a in county["areas"]] == ["Kildare"]
     assert client.get("/v1/prices").json()["areas"][0]["name"] == "All"
     assert client.get("/v1/prices", params={"settlement": "9999"}).status_code == 404
+
+
+def test_a_county_and_a_town_together_are_refused_not_answered_wrongly(client):
+    # Castlebar (3) is in Mayo: commencements used to return 0 homes here, and prices ignored the county.
+    for path in ("/v1/stats/commencements", "/v1/prices"):
+        response = client.get(path, params={"county": "kildare", "settlement": "3"})
+        assert response.status_code == 422
+        assert response.json()["error"]["message"] == "Give a county or a settlement, not both."
+
+
+def test_search_with_an_unknown_county_is_a_404(client):
+    response = client.get("/v1/settlements", params={"q": "ath", "county": "Atlantis"})
+    assert response.status_code == 404

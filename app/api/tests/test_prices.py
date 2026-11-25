@@ -2,6 +2,7 @@
 
 from datetime import date
 
+from dwellwise_api.place import Place
 from dwellwise_api.prices import choose, prices
 
 from .test_stats import CountingConn
@@ -43,7 +44,7 @@ def test_a_split_county_shows_each_part_and_ireland_shows_the_national_row():
 
 def test_months_fold_all_and_new_homes_and_the_latest_needs_a_median():
     data = {
-        "county_known": True, "settlement_known": True, "county": None, "key": None, "captured_at": None,
+        "key": None, "captured_at": None,
         "rows": [
             row("region", "-", "All", "2026-08-01"),
             row("region", "-", "All", "2026-08-01", status="new", sales=3, median=460_000),
@@ -51,7 +52,7 @@ def test_months_fold_all_and_new_homes_and_the_latest_needs_a_median():
         ],
     }  # fmt: skip
     conn = CountingConn(data)
-    found = prices(conn, None, None, date(2026, 11, 25))
+    found = prices(conn, Place(), date(2026, 11, 25))
     assert conn.queries == 1
     (area,) = found.areas
     assert [(m.month, m.median, m.new_median) for m in area.months] == [
@@ -60,8 +61,3 @@ def test_months_fold_all_and_new_homes_and_the_latest_needs_a_median():
     ]
     assert area.latest.month == "2026-08"  # September is suppressed
     assert area.sales_12_months == 10
-
-
-def test_an_unknown_place_is_none():
-    data = {"county_known": False, "settlement_known": True, "county": None, "key": None, "rows": []}
-    assert prices(CountingConn(data), "atlantis", None, date(2026, 11, 25)) is None

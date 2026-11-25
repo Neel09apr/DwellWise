@@ -19,6 +19,7 @@ from starlette.exceptions import HTTPException
 
 from . import db, metrics
 from .config import Settings
+from .place import Places, load_from_database
 from .routers import counties, health, maps, prices, settlements, stats
 
 log = logging.getLogger("dwellwise.api")
@@ -74,6 +75,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.settings = settings
     app.add_middleware(GZipMiddleware, minimum_size=1000)
     app.state.pool = None
+    app.state.places = Places(load_from_database)
     app.include_router(health.router)
     app.include_router(counties.router)
     app.include_router(settlements.router)

@@ -93,7 +93,7 @@ export interface paths {
         };
         /**
          * Search Settlements
-         * @description Settlements whose name contains the query; exact and prefix matches first.
+         * @description Settlements whose name contains the query; exact and prefix matches first. ``county`` limits it.
          */
         get: operations["search_settlements_v1_settlements_get"];
         put?: never;
@@ -777,9 +777,9 @@ export interface operations {
             query: {
                 /** @description Part of a settlement name */
                 q: string;
-                /** @description Limit to one county */
-                county?: string | null;
                 limit?: number;
+                /** @description County name; none means Ireland */
+                county?: string | null;
             };
             header?: never;
             path?: never;
@@ -794,6 +794,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SettlementSummary"][];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
             /** @description Validation Error */
@@ -892,14 +901,14 @@ export interface operations {
     application_stats_v1_stats_applications_get: {
         parameters: {
             query?: {
-                /** @description County name; none means Ireland */
-                county?: string | null;
                 /** @description true: only applications that state dwellings */
                 residential?: boolean | null;
                 /** @description First month, YYYY-MM */
                 from?: string | null;
                 /** @description Last month, YYYY-MM */
                 to?: string | null;
+                /** @description County name; none means Ireland */
+                county?: string | null;
             };
             header?: never;
             path?: never;
@@ -939,14 +948,14 @@ export interface operations {
     commencement_stats_v1_stats_commencements_get: {
         parameters: {
             query?: {
-                /** @description County name; none means Ireland */
-                county?: string | null;
-                /** @description CSO settlement code */
-                settlement?: string | null;
                 /** @description First month, YYYY-MM */
                 from?: string | null;
                 /** @description Last month, YYYY-MM */
                 to?: string | null;
+                /** @description County name; none means Ireland */
+                county?: string | null;
+                /** @description CSO settlement code */
+                settlement?: string | null;
             };
             header?: never;
             path?: never;
@@ -1056,13 +1065,13 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorBody"];
                 };
             };
-            /** @description Validation Error */
+            /** @description Unprocessable Content */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };
