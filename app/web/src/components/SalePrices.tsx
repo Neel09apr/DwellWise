@@ -13,7 +13,12 @@ export function SalePrices({ county, settlement }: { county?: string; settlement
     (signal) => api.prices({ county, settlement }, signal),
     `${county ?? ""}:${settlement ?? ""}`,
   );
-  if (settlement) return <Body data={data} />;
+  if (settlement)
+    return (
+      <div className="section-body">
+        <Body data={data} />
+      </div>
+    );
   return (
     <section aria-labelledby="prices-title" className="level">
       <h2 id="prices-title" className="level-title">
