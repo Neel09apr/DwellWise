@@ -87,6 +87,11 @@ def client():
                 (code, name, key, county, *box, snap),
             )
         seed_planning(conn)
+        for position, name in enumerate(["counties", "settlements", "planning", "sac", "spa", "nha"]):
+            conn.execute(
+                "insert into dw.source (name, attribution, position) values (%s, %s, %s)",
+                (name, f"{name.title()} attribution. CC BY 4.0.", position),
+            )
         for designation, code, box in PROTECTED:
             conn.execute(
                 f"insert into dw.protected_site values (%s, %s, %s, null, {SQUARE}, %s)",  # noqa: S608
@@ -117,7 +122,8 @@ def test_detail_has_location_area_and_sources(client):
     assert body["name"] == "Castlebar" and body["county"] == "MAYO"
     assert 53.85 < body["latitude"] < 53.87 and -9.31 < body["longitude"] < -9.28
     assert body["area_km2"] > 0
-    assert [s["name"] for s in body["sources"]] == ["settlements", "planning"]
+    assert [s["name"] for s in body["sources"]] == ["settlements", "planning"]  # loaded ones, in order
+    assert body["sources"][0]["attribution"] == "Settlements attribution. CC BY 4.0."
 
 
 def test_unknown_code_is_a_404_in_the_error_shape(client):
@@ -345,3 +351,17 @@ def test_a_county_and_a_town_together_are_refused_not_answered_wrongly(client):
 def test_search_with_an_unknown_county_is_a_404(client):
     response = client.get("/v1/settlements", params={"q": "ath", "county": "Atlantis"})
     assert response.status_code == 404
+
+
+def test_ready_follows_the_registry_and_an_empty_one_is_not_ready(client):
+    with psycopg.connect(URL, autocommit=True) as conn:
+        conn.execute(
+            "insert into dw.source (name, attribution, position) values ('newsource', 'New. CC BY 4.0.', 9)"
+        )
+    checks = client.get("/ready").json()["checks"]
+    assert checks["data:newsource"] == "never loaded"  # registered by a first run that has not loaded yet
+    with psycopg.connect(URL, autocommit=True) as conn:
+        conn.execute("delete from dw.source")
+    response = client.get("/ready")
+    assert response.status_code == 503
+    assert response.json()["checks"]["sources"] == "none registered"

@@ -152,4 +152,5 @@ SOURCE = Source(
     transform=transform,
     check=check,
     fetch=fetch,
+    after=("settlements",),
 )

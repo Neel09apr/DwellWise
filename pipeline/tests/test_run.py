@@ -42,3 +42,20 @@ def test_the_source_filter_reaches_the_fetch(tmp_path, counties):
     with pytest.raises(ValidationError):  # the counties fixture is not planning data
         run_source(SOURCES["planning"], LocalStore(tmp_path), fetch=fetch)
     assert seen[0][3] == "ReceivedDate >= DATE '2020-01-01'"
+
+
+def test_a_run_registers_its_source_before_fetching_so_a_failed_first_run_is_known(tmp_path):
+    executed = []
+
+    class RecordingConn:
+        def execute(self, sql, params=None):
+            executed.append((sql.split()[0:3], params))
+
+    def failing_fetch(*_args):
+        raise RuntimeError("the source is down")
+
+    with pytest.raises(RuntimeError):
+        run_source(SOURCES["prices"], LocalStore(tmp_path), RecordingConn(), fetch=failing_fetch)
+    (statement, params), *_ = executed
+    assert statement == ["insert", "into", "dw.source"]
+    assert params == ("prices", SOURCES["prices"].attribution, list(SOURCES).index("prices"))

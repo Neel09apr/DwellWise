@@ -20,3 +20,4 @@ class Source:
     max_offset: float | None = None  # ArcGIS maxAllowableOffset (degrees): simplify boundaries server side
     fetch: Callable[..., dict] | None = None  # a source that is not an ArcGIS layer brings its own reader
     geometry: bool = True  # statistics tables (prices) have none
+    after: tuple[str, ...] = ()  # sources whose rows this source's loader needs; SOURCES lists them earlier

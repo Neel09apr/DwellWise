@@ -25,6 +25,6 @@ SOURCE = Source(
     required_fields=("COUNTY",),
     min_rows=26,
     table="county",
-    attribution="© Tailte Éireann. CC BY 4.0.",
+    attribution="County boundaries © Tailte Éireann. CC BY 4.0.",
     transform=transform,
 )

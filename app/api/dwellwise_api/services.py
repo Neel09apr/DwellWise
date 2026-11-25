@@ -3,20 +3,10 @@
 from __future__ import annotations
 
 from . import repositories as repo
-from .brief import PROTECTED_ATTRIBUTION
 from .names import name_key
 from .place import Place
 from .schemas import County, SettlementDetail, SettlementSummary, SourceInfo
-from .stats import ATTRIBUTION as PLANNING_ATTRIBUTION
 
-ATTRIBUTION = {
-    "counties": "County boundaries © Tailte Éireann. CC BY 4.0.",
-    "settlements": "Settlement boundaries © Tailte Éireann. CC BY 4.0.",
-    "planning": PLANNING_ATTRIBUTION,
-    "sac": PROTECTED_ATTRIBUTION,
-    "spa": PROTECTED_ATTRIBUTION,
-    "nha": PROTECTED_ATTRIBUTION,
-}
 MIN_KEY_LENGTH = 2  # shorter queries match half the country
 
 
@@ -42,10 +32,9 @@ def detail(conn, place: Place) -> SettlementDetail | None:
     row = repo.get_settlement(conn, place.settlement)
     if row is None:
         return None
-    loaded = repo.loaded_sources(conn)
-    sources = [
-        SourceInfo(name=name, captured_at=loaded[name]["captured_at"], attribution=text)
-        for name, text in ATTRIBUTION.items()
-        if name in loaded
+    sources = [  # every loaded source, in the pipeline's order, with its own attribution
+        SourceInfo(name=s["name"], captured_at=s["captured_at"], attribution=s["attribution"])
+        for s in repo.registered_sources(conn)
+        if s["captured_at"] is not None
     ]
     return SettlementDetail(**row, sources=sources)

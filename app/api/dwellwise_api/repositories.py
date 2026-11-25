@@ -58,18 +58,30 @@ def get_settlement(conn, code: str) -> dict | None:
         return cur.fetchone()
 
 
-def loaded_sources(conn) -> dict[str, dict]:
-    """Latest successful load per source, with its age in hours."""
+def registered_sources(conn) -> list[dict]:
+    """Every source the pipeline has registered, in its order, with its latest successful load.
+
+    ``captured_at`` and ``age_hours`` are None for a source that has never loaded.
+    An empty list when nothing is registered, including before the registry
+    table exists (the pipeline creates it on its first run after a deploy).
+    """
     with conn.cursor(row_factory=dict_row) as cur:
+        cur.execute("select to_regclass('dw.source') is not null as present")
+        if not cur.fetchone()["present"]:
+            return []
         cur.execute(
             """
-            select source, max(fetched_at) as captured_at,
-                   extract(epoch from now() - max(fetched_at)) / 3600 as age_hours
-            from dw.snapshot where status = 'loaded'
-            group by source
+            select s.name, s.attribution, l.captured_at,
+                   extract(epoch from now() - l.captured_at) / 3600 as age_hours
+            from dw.source s
+            left join (
+                select source, max(fetched_at) as captured_at from dw.snapshot
+                where status = 'loaded' group by source
+            ) l on l.source = s.name
+            order by s.position, s.name
             """
         )
-        return {row["source"]: row for row in cur.fetchall()}
+        return cur.fetchall()
 
 
 def application_stats_data(conn, county: str | None, residential: bool | None, start, end) -> dict:

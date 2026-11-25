@@ -181,4 +181,5 @@ SOURCE = Source(
     transform=transform,
     where=f"ReceivedDate >= DATE '{SINCE}'",
     check=check,
+    after=("settlements",),
 )

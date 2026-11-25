@@ -14,6 +14,7 @@ from . import metrics
 from .arcgis import fetch_features
 from .load import LOADERS
 from .raw_store import raw_key
+from .sources import SOURCES
 from .sources.base import Source
 from .validate import ValidationError, validate
 
@@ -38,6 +39,17 @@ def _last_loaded_rows(conn, source: str) -> int | None:
     return row[0] if row else None
 
 
+def register(conn, source: Source) -> None:
+    """Declare the source in dw.source before it runs, so a failing first run is still known."""
+    position = list(SOURCES).index(source.name) if source.name in SOURCES else len(SOURCES)
+    conn.execute(
+        "insert into dw.source (name, attribution, position) values (%s, %s, %s) "
+        "on conflict (name) do update set attribution = excluded.attribution, "
+        "position = excluded.position, registered_at = now()",
+        (source.name, source.attribution, position),
+    )
+
+
 def _record(conn, run: RunResult, fetched_at: datetime, detail: str | None) -> None:
     conn.execute(
         "insert into dw.snapshot (id, source, fetched_at, raw_uri, sha256, rows_loaded, status, detail) "
@@ -57,6 +69,8 @@ def run_source(
     """Run one source. With no connection it stops after validation (a dry run)."""
     fetched_at = now or datetime.now(UTC)
     run_id = str(uuid.uuid4())
+    if conn is not None:
+        register(conn, source)
     collection = (fetch or source.fetch or fetch_features)(
         source.layer_url, list(source.out_fields), source.order_by, source.where, source.max_offset
     )
