@@ -168,6 +168,7 @@ def test_commencements_are_placed_in_their_settlement(conn, tmp_path, counties, 
                 "commenced": "2026-12-01", "expected_end": None, "homes": homes, "scheme_homes": homes,
                 "planning_ref": "23/68", "project_name": "Scheme" if homes >= NAMED_FROM else None,
                 "homes_completed": 0,
+                "routing_key": "P43" if homes >= NAMED_FROM else None,
             },
         }  # fmt: skip
 
@@ -175,7 +176,7 @@ def test_commencements_are_placed_in_their_settlement(conn, tmp_path, counties, 
     result = run_source(replace(SOURCES["commencements"], min_rows=1), store, conn, fetch=lambda *a: notices)
 
     got = conn.execute(
-        "select notice_number, county, settlement, homes from dw.commencement order by 1"
+        "select notice_number, county, settlement, homes, routing_key from dw.commencement order by 1"
     ).fetchall()
-    assert got == [("CN1", "CORK", "1001", 9), ("CN2", "CORK", None, 1)]
+    assert got == [("CN1", "CORK", "1001", 9, "P43"), ("CN2", "CORK", None, 1, None)]
     assert result.detail == {"in_a_settlement": 1}
