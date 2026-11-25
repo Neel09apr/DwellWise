@@ -11,7 +11,6 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
 from . import metrics
-from .arcgis import fetch_features
 from .load import LOADERS
 from .raw_store import raw_key
 from .sources import SOURCES
@@ -63,17 +62,18 @@ def run_source(
     store,
     conn=None,
     *,
-    fetch: Callable[..., dict] | None = None,
+    fetch: Callable[[], dict] | None = None,
     now: datetime | None = None,
 ) -> RunResult:
-    """Run one source. With no connection it stops after validation (a dry run)."""
+    """Run one source. With no connection it stops after validation (a dry run).
+
+    ``fetch`` stands in for the source's own reader (tests).
+    """
     fetched_at = now or datetime.now(UTC)
     run_id = str(uuid.uuid4())
     if conn is not None:
         register(conn, source)
-    collection = (fetch or source.fetch or fetch_features)(
-        source.layer_url, list(source.out_fields), source.order_by, source.where, source.max_offset
-    )
+    collection = (fetch or source.fetch)()
 
     data = json.dumps(collection, separators=(",", ":")).encode("utf-8")
     run = RunResult(

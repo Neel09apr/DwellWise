@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from dwellwise_pipeline.arcgis import FetchError, fetch_features, http_get
+from dwellwise_pipeline.arcgis import FetchError, Layer, fetch_features, http_get
 
 
 def feature(n: int) -> dict:
@@ -74,3 +74,18 @@ def test_simplification_is_requested_only_when_asked():
     fetch_features("https://example.test/0", ["ID"], "ID", opener=service, sleep=no_sleep)
     assert "maxAllowableOffset=0.0001" in service.urls[0]
     assert "maxAllowableOffset" not in service.urls[1]
+
+
+def test_a_layer_asks_for_its_own_fields_order_filter_and_simplification():
+    service = FakeService([{"features": [feature(1)]}])
+    layer = Layer("https://example.test/3", ("ID", "NAME"), "OBJECTID", "ID > 5", 0.0001)
+    assert layer(opener=service, sleep=no_sleep)["features"] == [feature(1)]
+    (url,) = service.urls
+    assert url.startswith("https://example.test/3/query?")
+    for part in (
+        "outFields=ID%2CNAME",
+        "orderByFields=OBJECTID",
+        "where=ID+%3E+5",
+        "maxAllowableOffset=0.0001",
+    ):
+        assert part in url

@@ -134,5 +134,5 @@ def test_an_unknown_authority_is_reported_before_load():
 
 def test_the_query_is_limited_and_never_asks_for_applicants():
     source = SOURCES["planning"]
-    assert source.where == "ReceivedDate >= DATE '2020-01-01'"
-    assert not [f for f in source.out_fields if f.lower().startswith(("applicant", "agent"))]
+    assert source.fetch.where == "ReceivedDate >= DATE '2020-01-01'"
+    assert not [f for f in source.fetch.fields if f.lower().startswith(("applicant", "agent"))]
