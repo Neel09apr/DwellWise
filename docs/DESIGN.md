@@ -200,6 +200,13 @@ Rules carried over from the problem domain:
 One pipeline run per source, scheduled nightly on GitHub Actions, each step idempotent and
 keyed by a run id.
 
+0. **Register** the source in `dw.source` (name, attribution, position) before
+   anything else, so a source whose first run fails is still known. Sources are
+   declared once, in `pipeline/dwellwise_pipeline/sources` (`SOURCES`, whose order
+   is also the dependency order: each source lists the sources it needs in
+   `after`). The API reads `dw.source` for `/ready` and for a settlement's list of
+   sources; it keeps no list of its own. Retiring a source means removing it from
+   `SOURCES` and deleting its row in a migration.
 1. **Fetch** the source and write the untouched file, gzipped, to
    `raw/<source>/<YYYY-MM-DD>/<run_id>.geojson.gz` in the raw store, with the
    SHA-256 of the uncompressed file. Copies older than 7 days are pruned after

@@ -180,3 +180,14 @@ def test_commencements_are_placed_in_their_settlement(conn, tmp_path, counties, 
     ).fetchall()
     assert got == [("CN1", "CORK", "1001", 9, "P43"), ("CN2", "CORK", None, 1, None)]
     assert result.detail == {"in_a_settlement": 1}
+
+
+def test_a_run_registers_its_source_first_even_when_it_fails(conn, tmp_path, counties):
+    bad = {"type": "FeatureCollection", "features": []}
+    with pytest.raises(ValidationError):
+        run_source(COUNTIES, LocalStore(tmp_path), conn, fetch=lambda *a: bad)
+    rows = conn.execute("select name, attribution, position from dw.source").fetchall()
+    assert rows == [("counties", "County boundaries © Tailte Éireann. CC BY 4.0.", 0)]
+
+    run_source(COUNTIES, LocalStore(tmp_path), conn, fetch=lambda *a: counties)
+    assert conn.execute("select count(*) from dw.source").fetchone() == (1,)  # registered once, then updated

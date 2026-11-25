@@ -17,17 +17,18 @@ def test_settlements_keep_their_code_as_text_and_get_a_name_key(settlements):
     assert rows[1]["name_key"] == "carrickonshannon"
 
 
-def test_counties_load_before_settlements():
-    assert list(SOURCES) == [
-        "counties",
-        "settlements",
-        "planning",
-        "sac",
-        "spa",
-        "nha",
-        "commencements",
-        "prices",
-    ]
+def test_every_source_comes_after_the_sources_it_needs():
+    order = list(SOURCES)
+    for name, source in SOURCES.items():
+        for needed in source.after:
+            assert needed in SOURCES, f"{name} needs {needed}, which is not a source"
+            assert order.index(needed) < order.index(name), f"{name} must come after {needed}"
+    assert SOURCES["settlements"].after == ("counties",)
+    assert SOURCES["planning"].after == SOURCES["commencements"].after == ("settlements",)
+
+
+def test_every_source_says_where_its_data_comes_from():
+    assert all(s.attribution.endswith("CC BY 4.0.") for s in SOURCES.values())
 
 
 def test_protected_sites_carry_their_designation_and_ask_for_simplified_boundaries():

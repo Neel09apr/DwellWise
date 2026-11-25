@@ -33,7 +33,9 @@ export interface paths {
         };
         /**
          * Ready
-         * @description The database answers and every required source is fresh.
+         * @description The database answers and every registered source loaded within FRESHNESS_HOURS.
+         *
+         *     The pipeline registers its sources in dw.source; an empty registry is not ready.
          */
         get: operations["ready_ready_get"];
         put?: never;

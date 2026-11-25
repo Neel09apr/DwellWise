@@ -1,7 +1,8 @@
-"""Every source the pipeline knows, by name. Order matters: counties, settlements, then planning.
+"""Every source the pipeline knows, by name: the only place a source is declared.
 
-Protected sites depend on nothing; the brief relates them to settlements at query time.
-Commencement notices, like planning, are placed in settlements, so they come after them.
+The order is the run order, the dependency order (each source comes after the
+sources in its ``after``) and the order the API lists sources in. Each run
+registers its source in ``dw.source``; the API reads that table.
 """
 
 from . import commencements, counties, planning, prices, protected, settlements

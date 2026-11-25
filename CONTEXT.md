@@ -17,3 +17,8 @@ Dublin. _Avoid_: local authority or council when the county is meant.
 by its CSO code (`11016` is Navan). It always lies in one county, which a
 resolved Place carries. Evidence describes the settlement, never a site in it.
 _Avoid_: town as an identifier (names repeat: there are two Kells).
+
+**Source**: one public dataset the pipeline loads (`planning`, `commencements`,
+`prices`...), declared once in the pipeline's `SOURCES` with its attribution, and
+registered in `dw.source` on every run. `/ready` requires every registered source
+to have loaded within 48 hours. _Avoid_: feed, dataset as a code identifier.

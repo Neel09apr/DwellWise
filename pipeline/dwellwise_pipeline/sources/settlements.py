@@ -39,6 +39,7 @@ SOURCE = Source(
     required_fields=("SETTLEMENT", "SETTL_NAME"),
     min_rows=800,
     table="settlement",
-    attribution="© Tailte Éireann. CC BY 4.0.",
+    attribution="Settlement boundaries © Tailte Éireann. CC BY 4.0.",
+    after=("counties",),
     transform=transform,
 )
