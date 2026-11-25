@@ -139,6 +139,11 @@ class DevelopmentFeature(BaseModel):
     properties: DevelopmentProperties
 
 
+class UnitReporting(BaseModel):
+    authority: str
+    share: int  # percent of its applications in the period that state a number of units
+
+
 class Developments(BaseModel):
     """GeoJSON: schemes of five homes or more, started or applied for in the last 12 months."""
 
@@ -146,6 +151,8 @@ class Developments(BaseModel):
     county: str | None
     min_homes: int
     attribution: list[str]
+    # Councils that rarely or never state units: their applications cannot appear on the map.
+    sparse_units: list[UnitReporting]
     features: list[DevelopmentFeature]
 
 

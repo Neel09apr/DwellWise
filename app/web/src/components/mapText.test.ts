@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { popupLines } from "./mapText";
+import { popupLines, sparseUnitsNote } from "./mapText";
 
 const base = {
   authority: "Meath County Council",
@@ -30,5 +30,25 @@ describe("popupLines", () => {
   it("keeps markup as text", () => {
     const [name] = popupLines({ ...base, kind: "started", label: "<img src=x onerror=alert(1)>", status: null });
     expect(name).toBe("<img src=x onerror=alert(1)>"); // rendered with textContent, so it shows as text
+  });
+});
+
+describe("sparseUnitsNote", () => {
+  it("says nothing when every council states units", () => {
+    expect(sparseUnitsNote([])).toBeNull();
+  });
+
+  it("names each council with its share, joined as a sentence", () => {
+    expect(
+      sparseUnitsNote([
+        { authority: "Dublin City Council", share: 6 },
+        { authority: "Dun Laoghaire Rathdown County Council", share: 0 },
+        { authority: "South Dublin County Council", share: 4 },
+      ]),
+    ).toBe(
+      "Applications from Dublin City Council (6% of applications), Dun Laoghaire Rathdown County Council " +
+        "(0% of applications) and South Dublin County Council (4% of applications) rarely or never state a " +
+        "number of homes, so they cannot appear on the map; their construction starts still do.",
+    );
   });
 });

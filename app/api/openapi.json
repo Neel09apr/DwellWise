@@ -1112,6 +1112,13 @@
             "type": "array",
             "title": "Attribution"
           },
+          "sparse_units": {
+            "items": {
+              "$ref": "#/components/schemas/UnitReporting"
+            },
+            "type": "array",
+            "title": "Sparse Units"
+          },
           "features": {
             "items": {
               "$ref": "#/components/schemas/DevelopmentFeature"
@@ -1125,6 +1132,7 @@
           "county",
           "min_homes",
           "attribution",
+          "sparse_units",
           "features"
         ],
         "title": "Developments",
@@ -1706,6 +1714,24 @@
           "attribution"
         ],
         "title": "SourceInfo"
+      },
+      "UnitReporting": {
+        "properties": {
+          "authority": {
+            "type": "string",
+            "title": "Authority"
+          },
+          "share": {
+            "type": "integer",
+            "title": "Share"
+          }
+        },
+        "type": "object",
+        "required": [
+          "authority",
+          "share"
+        ],
+        "title": "UnitReporting"
       },
       "ValidationError": {
         "properties": {

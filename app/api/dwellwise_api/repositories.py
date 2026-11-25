@@ -215,13 +215,15 @@ def settlement_brief(conn, code: str, since, limit: int, radius_m: int) -> dict:
         return cur.fetchone()
 
 
-def development_points(conn, county: str | None, min_homes: int, days: int) -> dict:
+def development_points(conn, county: str | None, min_homes: int, days: int, sparse_below: int) -> dict:
     """Schemes of at least ``min_homes`` homes on a map, in one round trip.
 
     Started: commencement notices with a start date in the last ``days`` days (or
     up to 60 days ahead, as notices are filed before work begins). Applied:
     planning applications received in the last ``days`` days that state as many
-    units. Coordinates are WGS84, rounded to 4 decimals (about 10 m).
+    units. Coordinates are WGS84, rounded to 4 decimals (about 10 m). Also the
+    councils that state units on fewer than ``sparse_below`` percent of their
+    applications: their schemes cannot be sized, so they are missing from the map.
     """
     with conn.cursor(row_factory=dict_row) as cur:
         cur.execute(
@@ -251,8 +253,17 @@ def development_points(conn, county: str | None, min_homes: int, days: int) -> d
                     'kind', kind, 'label', label, 'authority', authority, 'homes', homes, 'day', day,
                     'settlement', settlement, 'status', status, 'reference', reference,
                     'lng', round(ST_X(p)::numeric, 4), 'lat', round(ST_Y(p)::numeric, 4))
-                    order by day desc), '[]') from points) as points
+                    order by day desc), '[]') from points) as points,
+                (select coalesce(json_agg(json_build_object('authority', authority, 'share', share)
+                    order by authority), '[]') from (
+                    select authority,
+                           round(avg((units_stated is not null)::int) * 100)::int as share
+                    from dw.planning_application
+                    where received >= current_date - %(days)s
+                      and (%(county)s::text is null or county = %(county)s)
+                    group by authority) g
+                 where share < %(sparse_below)s) as sparse_units
             """,
-            {"county": county, "min_homes": min_homes, "days": days},
+            {"county": county, "min_homes": min_homes, "days": days, "sparse_below": sparse_below},
         )
         return cur.fetchone()

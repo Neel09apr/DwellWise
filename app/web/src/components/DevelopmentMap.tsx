@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 
 import { api } from "../api/client";
 import { useResource } from "../useResource";
+import { sparseUnitsNote } from "./mapText";
 import { Failure, Loading } from "./Status";
 
 const Canvas = lazy(() => import("./DevelopmentMapCanvas"));
@@ -35,6 +36,7 @@ export function DevelopmentMap({ county }: { county?: string }) {
           <p className="note">
             Circle size follows the number of homes. Smaller schemes and one-off houses are counted in the figures
             above but never placed on the map. Applications run to the national dataset&apos;s newest date.{" "}
+            {sparseUnitsNote(data.data.sparse_units) && `${sparseUnitsNote(data.data.sparse_units)} `}
             {data.data.attribution.join(" ")} Map: OpenFreeMap, OpenMapTiles, OpenStreetMap contributors.
           </p>
         </>

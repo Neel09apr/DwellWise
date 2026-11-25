@@ -15,7 +15,8 @@ POINT = {
 
 
 def test_points_become_geojson_in_one_round_trip():
-    conn = CountingConn({"county_known": True, "points": [POINT]})
+    sparse = [{"authority": "Cork County Council", "share": 0}]
+    conn = CountingConn({"county_known": True, "points": [POINT], "sparse_units": sparse})
     found = developments(conn, None)
     assert conn.queries == 1
     body = found.model_dump()
@@ -24,10 +25,14 @@ def test_points_become_geojson_in_one_round_trip():
     assert feature["geometry"] == {"type": "Point", "coordinates": [-6.6621, 52.6595]}
     assert feature["properties"]["label"] == "Bunclody Woods"
     assert "lng" not in feature["properties"]
+    assert body["sparse_units"] == [{"authority": "Cork County Council", "share": 0}]
 
 
 def test_an_unknown_county_is_none():
-    assert developments(CountingConn({"county_known": False, "points": []}), "atlantis") is None
+    assert (
+        developments(CountingConn({"county_known": False, "points": [], "sparse_units": []}), "atlantis")
+        is None
+    )
 
 
 def test_the_page_may_load_map_tiles_from_openfreemap_and_nowhere_else():
