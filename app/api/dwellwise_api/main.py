@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import mimetypes
 import time
 import uuid
 from contextlib import asynccontextmanager
@@ -12,23 +13,29 @@ from http import HTTPStatus
 import sentry_sdk
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from starlette.exceptions import HTTPException
 
 from . import db, metrics
 from .config import Settings
-from .routers import counties, health, settlements, stats
+from .routers import counties, health, maps, settlements, stats
 
 log = logging.getLogger("dwellwise.api")
+
+# The map's worker is an ES module (.mjs). Browsers refuse a module worker served
+# with any type but JavaScript, and not every platform's MIME table knows .mjs.
+mimetypes.add_type("text/javascript", ".mjs")
 
 SECURITY_HEADERS = {
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "Content-Security-Policy": (
-        "default-src 'self'; img-src 'self' data:; "
+        "default-src 'self'; img-src 'self' data: blob: https://tiles.openfreemap.org; "
         "style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; "
-        "connect-src 'self'; frame-ancestors 'none'; base-uri 'self'"
+        "connect-src 'self' https://tiles.openfreemap.org; worker-src 'self'; "
+        "frame-ancestors 'none'; base-uri 'self'"
     ),
 }
 
@@ -65,11 +72,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app = FastAPI(title="DwellWise API", version="0.1.0", lifespan=lifespan, redoc_url=None)
     app.state.settings = settings
+    app.add_middleware(GZipMiddleware, minimum_size=1000)
     app.state.pool = None
     app.include_router(health.router)
     app.include_router(counties.router)
     app.include_router(settlements.router)
     app.include_router(stats.router)
+    app.include_router(maps.router)
 
     @app.exception_handler(HTTPException)
     async def http_error(_request: Request, exc: HTTPException) -> JSONResponse:

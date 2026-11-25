@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 
 import { api } from "../api/client";
 import { BuildingNow } from "../components/BuildingNow";
+import { DevelopmentMap } from "../components/DevelopmentMap";
 import { PlanningActivity } from "../components/PlanningActivity";
 import { SettlementSearch } from "../components/SettlementSearch";
 import { Failure, Loading } from "../components/Status";
@@ -27,6 +28,8 @@ export function HomePage() {
       <PlanningActivity />
 
       <BuildingNow />
+
+      <DevelopmentMap />
 
       <section aria-labelledby="browse" className="level">
         <h2 id="browse" className="level-title">

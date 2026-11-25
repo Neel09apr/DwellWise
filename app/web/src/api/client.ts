@@ -7,6 +7,8 @@ export type SettlementDetail = Schemas["SettlementDetail"];
 export type ApplicationStats = Schemas["ApplicationStats"];
 export type Brief = Schemas["Brief"];
 export type CommencementStats = Schemas["CommencementStats"];
+export type Developments = Schemas["Developments"];
+export type DevelopmentProperties = Schemas["DevelopmentProperties"];
 
 /** Every API error carries {error: {code, message}}; this keeps the status too. */
 export class ApiError extends Error {
@@ -62,4 +64,6 @@ export const api = {
     const query = params.toString();
     return get<CommencementStats>(`/v1/stats/commencements${query ? `?${query}` : ""}`, signal);
   },
+  developments: (county: string | undefined, signal?: AbortSignal) =>
+    get<Developments>(`/v1/map/developments${county ? `?${new URLSearchParams({ county })}` : ""}`, signal),
 };

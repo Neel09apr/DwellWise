@@ -576,6 +576,69 @@
           }
         }
       }
+    },
+    "/v1/map/developments": {
+      "get": {
+        "tags": [
+          "map"
+        ],
+        "summary": "Development Map",
+        "description": "GeoJSON of schemes of five homes or more started or applied for in the last 12 months.",
+        "operationId": "development_map_v1_map_developments_get",
+        "parameters": [
+          {
+            "name": "county",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[A-Za-z][A-Za-z \\-]{1,30}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "County name; none means Ireland",
+              "title": "County"
+            },
+            "description": "County name; none means Ireland"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Developments"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -922,6 +985,151 @@
         "title": "DecisionCounts",
         "description": "Applications by current decision class. \"other\" covers invalid, exempt and split decisions."
       },
+      "DevelopmentFeature": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type",
+            "default": "Feature"
+          },
+          "geometry": {
+            "$ref": "#/components/schemas/PointGeometry"
+          },
+          "properties": {
+            "$ref": "#/components/schemas/DevelopmentProperties"
+          }
+        },
+        "type": "object",
+        "required": [
+          "geometry",
+          "properties"
+        ],
+        "title": "DevelopmentFeature"
+      },
+      "DevelopmentProperties": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "authority": {
+            "type": "string",
+            "title": "Authority"
+          },
+          "homes": {
+            "type": "integer",
+            "title": "Homes"
+          },
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day"
+          },
+          "settlement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Settlement"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "label",
+          "authority",
+          "homes",
+          "day",
+          "settlement",
+          "status",
+          "reference"
+        ],
+        "title": "DevelopmentProperties"
+      },
+      "Developments": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type",
+            "default": "FeatureCollection"
+          },
+          "county": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "County"
+          },
+          "min_homes": {
+            "type": "integer",
+            "title": "Min Homes"
+          },
+          "attribution": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Attribution"
+          },
+          "features": {
+            "items": {
+              "$ref": "#/components/schemas/DevelopmentFeature"
+            },
+            "type": "array",
+            "title": "Features"
+          }
+        },
+        "type": "object",
+        "required": [
+          "county",
+          "min_homes",
+          "attribution",
+          "features"
+        ],
+        "title": "Developments",
+        "description": "GeoJSON: schemes of five homes or more, started or applied for in the last 12 months."
+      },
       "ErrorBody": {
         "properties": {
           "error": {
@@ -1038,6 +1246,27 @@
           "month"
         ],
         "title": "MonthCounts"
+      },
+      "PointGeometry": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type",
+            "default": "Point"
+          },
+          "coordinates": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Coordinates"
+          }
+        },
+        "type": "object",
+        "required": [
+          "coordinates"
+        ],
+        "title": "PointGeometry"
       },
       "PrecedentApplication": {
         "properties": {

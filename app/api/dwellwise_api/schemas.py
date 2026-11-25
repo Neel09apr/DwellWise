@@ -117,6 +117,38 @@ class CommencementStats(BaseModel):
     recent_schemes: list[Scheme]
 
 
+class DevelopmentProperties(BaseModel):
+    kind: str  # "started" (commencement notice) or "applied" (planning application)
+    label: str | None  # the scheme's name, for started schemes that give one
+    authority: str
+    homes: int
+    day: date  # start date (started) or date received (applied)
+    settlement: str | None
+    status: str | None  # decision class, for applications
+    reference: str | None  # planning reference
+
+
+class PointGeometry(BaseModel):
+    type: str = "Point"
+    coordinates: list[float]  # [longitude, latitude], WGS84
+
+
+class DevelopmentFeature(BaseModel):
+    type: str = "Feature"
+    geometry: PointGeometry
+    properties: DevelopmentProperties
+
+
+class Developments(BaseModel):
+    """GeoJSON: schemes of five homes or more, started or applied for in the last 12 months."""
+
+    type: str = "FeatureCollection"
+    county: str | None
+    min_homes: int
+    attribution: list[str]
+    features: list[DevelopmentFeature]
+
+
 class PrecedentApplication(BaseModel):
     """One planning application, as the council published it. Never an applicant name or address."""
 

@@ -213,3 +213,46 @@ def settlement_brief(conn, code: str, since, limit: int, radius_m: int) -> dict:
             {"code": code, "since": since, "limit": limit, "radius": radius_m},
         )
         return cur.fetchone()
+
+
+def development_points(conn, county: str | None, min_homes: int, days: int) -> dict:
+    """Schemes of at least ``min_homes`` homes on a map, in one round trip.
+
+    Started: commencement notices with a start date in the last ``days`` days (or
+    up to 60 days ahead, as notices are filed before work begins). Applied:
+    planning applications received in the last ``days`` days that state as many
+    units. Coordinates are WGS84, rounded to 4 decimals (about 10 m).
+    """
+    with conn.cursor(row_factory=dict_row) as cur:
+        cur.execute(
+            """
+            with points as (
+                select 'started' as kind, coalesce(c.project_name, 'Unnamed scheme') as label,
+                       c.local_authority as authority, c.homes, c.commenced as day,
+                       s.name as settlement, null::text as status, c.planning_ref as reference,
+                       ST_Transform(c.location, 4326) as p
+                from dw.commencement c left join dw.settlement s on s.code = c.settlement
+                where c.homes >= %(min_homes)s
+                  and c.commenced between current_date - %(days)s and current_date + 60
+                  and (%(county)s::text is null or c.county = %(county)s)
+                union all
+                select 'applied', null, a.authority, a.units_stated, a.received,
+                       s.name, a.decision_class, a.application_number,
+                       ST_Transform(a.location, 4326)
+                from dw.planning_application a left join dw.settlement s on s.code = a.settlement
+                where a.units_stated >= %(min_homes)s
+                  and a.received >= current_date - %(days)s
+                  and (%(county)s::text is null or a.county = %(county)s)
+            )
+            select
+                (%(county)s::text is null or exists (select 1 from dw.county where name = %(county)s))
+                    as county_known,
+                (select coalesce(json_agg(json_build_object(
+                    'kind', kind, 'label', label, 'authority', authority, 'homes', homes, 'day', day,
+                    'settlement', settlement, 'status', status, 'reference', reference,
+                    'lng', round(ST_X(p)::numeric, 4), 'lat', round(ST_Y(p)::numeric, 4))
+                    order by day desc), '[]') from points) as points
+            """,
+            {"county": county, "min_homes": min_homes, "days": days},
+        )
+        return cur.fetchone()
