@@ -132,7 +132,7 @@ deploy/        Helm chart for the app, installed on a throwaway kind cluster in 
 | 6. Operate: error tracking (Sentry, API only) | Merged (PR #46); live 24 Nov, release seen in Sentry |
 | v2 M9a: construction starts (commencement notices) on the Ireland, county and town pages; planning shows its source's lag | Merged (PR #50); loaded and live 24 Nov |
 | v2 M9b: map of schemes of five homes or more, started and applied for (MapLibre, OpenFreeMap tiles) | Merged (PR #51); live 25 Nov. Note naming councils that rarely state units: merged (PR #53) |
-| v2 M10: sale prices by Eircode area and county (CSO), brief section 04 | In review |
+| v2 M10: sale prices by Eircode area and county (CSO), brief section 04 | Merged (PR #54); loaded and live 25 Nov |
 
 
 ## Next
