@@ -30,6 +30,16 @@ def migrate(conn) -> None:
             conn.execute(path.read_text(encoding="utf-8"))
 
 
+def _stage(cur, name: str, columns: dict[str, str], rows: list[dict]) -> None:
+    """Create a temporary staging table of these columns (dropped at commit) and COPY the rows in."""
+    cur.execute(
+        f"create temp table {name} ({', '.join(f'{c} {t}' for c, t in columns.items())}) on commit drop"
+    )
+    with cur.copy(f"copy {name} ({', '.join(columns)}) from stdin") as copy:
+        for r in rows:
+            copy.write_row(tuple(r[c] for c in columns))
+
+
 def load_counties(cur, rows: list[dict], snapshot_id: str) -> dict:
     cur.execute("create temp table stage (like dw.county) on commit drop")
     cur.executemany(
@@ -43,11 +53,6 @@ def load_counties(cur, rows: list[dict], snapshot_id: str) -> dict:
 
 
 def load_settlements(cur, rows: list[dict], snapshot_id: str) -> dict:
-    cur.execute("select count(*) from dw.county")
-    if cur.fetchone()[0] == 0:
-        raise LoadError(
-            "load counties before settlements: the county of each settlement is derived from them"
-        )
     cur.execute("create temp table stage (like dw.settlement) on commit drop")
     cur.executemany(
         f"insert into stage (code, name, name_key, county, boundary, snapshot_id) "  # noqa: S608 - constant GEOM
@@ -70,10 +75,11 @@ def load_settlements(cur, rows: list[dict], snapshot_id: str) -> dict:
     return {"county_by_nearest": nearest}
 
 
-PLANNING_COLUMNS = (
-    "authority", "application_number", "received", "decided", "decision", "decision_class",
-    "recognised", "county", "units_stated", "residential", "geometry",
-)  # fmt: skip
+PLANNING_COLUMNS = {
+    "authority": "text", "application_number": "text", "received": "date", "decided": "date",
+    "decision": "text", "decision_class": "text", "recognised": "boolean", "county": "text",
+    "units_stated": "integer", "residential": "boolean", "geometry": "text",
+}  # fmt: skip
 
 
 def load_planning(cur, rows: list[dict], snapshot_id: str) -> dict:
@@ -82,17 +88,7 @@ def load_planning(cur, rows: list[dict], snapshot_id: str) -> dict:
     A repeated application number keeps its most recently received row. Each
     point gets the settlement that contains it, if any.
     """
-    cur.execute("select count(*) from dw.settlement")
-    if cur.fetchone()[0] == 0:
-        raise LoadError("load settlements before planning: each application is placed in one")
-    cur.execute(
-        "create temp table stage_planning (authority text, application_number text, received date, "
-        "decided date, decision text, decision_class text, recognised boolean, county text, "
-        "units_stated integer, residential boolean, geometry text) on commit drop"
-    )
-    with cur.copy(f"copy stage_planning ({', '.join(PLANNING_COLUMNS)}) from stdin") as copy:
-        for r in rows:
-            copy.write_row(tuple(r[c] for c in PLANNING_COLUMNS))
+    _stage(cur, "stage_planning", PLANNING_COLUMNS, rows)
     cur.execute("select count(*) filter (where not recognised) from stage_planning")
     unrecognised = cur.fetchone()[0]
     cur.execute("delete from dw.planning_application")
@@ -134,26 +130,17 @@ def load_protected(cur, rows: list[dict], snapshot_id: str) -> dict:
     return {"features_merged": len(rows) - cur.rowcount}
 
 
-COMMENCEMENT_COLUMNS = (
-    "notice_number", "local_authority", "county", "submitted", "commenced", "expected_end",
-    "homes", "scheme_homes", "homes_completed", "planning_ref", "project_name", "routing_key", "geometry",
-)  # fmt: skip
+COMMENCEMENT_COLUMNS = {
+    "notice_number": "text", "local_authority": "text", "county": "text", "submitted": "date",
+    "commenced": "date", "expected_end": "date", "homes": "integer", "scheme_homes": "integer",
+    "homes_completed": "integer", "planning_ref": "text", "project_name": "text", "routing_key": "text",
+    "geometry": "text",
+}  # fmt: skip
 
 
 def load_commencements(cur, rows: list[dict], snapshot_id: str) -> dict:
     """COPY into staging, then replace the table, placing each notice in its settlement."""
-    cur.execute("select count(*) from dw.settlement")
-    if cur.fetchone()[0] == 0:
-        raise LoadError("load settlements before commencements: each notice is placed in one")
-    cur.execute(
-        "create temp table stage_commencement (notice_number text, local_authority text, county text, "
-        "submitted date, commenced date, expected_end date, homes integer, scheme_homes integer, "
-        "homes_completed integer, planning_ref text, project_name text, routing_key text, geometry text) "
-        "on commit drop"
-    )
-    with cur.copy(f"copy stage_commencement ({', '.join(COMMENCEMENT_COLUMNS)}) from stdin") as copy:
-        for r in rows:
-            copy.write_row(tuple(r[c] for c in COMMENCEMENT_COLUMNS))
+    _stage(cur, "stage_commencement", COMMENCEMENT_COLUMNS, rows)
     cur.execute("delete from dw.commencement")
     cur.execute(
         "insert into dw.commencement (notice_number, local_authority, county, submitted, commenced, "
@@ -171,17 +158,21 @@ def load_commencements(cur, rows: list[dict], snapshot_id: str) -> dict:
     return {"in_a_settlement": cur.fetchone()[0]}
 
 
-PRICE_COLUMNS = ("kind", "code", "name", "month", "status", "sales", "median", "mean")
+PRICE_COLUMNS = {
+    "kind": "text", "code": "text", "name": "text", "month": "date", "status": "text",
+    "sales": "integer", "median": "integer", "mean": "integer",
+}  # fmt: skip
 
 
 def load_prices(cur, rows: list[dict], snapshot_id: str) -> dict:
     """Replace the CSO price table: one row per area, month and dwelling status."""
-    cur.execute("create temp table stage_price (like dw.price) on commit drop")
-    with cur.copy(f"copy stage_price ({', '.join(PRICE_COLUMNS)}, snapshot_id) from stdin") as copy:
-        for r in rows:
-            copy.write_row((*(r[c] for c in PRICE_COLUMNS), snapshot_id))
+    _stage(cur, "stage_price", PRICE_COLUMNS, rows)
+    columns = ", ".join(PRICE_COLUMNS)
     cur.execute("delete from dw.price")
-    cur.execute("insert into dw.price select * from stage_price")
+    cur.execute(
+        f"insert into dw.price ({columns}, snapshot_id) select {columns}, %s from stage_price",  # noqa: S608 - constant columns
+        (snapshot_id,),
+    )
     return {}
 
 

@@ -191,3 +191,26 @@ def test_a_run_registers_its_source_first_even_when_it_fails(conn, tmp_path, cou
 
     run_source(COUNTIES, LocalStore(tmp_path), conn, fetch=lambda *a: counties)
     assert conn.execute("select count(*) from dw.source").fetchone() == (1,)  # registered once, then updated
+
+
+def price(code: str, median: int) -> dict:
+    row = {"kind": "eircode", "code": code, "name": code, "month": "2026-09-01", "status": "all"}
+    return {
+        "type": "Feature",
+        "geometry": None,
+        "properties": {**row, "sales": 12, "median": median, "mean": None},
+    }
+
+
+def test_prices_replace_the_whole_table_on_every_run(conn, tmp_path):
+    prices = replace(SOURCES["prices"], min_rows=1, check=None)
+    store = LocalStore(tmp_path)
+    run_source(prices, store, conn, fetch=lambda: {"features": [price(f"A4{n}", 300_000) for n in range(5)]})
+    second = [price(f"A4{n}", 310_000) for n in range(4)] + [price("D01", 450_000)]
+    result = run_source(prices, store, conn, fetch=lambda: {"features": second})
+    rows = conn.execute(
+        "select code, median, sales, mean, snapshot_id::text from dw.price order by code"
+    ).fetchall()
+    assert rows == [(f"A4{n}", 310_000, 12, None, result.run_id) for n in range(4)] + [
+        ("D01", 450_000, 12, None, result.run_id)
+    ]

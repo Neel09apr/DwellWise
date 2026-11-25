@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 
 from . import metrics
-from .load import LOADERS
+from .load import LOADERS, LoadError
 from .raw_store import raw_key
 from .sources import SOURCES
 from .sources.base import Source
@@ -47,6 +47,14 @@ def register(conn, source: Source) -> None:
         "position = excluded.position, registered_at = now()",
         (source.name, source.attribution, position),
     )
+
+
+def _require_after(cur, source: Source) -> None:
+    """Refuse to load before the sources this one's loader reads (``after``) have rows."""
+    for name in source.after:
+        cur.execute(f"select exists (select from dw.{SOURCES[name].table})")  # noqa: S608 - table names are constants
+        if not cur.fetchone()[0]:
+            raise LoadError(f"load {name} before {source.name}: its loader reads their rows")
 
 
 def _record(conn, run: RunResult, fetched_at: datetime, detail: str | None) -> None:
@@ -104,6 +112,7 @@ def run_source(
             run.status = "loaded"
             _record(conn, run, fetched_at, None)
             with conn.cursor() as cur:
+                _require_after(cur, source)
                 run.detail = LOADERS[source.table](cur, rows, run_id)
     except Exception as exc:
         run.status = "failed"
