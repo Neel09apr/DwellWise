@@ -3,6 +3,8 @@ from fastapi.testclient import TestClient
 from dwellwise_api.config import Settings
 from dwellwise_api.main import create_app
 
+from .fakes import memory_places
+
 
 def test_head_is_answered_for_uptime_monitors(client):
     assert client.head("/health").status_code == 200
@@ -33,6 +35,7 @@ def test_invalid_input_is_a_422_in_the_same_shape():
 
     app = create_app(Settings())
     app.dependency_overrides[get_conn] = lambda: None  # validation is checked without a database
+    app.state.places = memory_places()
     with TestClient(app) as c:
         response = c.get("/v1/settlements", params={"q": "x" * 81})
     assert response.status_code == 422

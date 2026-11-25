@@ -4,18 +4,17 @@ from __future__ import annotations
 
 from . import building, stats
 from . import repositories as repo
+from .place import Place
 from .schemas import DevelopmentFeature, DevelopmentProperties, Developments, PointGeometry, UnitReporting
 
 DAYS = 365
 SPARSE_BELOW = 10  # percent of applications stating units, under which a council is named
 
 
-def developments(conn, county: str | None) -> Developments | None:
-    """None when the county does not exist. Nothing below ``building.NAMED_FROM`` homes is mapped."""
-    name = county.strip().upper() if county else None
+def developments(conn, place: Place) -> Developments:
+    """Ireland or one county (``Place`` has resolved it). Nothing below ``building.NAMED_FROM`` homes."""
+    name = place.county
     data = repo.development_points(conn, name, building.NAMED_FROM, DAYS, SPARSE_BELOW)
-    if not data["county_known"]:
-        return None
     features = [
         DevelopmentFeature(
             geometry=PointGeometry(coordinates=[float(p["lng"]), float(p["lat"])]),

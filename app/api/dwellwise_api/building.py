@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import date
 
 from . import repositories as repo
+from .place import Place
 from .schemas import CommencementMonth, CommencementStats, HomesCount, Scheme
 from .stats import add_months, month_range
 
@@ -13,14 +14,13 @@ NAMED_FROM = 5  # the pipeline keeps project names only from this size; list not
 
 
 def commencement_stats(
-    conn, county: str | None, settlement: str | None, start: str | None, end: str | None, today: date
-) -> CommencementStats | None:
-    """None when the county or settlement does not exist."""
+    conn, place: Place, start: str | None, end: str | None, today: date
+) -> CommencementStats:
+    """Ireland, a county or a settlement (``Place`` has resolved it)."""
     first, last = month_range(start, end, today)
-    name = county.strip().upper() if county else None
-    data = repo.commencement_data(conn, name, settlement, first, add_months(last, 1), NAMED_FROM)
-    if not (data["county_known"] and data["settlement_known"]):
-        return None
+    data = repo.commencement_data(
+        conn, place.asked_county, place.settlement, first, add_months(last, 1), NAMED_FROM
+    )
 
     found = {m["month"]: m for m in data["months"]}
     months, day = [], first
@@ -30,8 +30,8 @@ def commencement_stats(
         day = add_months(day, 1)
 
     return CommencementStats(
-        county=name,
-        settlement=settlement,
+        county=place.asked_county,
+        settlement=place.settlement,
         from_month=f"{first:%Y-%m}",
         to_month=f"{last:%Y-%m}",
         captured_at=data["captured_at"],

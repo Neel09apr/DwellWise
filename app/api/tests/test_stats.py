@@ -8,7 +8,10 @@ from fastapi.testclient import TestClient
 from dwellwise_api.config import Settings
 from dwellwise_api.db import get_conn
 from dwellwise_api.main import create_app
+from dwellwise_api.place import Place
 from dwellwise_api.stats import RangeError, add_months, month_range
+
+from .fakes import memory_places
 
 TODAY = date(2026, 11, 17)
 
@@ -48,6 +51,7 @@ def test_months_add_across_year_ends(day, n, expected):
 def offline():
     app = create_app(Settings())
     app.dependency_overrides[get_conn] = lambda: None  # these requests fail before any SQL
+    app.state.places = memory_places()
     with TestClient(app) as c:
         yield c
 
@@ -93,7 +97,6 @@ class CountingConn:
 
 
 ROW = {
-    "counties": ["CORK", "MAYO"],
     "rows": [
         {"county": "CORK", "month": "2026-10-01", "decision_class": "granted", "n": 3},
         {"county": "MAYO", "month": "2026-10-01", "decision_class": "refused", "n": 1},
@@ -107,16 +110,8 @@ def test_the_stats_need_exactly_one_database_round_trip():
     from dwellwise_api.stats import application_stats
 
     conn = CountingConn(ROW)
-    stats = application_stats(conn, None, None, "2026-09", "2026-10", TODAY)
+    stats = application_stats(conn, Place(counties=("CORK", "MAYO")), None, "2026-09", "2026-10", TODAY)
     assert conn.queries == 1
     assert (stats.totals.granted, stats.totals.refused, stats.totals.total) == (3, 1, 4)
     assert [(m.month, m.total) for m in stats.months] == [("2026-09", 0), ("2026-10", 4)]
     assert [(c.county, c.total) for c in stats.counties] == [("CORK", 3), ("MAYO", 1)]
-
-
-def test_an_unknown_county_is_none_after_the_same_single_query():
-    from dwellwise_api.stats import application_stats
-
-    conn = CountingConn(ROW)
-    assert application_stats(conn, "atlantis", None, None, None, TODAY) is None
-    assert conn.queries == 1

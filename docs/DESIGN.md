@@ -259,6 +259,16 @@ Inside the API: routers (HTTP only) → services (brief assembly, rules above)
 → repositories (SQL). The OpenAPI schema is exported in CI and the web client
 is generated from it, so the two cannot drift.
 
+**Place.** Every endpoint scoped to a place takes a resolved `Place` (Ireland,
+one county or one settlement; see `CONTEXT.md`) from a FastAPI dependency in
+`place.py`, never raw text. One request names one place: a county and a
+settlement together are a 422, an unknown one a 404, with one wording each. The
+26 counties and the settlements are held in memory, loaded on first use and
+reloaded hourly, so resolving costs no database round trip and each feature
+query stays one round trip (§13). This replaced per-query `county_known` flags,
+which disagreed: a county with a settlement outside it returned 0 homes for
+commencements and ignored the county for prices (fixed 25 Nov 2026).
+
 ## 8. AI summary
 
 - Input is the brief's facts as JSON with ids; output must cite those ids.

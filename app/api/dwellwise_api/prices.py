@@ -10,6 +10,7 @@ from __future__ import annotations
 from datetime import date
 
 from . import repositories as repo
+from .place import Place
 from .schemas import PriceArea, PriceMonth, Prices
 from .stats import add_months
 
@@ -64,22 +65,19 @@ def choose(data: dict) -> tuple[list[tuple[str, str]], str]:
     return [("region", "-")], "Figures for all of Ireland."
 
 
-def prices(conn, county: str | None, settlement: str | None, today: date) -> Prices | None:
-    """None when the county or settlement does not exist."""
-    name = county.strip().upper() if county else None
+def prices(conn, place: Place, today: date) -> Prices:
+    """Ireland, a county or a settlement (``Place`` has resolved it, a settlement with its county)."""
     since = add_months(today.replace(day=1), -MONTHS)
-    data = repo.price_data(conn, name, settlement, since)
-    if not (data["county_known"] and data["settlement_known"]):
-        return None
-    picks, basis = choose({**data, "settlement": settlement})
+    data = repo.price_data(conn, place.county, place.settlement, since)
+    picks, basis = choose({**data, "county": place.county, "settlement": place.settlement})
     areas = []
     for kind, code in picks:
         rows = [r for r in data["rows"] if (r["kind"], r["code"]) == (kind, code)]
         if rows:
             areas.append(_area(rows))
     return Prices(
-        county=name,
-        settlement=settlement,
+        county=place.asked_county,
+        settlement=place.settlement,
         basis=basis,
         captured_at=data["captured_at"],
         attribution=ATTRIBUTION,
