@@ -20,10 +20,14 @@ export function DevelopmentMap({ county }: { county?: string }) {
       {data.kind === "ready" && (
         <>
           <p className="legend">
-            <span className="legend-started" aria-hidden="true" /> Construction started (
-            {fmt.format(data.data.features.filter((f) => f.properties.kind === "started").length)})
-            <span className="legend-applied" aria-hidden="true" /> Planning application (
-            {fmt.format(data.data.features.filter((f) => f.properties.kind === "applied").length)})
+            <span className="legend-item">
+              <span className="legend-started" aria-hidden="true" /> Construction started (
+              {fmt.format(data.data.features.filter((f) => f.properties.kind === "started").length)})
+            </span>
+            <span className="legend-item">
+              <span className="legend-applied" aria-hidden="true" /> Planning application (
+              {fmt.format(data.data.features.filter((f) => f.properties.kind === "applied").length)})
+            </span>
           </p>
           <Suspense fallback={<Loading what="the map" />}>
             <Canvas data={data.data} />

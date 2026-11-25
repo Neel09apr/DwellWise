@@ -41,6 +41,7 @@ export default function DevelopmentMapCanvas({ data }: { data: Developments }) {
       style: STYLE + (dark ? "dark" : "positron"),
       bounds,
       fitBoundsOptions: { padding: 24, maxZoom: 11 },
+      attributionControl: { compact: true }, // credits stay one tap away on small screens
       cooperativeGestures: true, // the page scrolls past the map unless ctrl/two fingers are used
     });
     map.addControl(new NavigationControl({ showCompass: false }), "top-right");
