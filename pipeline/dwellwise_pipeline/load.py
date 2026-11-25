@@ -168,7 +168,6 @@ def load_prices(cur, rows: list[dict], snapshot_id: str) -> dict:
     """Replace the CSO price table: one row per area, month and dwelling status."""
     _stage(cur, "stage_price", PRICE_COLUMNS, rows)
     columns = ", ".join(PRICE_COLUMNS)
-    cur.execute("delete from dw.price")
     cur.execute(
         f"insert into dw.price ({columns}, snapshot_id) select {columns}, %s from stage_price",  # noqa: S608 - constant columns
         (snapshot_id,),
