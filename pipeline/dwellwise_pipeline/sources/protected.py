@@ -9,6 +9,7 @@ distances at 1 km and 5 km. Proposed NHAs (layer 1) are not in v1.
 import json
 from functools import partial
 
+from ..arcgis import Layer
 from .base import Source
 
 SERVICE = (
@@ -37,15 +38,14 @@ def transform(designation: str, collection: dict) -> list[dict]:
 def _source(name: str, layer: int, designation: str, min_rows: int) -> Source:
     return Source(
         name=name,
-        layer_url=f"{SERVICE}/{layer}",
-        out_fields=("SITECODE", "SITE_NAME", "URL"),
-        order_by="OBJECTID",
+        fetch=Layer(
+            f"{SERVICE}/{layer}", ("SITECODE", "SITE_NAME", "URL"), "OBJECTID", max_offset=MAX_OFFSET
+        ),
         required_fields=("SITECODE", "SITE_NAME"),
         min_rows=min_rows,
         table="protected_site",
         attribution=ATTRIBUTION,
         transform=partial(transform, designation),
-        max_offset=MAX_OFFSET,
     )
 
 

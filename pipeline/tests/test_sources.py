@@ -41,5 +41,5 @@ def test_protected_sites_carry_their_designation_and_ask_for_simplified_boundari
     assert rows[0]["designation"] == "SAC"
     assert (rows[0]["site_code"], rows[0]["name"], rows[0]["url"]) == ("000006", "Killyconny Bog SAC", None)
     assert SOURCES["spa"].transform({"features": [feature]})[0]["designation"] == "SPA"
-    assert all(SOURCES[n].max_offset == 0.0001 for n in ("sac", "spa", "nha"))
-    assert SOURCES["counties"].max_offset is None
+    assert all(SOURCES[n].fetch.max_offset == 0.0001 for n in ("sac", "spa", "nha"))
+    assert SOURCES["counties"].fetch.max_offset is None

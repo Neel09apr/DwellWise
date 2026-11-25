@@ -7,6 +7,7 @@ just outside every county polygon.
 
 import json
 
+from ..arcgis import Layer
 from ..names import name_key
 from .base import Source
 
@@ -33,9 +34,7 @@ def transform(collection: dict) -> list[dict]:
 
 SOURCE = Source(
     name="settlements",
-    layer_url=LAYER,
-    out_fields=("SETTLEMENT", "SETTL_NAME"),
-    order_by="OBJECTID_12",
+    fetch=Layer(LAYER, fields=("SETTLEMENT", "SETTL_NAME"), order_by="OBJECTID_12"),
     required_fields=("SETTLEMENT", "SETTL_NAME"),
     min_rows=800,
     table="settlement",

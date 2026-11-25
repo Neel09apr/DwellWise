@@ -1,5 +1,6 @@
 import gzip
 import hashlib
+from dataclasses import replace
 from datetime import UTC, datetime
 
 import pytest
@@ -28,20 +29,10 @@ def test_dry_run_still_rejects_bad_data_but_keeps_the_raw_copy(tmp_path, countie
     assert list(tmp_path.rglob("*.geojson.gz")), "the raw file is kept for diagnosis"
 
 
-def test_the_source_filter_reaches_the_fetch(tmp_path, counties):
-    seen = []
+def test_a_run_reads_through_the_sources_own_fetch(tmp_path, counties):
     counties["features"] *= 13
-
-    def fetch(*args):
-        seen.append(args)
-        return counties
-
-    run_source(SOURCES["counties"], LocalStore(tmp_path), fetch=fetch)
-    assert seen[0][3] == "1=1"
-    seen.clear()
-    with pytest.raises(ValidationError):  # the counties fixture is not planning data
-        run_source(SOURCES["planning"], LocalStore(tmp_path), fetch=fetch)
-    assert seen[0][3] == "ReceivedDate >= DATE '2020-01-01'"
+    source = replace(SOURCES["counties"], fetch=lambda: counties)
+    assert run_source(source, LocalStore(tmp_path)).rows == len(counties["features"])
 
 
 def test_a_run_registers_its_source_before_fetching_so_a_failed_first_run_is_known(tmp_path):
@@ -51,7 +42,7 @@ def test_a_run_registers_its_source_before_fetching_so_a_failed_first_run_is_kno
         def execute(self, sql, params=None):
             executed.append((sql.split()[0:3], params))
 
-    def failing_fetch(*_args):
+    def failing_fetch():
         raise RuntimeError("the source is down")
 
     with pytest.raises(RuntimeError):

@@ -13,6 +13,7 @@ import time
 import urllib.parse
 import urllib.request
 from collections.abc import Callable
+from dataclasses import dataclass
 
 USER_AGENT = "dwellwise-pipeline (+https://github.com/Neel09apr/DwellWise)"
 PAGE_SIZE = 1000
@@ -86,3 +87,25 @@ def fetch_features(
         if not more or not batch:
             return {"type": "FeatureCollection", "features": features}
         offset += len(batch)
+
+
+@dataclass(frozen=True)
+class Layer:
+    """One ArcGIS feature layer and what to ask it for: the reader of every ArcGIS source."""
+
+    url: str
+    fields: tuple[str, ...]
+    order_by: str
+    where: str = "1=1"  # e.g. a date window
+    max_offset: float | None = None  # maxAllowableOffset (degrees): simplify boundaries server side
+
+    def __call__(self, *, opener: Opener = http_get, sleep: Callable[[float], None] = time.sleep) -> dict:
+        return fetch_features(
+            self.url,
+            list(self.fields),
+            self.order_by,
+            self.where,
+            self.max_offset,
+            opener=opener,
+            sleep=sleep,
+        )

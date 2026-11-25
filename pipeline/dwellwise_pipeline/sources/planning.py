@@ -16,6 +16,7 @@ import json
 import re
 from datetime import UTC, datetime
 
+from ..arcgis import Layer
 from .base import Source
 
 LAYER = (
@@ -159,19 +160,22 @@ def check(collection: dict) -> list[str]:
 
 SOURCE = Source(
     name="planning",
-    layer_url=LAYER,
-    out_fields=(
-        "PlanningAuthority",
-        "ApplicationNumber",
-        "ReceivedDate",
-        "DecisionDate",
-        "WithdrawnDate",
-        "Decision",
-        "ApplicationStatus",
-        "NumResidentialUnits",
-        "OneOffHouse",
+    fetch=Layer(
+        LAYER,
+        fields=(
+            "PlanningAuthority",
+            "ApplicationNumber",
+            "ReceivedDate",
+            "DecisionDate",
+            "WithdrawnDate",
+            "Decision",
+            "ApplicationStatus",
+            "NumResidentialUnits",
+            "OneOffHouse",
+        ),
+        order_by="OBJECTID",
+        where=f"ReceivedDate >= DATE '{SINCE}'",
     ),
-    order_by="OBJECTID",
     required_fields=("PlanningAuthority", "ApplicationNumber", "ReceivedDate"),
     min_rows=200_000,
     table="planning_application",
@@ -179,7 +183,6 @@ SOURCE = Source(
         "National Planning Applications, Department of Housing, Local Government and Heritage. CC BY 4.0."
     ),
     transform=transform,
-    where=f"ReceivedDate >= DATE '{SINCE}'",
     check=check,
     after=("settlements",),
 )

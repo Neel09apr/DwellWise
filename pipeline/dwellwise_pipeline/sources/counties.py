@@ -2,6 +2,7 @@
 
 import json
 
+from ..arcgis import Layer
 from .base import Source
 
 LAYER = (
@@ -19,9 +20,7 @@ def transform(collection: dict) -> list[dict]:
 
 SOURCE = Source(
     name="counties",
-    layer_url=LAYER,
-    out_fields=("COUNTY",),
-    order_by="ESRI_OID",
+    fetch=Layer(LAYER, fields=("COUNTY",), order_by="ESRI_OID"),
     required_fields=("COUNTY",),
     min_rows=26,
     table="county",

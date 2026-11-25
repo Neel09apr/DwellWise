@@ -105,7 +105,7 @@ def parse(lines: Iterable[str]) -> dict:
     return {"type": "FeatureCollection", "features": list(notices.values()), "no_location": no_location}
 
 
-def fetch(url: str, *_args) -> dict:
+def fetch(url: str = URL) -> dict:
     """Stream the 280 MB file, keeping only what ``parse`` keeps."""
     if not url.startswith("https://"):
         raise FetchError(f"refusing a non-HTTPS URL: {url}")
@@ -142,9 +142,6 @@ def check(collection: dict) -> list[str]:
 
 SOURCE = Source(
     name="commencements",
-    layer_url=URL,
-    out_fields=(),
-    order_by="",
     required_fields=("notice_number", "local_authority", "submitted"),
     min_rows=60_000,
     table="commencement",

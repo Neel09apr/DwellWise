@@ -20,5 +20,6 @@ _Avoid_: town as an identifier (names repeat: there are two Kells).
 
 **Source**: one public dataset the pipeline loads (`planning`, `commencements`,
 `prices`...), declared once in the pipeline's `SOURCES` with its attribution, and
-registered in `dw.source` on every run. `/ready` requires every registered source
-to have loaded within 48 hours. _Avoid_: feed, dataset as a code identifier.
+registered in `dw.source` on every run. Each source owns its reader (`fetch`):
+an ArcGIS `Layer`, the commencements CSV or the CSO's PxStat API. `/ready`
+requires every registered source to have loaded within 48 hours. _Avoid_: feed, dataset as a code identifier.

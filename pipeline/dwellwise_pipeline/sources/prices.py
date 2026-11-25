@@ -117,7 +117,7 @@ def http_post(url: str, body: dict) -> dict:
     return answer["result"]
 
 
-def fetch(url: str, *_args, post=http_post) -> dict:
+def fetch(url: str = API, post=http_post) -> dict:
     features = [f for table in TABLES for f in parse(table, post(url, query(table)))]
     return {"type": "FeatureCollection", "features": features}
 
@@ -146,9 +146,6 @@ def check(collection: dict) -> list[str]:
 
 SOURCE = Source(
     name="prices",
-    layer_url=API,
-    out_fields=(),
-    order_by="",
     required_fields=("kind", "code", "name", "month", "status"),
     min_rows=20_000,
     table="price",
