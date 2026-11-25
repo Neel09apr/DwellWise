@@ -289,4 +289,10 @@ def test_the_map_shows_schemes_of_five_homes_or_more_from_the_last_year(client):
     assert kinds == [("applied", 12), ("started", 9)]
     lng, lat = body["features"][0]["geometry"]["coordinates"]
     assert round(lng, 4) == lng and 52 < lat < 54
+    # Seeded applications state no units, except K1: Test Council states them on 1 in 3 recent ones.
+    assert body["sparse_units"] == []
+    with psycopg.connect(URL, autocommit=True) as conn:
+        conn.execute("update dw.planning_application set units_stated = null")
+    body = client.get("/v1/map/developments", params={"county": "kildare"}).json()
+    assert body["sparse_units"] == [{"authority": "Test Council", "share": 0}]
     assert client.get("/v1/map/developments", params={"county": "Atlantis"}).status_code == 404

@@ -524,6 +524,11 @@ only when a map is shown; tiles, fonts and sprites come from OpenFreeMap (free,
 no key, no cookies), so the CSP allows `https://tiles.openfreemap.org` for
 images and connections and `worker-src 'self'` for MapLibre's bundled worker.
 Pop-ups are built with `textContent`, never HTML. Responses are gzipped.
+Councils that state a number of units on under 10% of their applications in
+the period (Cork County and Dún Laoghaire-Rathdown at 0%, South Dublin 4%,
+Dublin City 6%, measured 25 Nov 2026) are named under the map, with their
+share: their applications cannot be sized, so an empty area there is a gap in
+the source, not an absence of schemes.
 
 **M10. Prices, area level.** The CSO Residential Property Price Index (PxStat
 API, CC BY 4.0; county and Eircode routing area) as a trend per county and per

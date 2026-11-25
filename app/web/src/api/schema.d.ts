@@ -358,6 +358,8 @@ export interface components {
             min_homes: number;
             /** Attribution */
             attribution: string[];
+            /** Sparse Units */
+            sparse_units: components["schemas"]["UnitReporting"][];
             /** Features */
             features: components["schemas"]["DevelopmentFeature"][];
         };
@@ -565,6 +567,13 @@ export interface components {
             captured_at: string;
             /** Attribution */
             attribution: string;
+        };
+        /** UnitReporting */
+        UnitReporting: {
+            /** Authority */
+            authority: string;
+            /** Share */
+            share: number;
         };
         /** ValidationError */
         ValidationError: {
