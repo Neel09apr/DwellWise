@@ -639,6 +639,88 @@
           }
         }
       }
+    },
+    "/v1/prices": {
+      "get": {
+        "tags": [
+          "prices"
+        ],
+        "summary": "Sale Prices",
+        "description": "Median sale prices and sales by month for the area around a town, a county or Ireland (CSO).",
+        "operationId": "sale_prices_v1_prices_get",
+        "parameters": [
+          {
+            "name": "county",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[A-Za-z][A-Za-z \\-]{1,30}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "County name; none means Ireland",
+              "title": "County"
+            },
+            "description": "County name; none means Ireland"
+          },
+          {
+            "name": "settlement",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{1,6}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "CSO settlement code",
+              "title": "Settlement"
+            },
+            "description": "CSO settlement code"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Prices"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1397,6 +1479,178 @@
         ],
         "title": "Precedents",
         "description": "Residential applications (stating new dwellings) inside the settlement boundary."
+      },
+      "PriceArea": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "latest": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PriceMonth"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sales_12_months": {
+            "type": "integer",
+            "title": "Sales 12 Months"
+          },
+          "months": {
+            "items": {
+              "$ref": "#/components/schemas/PriceMonth"
+            },
+            "type": "array",
+            "title": "Months"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "code",
+          "name",
+          "latest",
+          "sales_12_months",
+          "months"
+        ],
+        "title": "PriceArea"
+      },
+      "PriceMonth": {
+        "properties": {
+          "month": {
+            "type": "string",
+            "title": "Month"
+          },
+          "sales": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sales"
+          },
+          "median": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median"
+          },
+          "new_sales": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "New Sales"
+          },
+          "new_median": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "New Median"
+          }
+        },
+        "type": "object",
+        "required": [
+          "month",
+          "sales",
+          "median",
+          "new_sales",
+          "new_median"
+        ],
+        "title": "PriceMonth"
+      },
+      "Prices": {
+        "properties": {
+          "county": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "County"
+          },
+          "settlement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Settlement"
+          },
+          "basis": {
+            "type": "string",
+            "title": "Basis"
+          },
+          "captured_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Captured At"
+          },
+          "attribution": {
+            "type": "string",
+            "title": "Attribution"
+          },
+          "areas": {
+            "items": {
+              "$ref": "#/components/schemas/PriceArea"
+            },
+            "type": "array",
+            "title": "Areas"
+          }
+        },
+        "type": "object",
+        "required": [
+          "county",
+          "settlement",
+          "basis",
+          "captured_at",
+          "attribution",
+          "areas"
+        ],
+        "title": "Prices",
+        "description": "What homes sold for in an area, from CSO stamp duty statistics. Never the value of a site."
       },
       "ProtectedSite": {
         "properties": {

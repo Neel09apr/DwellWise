@@ -156,6 +156,34 @@ class Developments(BaseModel):
     features: list[DevelopmentFeature]
 
 
+class PriceMonth(BaseModel):
+    month: str  # YYYY-MM, by the month the deed was executed
+    sales: int | None  # None where the CSO suppresses a small count
+    median: int | None  # euro
+    new_sales: int | None  # new homes only
+    new_median: int | None
+
+
+class PriceArea(BaseModel):
+    kind: str  # "eircode" (routing area) or "region" (CSO county, council area or Ireland)
+    code: str
+    name: str
+    latest: PriceMonth | None  # the newest month with a median for all homes
+    sales_12_months: int  # sales in the 12 months up to the newest month, suppressed months counted as 0
+    months: list[PriceMonth]
+
+
+class Prices(BaseModel):
+    """What homes sold for in an area, from CSO stamp duty statistics. Never the value of a site."""
+
+    county: str | None
+    settlement: str | None
+    basis: str  # how the area was chosen, in words
+    captured_at: datetime | None
+    attribution: str
+    areas: list[PriceArea]
+
+
 class PrecedentApplication(BaseModel):
     """One planning application, as the council published it. Never an applicant name or address."""
 

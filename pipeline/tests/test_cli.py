@@ -10,6 +10,7 @@ def test_run_with_no_sources_means_all_of_them_in_order():
         "spa",
         "nha",
         "commencements",
+        "prices",
     ]
 
 

@@ -201,6 +201,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/prices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Sale Prices
+         * @description Median sale prices and sales by month for the area around a town, a county or Ireland (CSO).
+         */
+        get: operations["sale_prices_v1_prices_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -462,6 +482,51 @@ export interface components {
             captured_at: string | null;
             /** Attribution */
             attribution: string;
+        };
+        /** PriceArea */
+        PriceArea: {
+            /** Kind */
+            kind: string;
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            latest: components["schemas"]["PriceMonth"] | null;
+            /** Sales 12 Months */
+            sales_12_months: number;
+            /** Months */
+            months: components["schemas"]["PriceMonth"][];
+        };
+        /** PriceMonth */
+        PriceMonth: {
+            /** Month */
+            month: string;
+            /** Sales */
+            sales: number | null;
+            /** Median */
+            median: number | null;
+            /** New Sales */
+            new_sales: number | null;
+            /** New Median */
+            new_median: number | null;
+        };
+        /**
+         * Prices
+         * @description What homes sold for in an area, from CSO stamp duty statistics. Never the value of a site.
+         */
+        Prices: {
+            /** County */
+            county: string | null;
+            /** Settlement */
+            settlement: string | null;
+            /** Basis */
+            basis: string;
+            /** Captured At */
+            captured_at: string | null;
+            /** Attribution */
+            attribution: string;
+            /** Areas */
+            areas: components["schemas"]["PriceArea"][];
         };
         /**
          * ProtectedSite
@@ -937,6 +1002,49 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Developments"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sale_prices_v1_prices_get: {
+        parameters: {
+            query?: {
+                /** @description County name; none means Ireland */
+                county?: string | null;
+                /** @description CSO settlement code */
+                settlement?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Prices"];
                 };
             };
             /** @description Not Found */

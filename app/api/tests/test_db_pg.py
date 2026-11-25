@@ -296,3 +296,39 @@ def test_the_map_shows_schemes_of_five_homes_or_more_from_the_last_year(client):
     body = client.get("/v1/map/developments", params={"county": "kildare"}).json()
     assert body["sparse_units"] == [{"authority": "Test Council", "share": 0}]
     assert client.get("/v1/map/developments", params={"county": "Atlantis"}).status_code == 404
+
+
+def test_prices_follow_the_towns_routing_key_or_fall_back_to_the_county(client):
+    with psycopg.connect(URL, autocommit=True) as conn:
+        seed_commencements(conn)  # CN1 and CN2 are in Athy (settlement 1)
+        conn.execute("update dw.commencement set routing_key = 'R14' where notice_number in ('CN1', 'CN2')")
+        snap = str(uuid.uuid4())
+        conn.execute(
+            "insert into dw.snapshot (id, source, fetched_at, raw_uri, sha256, rows_loaded, status) "
+            "values (%s, 'prices', now(), 'test://', 'x', 3, 'loaded')",
+            (snap,),
+        )
+        for kind, code, name in [
+            ("eircode", "R14", "Athy"),
+            ("region", "-", "All"),
+            ("region", "22", "Kildare"),
+        ]:
+            conn.execute(
+                "insert into dw.price values (%s, %s, %s, "
+                "date_trunc('month', current_date) - interval '2 months', 'all', 30, 350000, 360000, %s)",
+                (kind, code, name, snap),
+            )
+    town = client.get("/v1/prices", params={"settlement": "1"}).json()
+    assert [(a["kind"], a["code"], a["latest"]["median"]) for a in town["areas"]] == [
+        ("eircode", "R14", 350000)
+    ]
+    assert town["basis"].startswith("Eircode area R14: 2 of the 2 construction notices")
+
+    # Athboy (Meath) has no notices and Meath has no price rows here: the national figures, said as such.
+    other = client.get("/v1/prices", params={"settlement": "2"}).json()
+    assert [a["name"] for a in other["areas"]] == ["All"] and other["basis"] == "Figures for all of Ireland."
+
+    county = client.get("/v1/prices", params={"county": "kildare"}).json()
+    assert [a["name"] for a in county["areas"]] == ["Kildare"]
+    assert client.get("/v1/prices").json()["areas"][0]["name"] == "All"
+    assert client.get("/v1/prices", params={"settlement": "9999"}).status_code == 404

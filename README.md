@@ -70,7 +70,7 @@ flowchart LR
     nightly["Nightly: verify signature, run pipeline"]
   end
 
-  sources["Public sources<br/>boundaries · planning applications · NPWS protected sites · commencement notices"] --> nightly
+  sources["Public sources<br/>boundaries · planning applications · NPWS protected sites · commencement notices · CSO sale prices"] --> nightly
   images --> nightly
   nightly -->|"validated, atomic load"| db
   nightly --> raw["Supabase Storage<br/>raw snapshots (S3 API)"]
@@ -165,5 +165,5 @@ PostGIS service container.
 Code: MIT, see [LICENSE](LICENSE). Data, credited in each brief: boundaries
 © Tailte Éireann; planning applications and protected sites from the Department
 of Housing, Local Government and Heritage and the National Parks and Wildlife
-Service; commencement notices from the National Building Control Office; all
-CC BY 4.0.
+Service; commencement notices from the National Building Control Office; sale
+prices from the Central Statistics Office; all CC BY 4.0.

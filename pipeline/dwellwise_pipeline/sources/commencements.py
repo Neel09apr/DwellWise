@@ -16,6 +16,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import re
 import urllib.request
 from collections.abc import Iterable
 from datetime import UTC, datetime
@@ -37,6 +38,16 @@ COUNTY = {
     "Dún-Laoghaire Rathdown County Council": "DUBLIN",
     "Limerick City and County Council": "LIMERICK",
 }
+
+
+# A full Eircode identifies one address; its first three characters (the routing
+# key) cover thousands. Only the routing key is kept, to place towns in a CSO price area.
+EIRCODE = re.compile(r"(?:[AC-FHKNPRTV-Y]\d{2}|D6W)[0-9AC-FHKNPRTV-Y]{4}")
+
+
+def routing_key(eircode: str) -> str | None:
+    code = re.sub(r"\s", "", eircode).upper()
+    return code[:3] if EIRCODE.fullmatch(code) else None
 
 
 def _int(text: str) -> int | None:
@@ -83,6 +94,7 @@ def parse(lines: Iterable[str]) -> dict:
                 "homes": homes,
                 "scheme_homes": _int(row["CN_Total_Number_of_Dwelling_Units"]),
                 "planning_ref": row["CN_Planning_Permission_Number"].strip() or None,
+                "routing_key": routing_key(row["CN_Eircode"]),
                 "project_name": (
                     row["CN_Project_Name"].strip() or None if (homes or 0) >= NAMED_FROM else None
                 ),
