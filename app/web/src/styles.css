@@ -146,3 +146,14 @@ h1 { font: 600 clamp(1.9rem, 5vw, 2.6rem)/1.15 var(--serif); letter-spacing: -0.
 }
 
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+/* M9: construction starts and the development map */
+.counts caption { text-align: left; caption-side: top; }
+.nowrap { white-space: nowrap; }
+.map { height: 26rem; margin-top: 0.75rem; border: 1px solid var(--rule); border-radius: 4px; }
+.legend { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 1.25rem; margin: 0; font-size: 0.85rem; color: var(--prose); }
+.legend-started, .legend-applied { display: inline-block; width: 0.8rem; height: 0.8rem; border-radius: 50%; }
+.legend-started { background: var(--accent); opacity: 0.75; }
+.legend-item { display: inline-flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
+.legend-applied { border: 1.5px solid var(--muted); }
+.map-popup { display: grid; gap: 0.15rem; font: 0.8rem/1.4 var(--sans); color: #142433; }

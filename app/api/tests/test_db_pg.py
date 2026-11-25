@@ -274,3 +274,19 @@ def test_commencements_count_homes_and_list_only_schemes_of_five_or_more(client)
 def test_planning_stats_say_how_recent_the_source_is(client):
     body = client.get("/v1/stats/applications", params={"county": "mayo"}).json()
     assert body["newest_received"] == "2026-10-10"
+
+
+def test_the_map_shows_schemes_of_five_homes_or_more_from_the_last_year(client):
+    with psycopg.connect(URL, autocommit=True) as conn:
+        seed_commencements(conn)  # CN1 (9 homes) is recent; CN2 is one house; CN3 started in 2025-02
+        conn.execute(
+            "update dw.planning_application set units_stated = 12, received = current_date - 10 "
+            "where application_number = 'K1'"
+        )
+        conn.execute("update dw.commencement set commenced = current_date - 30 where notice_number = 'CN1'")
+    body = client.get("/v1/map/developments", params={"county": "kildare"}).json()
+    kinds = sorted((f["properties"]["kind"], f["properties"]["homes"]) for f in body["features"])
+    assert kinds == [("applied", 12), ("started", 9)]
+    lng, lat = body["features"][0]["geometry"]["coordinates"]
+    assert round(lng, 4) == lng and 52 < lat < 54
+    assert client.get("/v1/map/developments", params={"county": "Atlantis"}).status_code == 404

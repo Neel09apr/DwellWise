@@ -181,6 +181,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/map/developments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Development Map
+         * @description GeoJSON of schemes of five homes or more started or applied for in the last 12 months.
+         */
+        get: operations["development_map_v1_map_developments_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -290,6 +310,57 @@ export interface components {
             /** Total */
             total: number;
         };
+        /** DevelopmentFeature */
+        DevelopmentFeature: {
+            /**
+             * Type
+             * @default Feature
+             */
+            type: string;
+            geometry: components["schemas"]["PointGeometry"];
+            properties: components["schemas"]["DevelopmentProperties"];
+        };
+        /** DevelopmentProperties */
+        DevelopmentProperties: {
+            /** Kind */
+            kind: string;
+            /** Label */
+            label: string | null;
+            /** Authority */
+            authority: string;
+            /** Homes */
+            homes: number;
+            /**
+             * Day
+             * Format: date
+             */
+            day: string;
+            /** Settlement */
+            settlement: string | null;
+            /** Status */
+            status: string | null;
+            /** Reference */
+            reference: string | null;
+        };
+        /**
+         * Developments
+         * @description GeoJSON: schemes of five homes or more, started or applied for in the last 12 months.
+         */
+        Developments: {
+            /**
+             * Type
+             * @default FeatureCollection
+             */
+            type: string;
+            /** County */
+            county: string | null;
+            /** Min Homes */
+            min_homes: number;
+            /** Attribution */
+            attribution: string[];
+            /** Features */
+            features: components["schemas"]["DevelopmentFeature"][];
+        };
         /** ErrorBody */
         ErrorBody: {
             error: components["schemas"]["ErrorDetail"];
@@ -334,6 +405,16 @@ export interface components {
             total: number;
             /** Month */
             month: string;
+        };
+        /** PointGeometry */
+        PointGeometry: {
+            /**
+             * Type
+             * @default Point
+             */
+            type: string;
+            /** Coordinates */
+            coordinates: number[];
         };
         /**
          * PrecedentApplication
@@ -824,6 +905,47 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    development_map_v1_map_developments_get: {
+        parameters: {
+            query?: {
+                /** @description County name; none means Ireland */
+                county?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Developments"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

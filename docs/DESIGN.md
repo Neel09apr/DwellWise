@@ -334,6 +334,7 @@ workflow runs and stale-data alerts.
 | Abuse of the AI endpoint | Per-IP and daily limits; cached responses; works without it |
 | Secrets in git | gitleaks on full history; push protection on |
 | Personal data | Applicant fields excluded at fetch and asserted absent at validation |
+| Third-party content on the page | The CSP allows one outside host, OpenFreeMap, for map tiles and fonts only (no scripts); map pop-ups set text, never HTML |
 | Secrets in error reports | Sentry gets no frame local variables and no default personal data; a test sends a bearer token and asserts it is absent from the event |
 
 ## 11. Environments and delivery
@@ -512,6 +513,17 @@ source, so "as recent as last night" is shown, not assumed. Commencement
 notices add construction starts if their licence allows; otherwise the
 dashboard shows applications and decisions only. Data age stays under the
 existing freshness SLO.
+
+Built in two parts. M9a (PR #50): construction starts from commencement notices
+on the Ireland, county and town pages, and the planning panel's note on how far
+its source runs. M9b: a map on the Ireland and county pages of schemes of five
+homes or more, started (filled, survey blue) or applied for (ringed, grey), last
+12 months, from `GET /v1/map/developments` (GeoJSON, coordinates rounded to
+about 10 m). Nothing smaller is placed on a map. MapLibre GL (BSD-3) is loaded
+only when a map is shown; tiles, fonts and sprites come from OpenFreeMap (free,
+no key, no cookies), so the CSP allows `https://tiles.openfreemap.org` for
+images and connections and `worker-src 'self'` for MapLibre's bundled worker.
+Pop-ups are built with `textContent`, never HTML. Responses are gzipped.
 
 **M10. Prices, area level.** The CSO Residential Property Price Index (PxStat
 API, CC BY 4.0; county and Eircode routing area) as a trend per county and per

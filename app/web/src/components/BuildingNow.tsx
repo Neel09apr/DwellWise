@@ -77,7 +77,7 @@ function Figures({ stats, inTown }: { stats: CommencementStats; inTown: boolean 
                   {fmt.format(s.homes)}
                   {s.scheme_homes && s.scheme_homes > s.homes ? ` of ${fmt.format(s.scheme_homes)}` : ""}
                 </td>
-                <td>{s.commenced ? dayLabel(s.commenced) : "Not given"}</td>
+                <td className="nowrap">{s.commenced ? dayLabel(s.commenced) : "Not given"}</td>
                 <td>{s.planning_ref ?? "None given"}</td>
               </tr>
             ))}
