@@ -267,3 +267,44 @@ def development_points(conn, county: str | None, min_homes: int, days: int, spar
             {"county": county, "min_homes": min_homes, "days": days, "sparse_below": sparse_below},
         )
         return cur.fetchone()
+
+
+def price_data(conn, county: str | None, settlement: str | None, since) -> dict:
+    """Every candidate price area for a place, with its months since ``since``, in one round trip.
+
+    Candidates: the Eircode routing key most of the town's commencement notices
+    carry (with how many), the county's CSO areas (exact name, or "<county> ..."
+    for counties split into city and county), and the national row ('-').
+    """
+    with conn.cursor(row_factory=dict_row) as cur:
+        cur.execute(
+            """
+            with s as (select code, county from dw.settlement where code = %(settlement)s),
+            key as (
+                select routing_key, count(*)::int as notices, (sum(count(*)) over ())::int as with_eircode
+                from dw.commencement
+                where %(settlement)s::text is not null and settlement = %(settlement)s
+                  and routing_key is not null
+                group by routing_key order by count(*) desc, routing_key limit 1
+            ),
+            target as (select coalesce(%(county)s, (select county from s)) as county)
+            select
+                (%(county)s::text is null or exists (select 1 from dw.county where name = %(county)s))
+                    as county_known,
+                (%(settlement)s::text is null or exists (select 1 from s)) as settlement_known,
+                (select county from target) as county,
+                (select row_to_json(key) from key) as key,
+                (select max(fetched_at) from dw.snapshot where source = 'prices' and status = 'loaded')
+                    as captured_at,
+                (select coalesce(json_agg(p order by kind, code, month, status), '[]') from (
+                    select kind, code, name, month, status, sales, median from dw.price
+                    where month >= %(since)s and (
+                        (kind = 'eircode' and code = (select routing_key from key))
+                        or (kind = 'region' and (code = '-'
+                            or upper(name) = (select county from target)
+                            or upper(name) like (select county from target) || ' %%')))
+                ) p) as rows
+            """,
+            {"county": county, "settlement": settlement, "since": since},
+        )
+        return cur.fetchone()

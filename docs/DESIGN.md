@@ -228,6 +228,7 @@ file, which makes backfills and bug fixes cheap. What to do when it fails:
 | Tailte Éireann settlement boundaries | Settlement polygons | CC BY 4.0, attribution "© Tailte Éireann" |
 | NPWS designated areas (ArcGIS REST, the service named on npws.ie) | SAC, SPA and NHA boundaries, one source each | CC BY 4.0 |
 | Building Commencement and Completion Data, National Building Control Office (one CSV, refreshed each morning) | Residential commencement notices since 2020, one row per notice (M9) | CC BY 4.0 |
+| CSO PxStat tables HPM04 (by Eircode routing key) and HPM05 (by county and council area) | Monthly sales, median and mean price of homes bought by households, all and new, since 2020 (M10) | CC BY 4.0 (CSO copyright policy) |
 
 **Commencement notices (M9).** The file is about 280 MB with one row per
 building. The source streams it and keeps only residential notices received
@@ -492,10 +493,9 @@ v2, detailed in §16:
 - ~~Whether commencement notices can be used.~~ Settled 24 Nov 2026: the
   National Building Control Office publishes them nationally under CC BY 4.0,
   refreshed daily (the Department's yearly files are CC BY-SA and stop in 2021).
-- The Property Price Register's reuse terms. The PSRA encourages reuse of its
-  information, but no licence text was found for the register itself (checked
-  24 Nov 2026). M10 uses it only once the terms are confirmed, aggregated, and
-  without addresses.
+- ~~The Property Price Register's reuse terms.~~ Not needed: the CSO's HPM04
+  and HPM05 tables give the same sales as area statistics under CC BY 4.0
+  (25 Nov 2026), without addresses.
 - Each free AI tier's current limits and data terms; published figures
   disagree. Confirm in the provider's own documentation before M12.
 
@@ -536,6 +536,16 @@ settlement's routing area. Property Price Register sales, aggregated per town
 (count and median by year, no addresses, small groups suppressed), only once
 its terms are confirmed. A new brief section with the source and date of each
 figure. Not a valuation of any site.
+
+Built (M10): the CSO publishes the same stamp duty data as monthly statistics
+by Eircode routing area (HPM04, 139 areas) and by county and council area
+(HPM05), so the Property Price Register is not needed and no address is ever
+fetched. A town has no figures of its own: it gets the routing area that most of
+its commencement notices carry (only the first three characters of an Eircode
+are kept, never the full code), and the response says how many notices that
+is; with none, its county's figures, and it says so. Counties split into city
+and county (Cork, Galway, Limerick, Waterford) show each part. Suppressed small
+counts stay "not published". The brief gains section 04, "Sale prices nearby".
 
 **M11. Cost and feasibility calculator.** Deterministic code: build cost per
 square metre, the council's development contribution charges (from its

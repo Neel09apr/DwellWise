@@ -5,6 +5,7 @@ import { Breadcrumbs } from "../components/Breadcrumbs";
 import { BuildingNow } from "../components/BuildingNow";
 import { PlanningPrecedents } from "../components/PlanningPrecedents";
 import { ProtectedSites } from "../components/ProtectedSites";
+import { SalePrices } from "../components/SalePrices";
 import { WastewaterRegister } from "../components/WastewaterRegister";
 import { Failure, Loading } from "../components/Status";
 import { countySlug, titleCase } from "../text";
@@ -28,6 +29,11 @@ const SECTIONS = [
     about: "SAC, SPA and NHA sites within 1 km and 5 km of the town boundary.",
   },
   {
+    id: "prices",
+    title: "Sale prices nearby",
+    about: "What homes sold for in the Eircode area around the town, by month.",
+  },
+  {
     id: "alternatives",
     title: "Nearby alternatives",
     about: "Nearby settlements with spare capacity, by distance.",
@@ -45,6 +51,7 @@ type SectionProps = {
 /** A section's content: its data once the brief arrives, or a note that its source has not landed. */
 function SectionBody({ id, title, brief, settlement }: SectionProps) {
   if (id === "wastewater") return <WastewaterRegister name={settlement.name} county={settlement.county} />;
+  if (id === "prices") return <SalePrices settlement={settlement.code} />;
   if (id !== "precedents" && id !== "protected")
     return <p className="pending">Not loaded yet. This section fills in when its public data source is added.</p>;
   if (brief.kind === "loading") return <Loading what={title.toLowerCase()} />;

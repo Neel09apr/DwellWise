@@ -4,6 +4,7 @@ import { api } from "../api/client";
 import { Breadcrumbs } from "../components/Breadcrumbs";
 import { BuildingNow } from "../components/BuildingNow";
 import { DevelopmentMap } from "../components/DevelopmentMap";
+import { SalePrices } from "../components/SalePrices";
 import { PlanningActivity } from "../components/PlanningActivity";
 import { Failure, Loading } from "../components/Status";
 import { byFirstLetter, countyFromSlug, titleCase } from "../text";
@@ -32,6 +33,8 @@ export function CountyPage() {
       <BuildingNow county={countyFromSlug(slug)} />
 
       <DevelopmentMap county={countyFromSlug(slug)} />
+
+      <SalePrices county={countyFromSlug(slug)} />
 
       <h2 className="level-title level">Settlements</h2>
       {settlements.kind === "loading" && <Loading what="settlements" />}

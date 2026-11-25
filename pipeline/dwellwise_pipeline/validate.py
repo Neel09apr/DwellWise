@@ -40,7 +40,7 @@ def validate(source: Source, collection: dict, previous_rows: int | None, max_dr
         if missing:
             problems.append(f"{missing} rows missing {field}")
 
-    no_geometry = sum(1 for f in features if not f.get("geometry"))
+    no_geometry = sum(1 for f in features if not f.get("geometry")) if source.geometry else 0
     if no_geometry:
         problems.append(f"{no_geometry} rows without geometry")
 
