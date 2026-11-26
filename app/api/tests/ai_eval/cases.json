@@ -303,7 +303,10 @@
    "run_sql"
   ],
   "live_must_call": [
-   "commencement_stats"
+   [
+    "commencement_stats",
+    "settlement_brief"
+   ]
   ]
  },
  {
