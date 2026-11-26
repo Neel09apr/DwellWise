@@ -29,7 +29,8 @@ If it does neither, it is drift.
 **In (v1)**, as specified in `docs/DESIGN.md`:
 
 - Settlement search and a brief per settlement: wastewater capacity, planning
-  precedents, protected sites nearby, nearby alternatives with capacity.
+  precedents, protected sites nearby; nearby alternatives with capacity wait on the
+  wastewater registers' licence (off the page since M14b).
 - An optional AI summary written only over computed facts.
 - A national planning dashboard on the Ireland page: applications granted,
   refused and pending, per county and month, refreshed nightly (F9).
@@ -139,7 +140,8 @@ deploy/        Helm chart for the app, installed on a throwaway kind cluster in 
 | v2 M12a: AI platform: `POST /v1/ask`, own-API tools, grounding check, limits, kill switch, scripted eval in CI | Merged (PR #66); live 26 Nov, switched on 26 Nov (Groq key on Render) |
 | v2 M12b: assistant metrics and quota alerts (Grafana, Terraform), live eval workflow, question box on Ireland and briefs | Merged (PR #68); live 26 Nov. Refused price answers fixed (PR #70): thousands in narrow spaces, rejected tool calls retried |
 | v2 M13: scheme assistant: code-ranked county shortlist (`GET /v1/shortlist`), follow-up questions, a token budget per question, the table and brief links beside the answer | Merged (PR #71); live 26 Nov, verified on the Ireland page. Shorter answers, no reading of prices (PR #72) |
-| v2 M14a: UI frame: wide pages with a side list, header links, headline figures and one shared overview for Ireland and counties, towns compared on county pages, tables collapsed and keyboard-scrollable | In review |
+| v2 M14a: UI frame: wide pages with a side list, header links, headline figures and one shared overview for Ireland and counties, towns compared on county pages, tables collapsed and keyboard-scrollable | Merged (PR #73); live 26 Nov, checked at 375, 768 and 1280 px |
+| v2 M14b: the brief: four-figure summary strip, side list of sections, Nearby alternatives off the page, question box below the evidence | In review |
 
 
 ## Next

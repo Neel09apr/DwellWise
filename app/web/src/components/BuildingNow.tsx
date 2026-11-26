@@ -1,18 +1,12 @@
-import { api, type CommencementStats } from "../api/client";
+import type { CommencementStats } from "../api/client";
 import { dayLabel, titleCase } from "../text";
-import { type Resource, useResource } from "../useResource";
+import type { Resource } from "../useResource";
 import { Failure, Loading } from "./Status";
 import { TableRegion } from "./TableRegion";
 
 const FIRST = 5; // schemes shown before "Show all"
 
 const fmt = new Intl.NumberFormat("en-IE");
-
-/** Construction starts in one town, fetched here (the brief). */
-export function BuildingNow({ settlement }: { settlement: string }) {
-  const stats = useResource((signal) => api.commencementStats({ settlement }, signal), settlement);
-  return <BuildingSection stats={stats} settlement={settlement} />;
-}
 
 /** Homes whose construction has started, from commencement notices: Ireland, a county or a town. */
 export function BuildingSection({ stats, settlement }: { stats: Resource<CommencementStats>; settlement?: string }) {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import type { ApplicationStats, CommencementStats, Prices } from "./api/client";
-import { headlineFigures } from "./overviewText";
+import type { ApplicationStats, Brief, CommencementStats, Prices } from "./api/client";
+import { headlineFigures, townFigures } from "./overviewText";
 
 const counts = {
   granted: 7000,
@@ -83,5 +83,33 @@ describe("a place's headline figures", () => {
       areas: [{ ...prices.areas[1], name: "Suppressed", latest: month("2026-10", null) }, prices.areas[1]],
     } as unknown as Prices;
     expect(headlineFigures(null, null, unpublished)[0]?.detail).toBe("Cork County, Sep 2026");
+  });
+});
+
+describe("a brief's summary figures", () => {
+  const decisions = { granted: 12, refused: 3, pending: 2, withdrawn: 0, other: 1, total: 18 };
+  const site = (band: string) => ({ designation: "SAC", site_code: band, name: band, url: null, distance_m: 0, band });
+  const brief = {
+    precedents: { years: 4, residential: decisions },
+    protected: { sites: [site("touches"), site("1km"), site("5km")] },
+  } as unknown as Brief;
+
+  it("gives grants, homes started, protected sites within 1 km and the area's price, each pointing at its section", () => {
+    expect(townFigures(brief, starts, prices)).toEqual([
+      {
+        id: "precedents",
+        value: "12",
+        label: "residential applications granted, 4 years",
+        detail: "3 refused, 2 pending",
+      },
+      { id: "building", value: "30,500", label: "homes started, 12 months", detail: "1,234 commencement notices" },
+      { id: "protected", value: "2", label: "protected sites within 1 km", detail: "3 within 5 km" },
+      { id: "prices", value: "€340,000", label: "median sale price", detail: "Cork County, Sep 2026" },
+    ]);
+  });
+
+  it("leaves out what has not loaded", () => {
+    expect(townFigures(null, null, null)).toEqual([]);
+    expect(townFigures(null, starts, null).map((f) => f.id)).toEqual(["building"]);
   });
 });
