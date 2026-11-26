@@ -2,11 +2,12 @@ import { type FormEvent, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import { api, type Costs, type Prices } from "../api/client";
+import { Board } from "../components/Board";
 import { Breadcrumbs } from "../components/Breadcrumbs";
 import { areaTitle, price } from "../components/priceText";
 import { monthLabel } from "../components/planningText";
 import { Failure, Loading } from "../components/Status";
-import { type CostForm, costQuery, councilsFor, loadDraft, saveDraft } from "../costText";
+import { type CostForm, costQuery, councilsFor, estimateFigures, loadDraft, saveDraft } from "../costText";
 import { titleCase } from "../text";
 import { type Resource, useResource } from "../useResource";
 
@@ -48,21 +49,23 @@ export function CostsPage() {
     setQuery(costQuery(form));
   };
 
+  const estimate = useResource((signal) => (query ? api.costs(query, signal) : Promise.resolve(null)), query ?? "none");
+  const ready = estimate.kind === "ready" ? estimate.data : null;
+
   return (
     <article>
       <Breadcrumbs trail={[{ label: "Ireland", to: "/" }, { label: "Cost estimate" }]} />
-      <header className="page-head">
-        <p className="eyebrow">Cost estimate</p>
-        <h1>What might a scheme cost?</h1>
-        <p className="muted">
-          Your figures, worked line by line. Nothing is filled in for you and nothing leaves this browser except
-          the sums. An estimate of building costs, never the value of a site.
-        </p>
-      </header>
+      <Board
+        title="Cost estimate"
+        place="What might a scheme cost? Your figures, worked line by line."
+        figures={ready ? estimateFigures(ready) : []}
+        foot="Nothing is filled in for you and nothing leaves this browser except the sums. An estimate of building costs, never the value of a site."
+        disclaimer={false}
+      />
 
-      <form className="cost-form" onSubmit={submit}>
-        <fieldset>
-          <legend className="search-label">Development contributions</legend>
+      <form className="notices cost-form" onSubmit={submit}>
+        <section aria-labelledby="contributions-title">
+          <h2 id="contributions-title">Development contributions</h2>
           <label className="cost-field">
             <span>Council</span>
             <select value={council} onChange={(e) => setCouncil(e.target.value)}>
@@ -97,10 +100,10 @@ export function CostsPage() {
               <option value="per_home">per home</option>
             </select>
           </label>
-        </fieldset>
+        </section>
 
-        <fieldset>
-          <legend className="search-label">The scheme</legend>
+        <section aria-labelledby="scheme-title">
+          <h2 id="scheme-title">The scheme</h2>
           {FIELDS.map((f) => (
             <label key={f.key} className="cost-field">
               <span>
@@ -115,36 +118,36 @@ export function CostsPage() {
               />
             </label>
           ))}
-        </fieldset>
-        <button type="submit" className="cost-submit">
-          Work it out
-        </button>
+          <button type="submit" className="cost-submit">
+            Work it out
+          </button>
+          <p className="note">
+            Build cost hint: Society of Chartered Surveyors Ireland, The Real Costs of New Apartment Delivery (December
+            2025). Professional fees, contingency and finance are your own assumptions.
+          </p>
+        </section>
       </form>
 
-      {query ? <Estimate query={query} /> : null}
-      {settlement ? <AreaPrices settlement={settlement} county={county} /> : null}
-      <p className="note">
-        Build cost hint: Society of Chartered Surveyors Ireland, The Real Costs of New Apartment Delivery
-        (December 2025). Professional fees, contingency and finance are your own assumptions.
-      </p>
+      {query || settlement ? (
+        <div className="notices">
+          {query ? (
+            <section aria-labelledby="estimate-title">
+              <h2 id="estimate-title">Estimate</h2>
+              <EstimateBody data={estimate} />
+            </section>
+          ) : null}
+          {settlement ? <AreaPrices settlement={settlement} county={county} /> : null}
+        </div>
+      ) : null}
     </article>
   );
 }
 
-function Estimate({ query }: { query: string }) {
-  const data = useResource((signal) => api.costs(query, signal), query);
-  return (
-    <section className="section" aria-labelledby="estimate-title">
-      <h2 id="estimate-title">Estimate</h2>
-      <EstimateBody data={data} />
-    </section>
-  );
-}
-
-function EstimateBody({ data }: { data: Resource<Costs> }) {
+function EstimateBody({ data }: { data: Resource<Costs | null> }) {
   if (data.kind === "loading") return <Loading what="the estimate" />;
   if (data.kind === "error") return <Failure message={data.message} />;
   const costs = data.data;
+  if (!costs) return null;
   return (
     <>
       <table className="counts">
@@ -185,7 +188,7 @@ function EstimateBody({ data }: { data: Resource<Costs> }) {
 function AreaPrices({ settlement, county }: { settlement: string; county: string | null }) {
   const data = useResource((signal) => api.prices({ settlement }, signal), settlement);
   return (
-    <section className="section" aria-labelledby="area-prices-title">
+    <section aria-labelledby="area-prices-title">
       <h2 id="area-prices-title">What homes sold for nearby</h2>
       <AreaPricesBody data={data} county={county} />
     </section>
@@ -202,13 +205,13 @@ function AreaPricesBody({ data, county }: { data: Resource<Prices>; county: stri
     <>
       <p>
         In {areaTitle(area)}
-        {county ? `, County ${titleCase(county)}` : ""}, homes sold in {monthLabel(latest.month)} for a median
-        of {price(latest.median)}
+        {county ? `, County ${titleCase(county)}` : ""}, homes sold in {monthLabel(latest.month)} for a median of{" "}
+        {price(latest.median)}
         {latest.new_median != null ? `; new homes ${price(latest.new_median)}` : ""}.
       </p>
       <p className="note">
-        {data.data.basis} An area figure from the CSO, set beside your cost per home for comparison; it is not
-        the value of any site. {data.data.attribution}
+        {data.data.basis} An area figure from the CSO, set beside your cost per home for comparison; it is not the value
+        of any site. {data.data.attribution}
       </p>
     </>
   );
