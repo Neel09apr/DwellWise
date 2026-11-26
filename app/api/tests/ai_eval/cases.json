@@ -223,7 +223,7 @@
  },
  {
   "name": "an unknown place is reported, not invented",
-  "question": "How many applications in Atlantis?",
+  "question": "How many planning applications were there in County Ballykilty?",
   "settlement": null,
   "turns": [
    {
@@ -235,18 +235,18 @@
       "type": "function",
       "function": {
        "name": "application_stats",
-       "arguments": "{\"county\": \"Atlantis\"}"
+       "arguments": "{\"county\": \"Ballykilty\"}"
       }
      }
     ]
    },
    {
     "role": "assistant",
-    "content": "There is no county called Atlantis in the data."
+    "content": "There is no county called Ballykilty in the national planning applications data."
    }
   ],
   "tool_results": {
-   "application_stats": "{\"status\": 404, \"body\": {\"error\": {\"code\": \"not_found\", \"message\": \"No county is called Atlantis.\"}}}"
+   "application_stats": "{\"status\": 404, \"body\": {\"error\": {\"code\": \"not_found\", \"message\": \"No county is called Ballykilty.\"}}}"
   },
   "expect": "grounded",
   "live_must_call": [
