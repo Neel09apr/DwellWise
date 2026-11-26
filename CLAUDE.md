@@ -133,7 +133,7 @@ deploy/        Helm chart for the app, installed on a throwaway kind cluster in 
 | v2 M9a: construction starts (commencement notices) on the Ireland, county and town pages; planning shows its source's lag | Merged (PR #50); loaded and live 24 Nov |
 | v2 M9b: map of schemes of five homes or more, started and applied for (MapLibre, OpenFreeMap tiles) | Merged (PR #51); live 25 Nov. Note naming councils that rarely state units: merged (PR #53) |
 | v2 M10: sale prices by Eircode area and county (CSO), brief section 04 | Merged (PR #54); loaded and live 25 Nov |
-| v2 M11: cost estimate from the user's own figures (`/costs`, `GET /v1/costs`), linked from each brief | In review (PR #64) |
+| v2 M11: cost estimate from the user's own figures (`/costs`, `GET /v1/costs`), linked from each brief | Merged (PR #64); live 26 Nov |
 
 
 ## Next
