@@ -86,7 +86,9 @@ If it does neither, it is drift.
    is not "housing".
 10. **Design.** Minimal and hierarchical: Ireland > county > settlement > brief, with
     breadcrumbs and numbered sections. One serif, one sans, mono for metadata;
-    survey blue is the only accent; green, amber and red are for capacity status only.
+    survey blue is the only accent (charts may also use a lighter tint of it);
+    green, amber and red are for capacity status only. Wide pages (72rem) for
+    reference content; prose keeps its 46rem measure (revisited in M14, 26 Nov).
 8. **Security defaults.** No long-lived cloud keys. Least privilege. Non-root
    containers. Every scanner suppression is scoped and gives its reason.
 9. **Tests that can fail.** A new check is mutation-tested before it is trusted.
@@ -136,7 +138,8 @@ deploy/        Helm chart for the app, installed on a throwaway kind cluster in 
 | v2 M11: cost estimate from the user's own figures (`/costs`, `GET /v1/costs`), linked from each brief | Merged (PR #64); live 26 Nov |
 | v2 M12a: AI platform: `POST /v1/ask`, own-API tools, grounding check, limits, kill switch, scripted eval in CI | Merged (PR #66); live 26 Nov, switched on 26 Nov (Groq key on Render) |
 | v2 M12b: assistant metrics and quota alerts (Grafana, Terraform), live eval workflow, question box on Ireland and briefs | Merged (PR #68); live 26 Nov. Refused price answers fixed (PR #70): thousands in narrow spaces, rejected tool calls retried |
-| v2 M13: scheme assistant: code-ranked county shortlist (`GET /v1/shortlist`), follow-up questions, a token budget per question, the table and brief links beside the answer | Merged (PR #71); live 26 Nov, verified on the Ireland page. Shorter shortlist answers, no reading of prices (this PR) |
+| v2 M13: scheme assistant: code-ranked county shortlist (`GET /v1/shortlist`), follow-up questions, a token budget per question, the table and brief links beside the answer | Merged (PR #71); live 26 Nov, verified on the Ireland page. Shorter answers, no reading of prices (PR #72) |
+| v2 M14a: UI frame: wide pages with a side list, header links, headline figures and one shared overview for Ireland and counties, towns compared on county pages, tables collapsed and keyboard-scrollable | In review |
 
 
 ## Next

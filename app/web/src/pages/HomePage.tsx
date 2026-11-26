@@ -2,10 +2,7 @@ import { Link } from "react-router-dom";
 
 import { api } from "../api/client";
 import { AskBox } from "../components/AskBox";
-import { BuildingNow } from "../components/BuildingNow";
-import { DevelopmentMap } from "../components/DevelopmentMap";
-import { SalePrices } from "../components/SalePrices";
-import { PlanningActivity } from "../components/PlanningActivity";
+import { PlaceOverview } from "../components/PlaceOverview";
 import { SettlementSearch } from "../components/SettlementSearch";
 import { Failure, Loading } from "../components/Status";
 import { countySlug, titleCase } from "../text";
@@ -29,15 +26,9 @@ export function HomePage() {
 
       <AskBox place="Ireland" />
 
-      <PlanningActivity />
+      <PlaceOverview />
 
-      <BuildingNow />
-
-      <DevelopmentMap />
-
-      <SalePrices />
-
-      <section aria-labelledby="browse" className="level">
+      <section aria-labelledby="browse" className="level deferred">
         <h2 id="browse" className="level-title">
           Browse by county
         </h2>

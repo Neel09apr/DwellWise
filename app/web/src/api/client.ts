@@ -114,6 +114,11 @@ export const api = {
     const query = params.toString();
     return get<Prices>(`/v1/prices${query ? `?${query}` : ""}`, signal);
   },
+  shortlist: (county: string, sort: string, signal?: AbortSignal) =>
+    get<Shortlist>(
+      `/v1/shortlist?${new URLSearchParams({ county, sort })}`,
+      signal,
+    ),
   costs: (query: string, signal?: AbortSignal) =>
     get<Costs>(`/v1/costs?${query}`, signal),
   assistant: (signal?: AbortSignal) =>

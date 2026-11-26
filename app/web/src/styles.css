@@ -17,6 +17,7 @@
   --sans: "IBM Plex Sans", system-ui, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, monospace;
   --measure: 46rem;
+  --page: 72rem; /* wide pages; prose keeps --measure */
   color-scheme: light;
 }
 
@@ -44,10 +45,13 @@ a { color: var(--accent); text-underline-offset: 0.18em; }
 .skip:focus { top: 0.75rem; }
 
 /* ---- shell ------------------------------------------------------------- */
-.shell { max-width: var(--measure); margin: 0 auto; padding: 0 1.25rem; min-height: 100vh; display: flex; flex-direction: column; }
+.shell { max-width: var(--page); margin: 0 auto; padding: 0 1.25rem; min-height: 100vh; display: flex; flex-direction: column; }
 .header { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: 1.5rem 0; border-bottom: 1px solid var(--rule); }
 .brand { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--ink); text-decoration: none; font: 600 1.1rem var(--serif); }
-.header-tag { font: 0.75rem var(--mono); color: var(--muted); letter-spacing: 0.02em; }
+.header-nav { display: flex; gap: 1.25rem; font-size: 0.9rem; }
+.header-nav a { color: var(--prose); text-decoration: none; min-height: 32px; display: inline-flex; align-items: center; }
+.header-nav a:hover, .header-nav a.active { color: var(--accent); }
+.header-nav a.active { text-decoration: underline; text-underline-offset: 0.35em; }
 .main { flex: 1; padding: 2.5rem 0 4rem; }
 .footer { border-top: 1px solid var(--rule); padding: 1.25rem 0 2rem; font-size: 0.8rem; color: var(--muted); }
 .footer p { margin: 0 0 0.25rem; }
@@ -112,8 +116,8 @@ h1 { font: 600 clamp(1.9rem, 5vw, 2.6rem)/1.15 var(--serif); letter-spacing: -0.
 .ask-answer p { margin: 0 0 0.6rem; }
 .ask-exchange { margin-bottom: 1.25rem; }
 .ask-question { margin: 0 0 0.25rem; font: 0.8rem var(--mono); color: var(--muted); }
-.ask-shortlist { overflow-x: auto; max-width: 48rem; }
-.ask-shortlist caption { text-align: left; caption-side: top; }
+.ask-shortlist { max-width: 52rem; }
+.table-caption { text-align: left; caption-side: top; font: 0.8rem var(--mono); color: var(--muted); padding-bottom: 0.25rem; }
 .ask-restart { margin-top: 0.5rem; min-height: 32px; padding: 0; font: 0.85rem var(--sans); color: var(--accent); background: none; border: 0; cursor: pointer; }
 @media (max-width: 520px) { .ask-form { flex-direction: column; align-items: stretch; } }
 
@@ -162,7 +166,6 @@ h1 { font: 600 clamp(1.9rem, 5vw, 2.6rem)/1.15 var(--serif); letter-spacing: -0.
 .note { margin: 1rem 0 0; font-size: 0.8rem; color: var(--muted); max-width: 40rem; }
 
 @media (max-width: 520px) {
-  .counts th:nth-child(5), .counts td:nth-child(5) { display: none; }
   .chart-label { font-size: 21px; } /* the chart scales to half size here; keeps labels near 11px */
   .section > p, .sources, .section-body { margin-left: 0; }
   .letter { grid-template-columns: 1.75rem 1fr; gap: 0 0.75rem; }
@@ -184,3 +187,30 @@ h1 { font: 600 clamp(1.9rem, 5vw, 2.6rem)/1.15 var(--serif); letter-spacing: -0.
 /* M10: sale prices */
 .price-area + .price-area { margin-top: 2rem; }
 .price-title { margin: 0 0 0.25rem; font: 600 1.05rem var(--serif); color: var(--ink); }
+
+/* M14a: the frame */
+h2, h3 { text-wrap: balance; }
+p { text-wrap: pretty; }
+.intro, .search, .note, .lede, .ask-form, .ask-answer > p, .page-head { max-width: var(--measure); }
+.figures { list-style: none; margin: 0 0 1rem; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); container-type: inline-size; }
+.figures a { display: grid; gap: 0.15rem; height: 100%; padding: 1rem 1.1rem; background: var(--ground); color: var(--ink); text-decoration: none; }
+.figures a:hover { background: var(--accent-wash); }
+.figure-value { font: 600 1.9rem/1.1 var(--serif); }
+.figure-label { font-size: 0.9rem; color: var(--prose); }
+.figure-detail { font: 0.75rem var(--mono); color: var(--muted); }
+@container (width < 30rem) { .figures a { padding: 0.75rem 0.9rem; } .figure-value { font-size: 1.5rem; } }
+.table-region { overflow-x: auto; max-width: 100%; }
+.table-region:focus-visible { outline-offset: 4px; }
+.table-region .counts { min-width: 34rem; }
+.table-region tbody th[scope="row"] { position: sticky; inset-inline-start: 0; background: var(--ground); }
+.toggle select { min-height: 36px; padding: 0.2rem 0.5rem; font: 0.9rem var(--sans); color: var(--ink); background: var(--ground); border: 1px solid var(--muted); border-radius: 6px; }
+.rail { display: none; }
+@media (min-width: 64rem) {
+  .with-rail { display: grid; grid-template-columns: 11rem minmax(0, 1fr); gap: 3rem; }
+  .rail { display: block; position: sticky; top: 1.5rem; align-self: start; margin-top: 3rem; font-size: 0.85rem; }
+  .rail ol { list-style: none; margin: 0; padding: 0 0 0 0.75rem; border-left: 1px solid var(--rule); }
+  .rail a { display: block; padding: 0.3rem 0; color: var(--prose); text-decoration: none; }
+  .rail a:hover { color: var(--accent); }
+}
+/* Sections well below the fold skip rendering until they are near the screen; the size is a placeholder. */
+.deferred { content-visibility: auto; contain-intrinsic-size: auto 640px; }

@@ -1,11 +1,11 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 
-import { api, type ApplicationStats } from "../api/client";
+import type { ApplicationStats } from "../api/client";
 import { countySlug, dayLabel, titleCase } from "../text";
-import { useResource } from "../useResource";
+import type { Resource } from "../useResource";
 import { decidedShare, monthLabel } from "./planningText";
 import { Failure, Loading } from "./Status";
+import { TableRegion } from "./TableRegion";
 
 const FIGURES = [
   { key: "granted", label: "Granted" },
@@ -17,14 +17,20 @@ const FIGURES = [
 
 const fmt = new Intl.NumberFormat("en-IE");
 
-/** Planning applications for Ireland, or one county: figures, a monthly chart, and (for Ireland) each county. */
-export function PlanningActivity({ county }: { county?: string }) {
-  const [residential, setResidential] = useState(false);
-  const stats = useResource(
-    (signal) => api.applicationStats({ county, residential }, signal),
-    `${county ?? "ireland"}:${residential}`,
-  );
+type Props = {
+  stats: Resource<ApplicationStats>;
+  national: boolean;
+  residential: boolean;
+  onResidential: (residential: boolean) => void;
+};
 
+/** Planning applications for Ireland, or one county: figures, a monthly chart, and (for Ireland) each county. */
+export function PlanningActivity({
+  stats,
+  national,
+  residential,
+  onResidential,
+}: Props) {
   return (
     <section aria-labelledby="activity" className="level activity">
       <div className="activity-head">
@@ -35,7 +41,7 @@ export function PlanningActivity({ county }: { county?: string }) {
           <input
             type="checkbox"
             checked={residential}
-            onChange={(e) => setResidential(e.target.checked)}
+            onChange={(e) => onResidential(e.target.checked)}
           />
           Residential only
         </label>
@@ -43,7 +49,7 @@ export function PlanningActivity({ county }: { county?: string }) {
       {stats.kind === "loading" && <Loading what="planning applications" />}
       {stats.kind === "error" && <Failure message={stats.message} />}
       {stats.kind === "ready" && (
-        <Figures stats={stats.data} national={!county} />
+        <Figures stats={stats.data} national={national} />
       )}
     </section>
   );
@@ -184,31 +190,36 @@ function bar(x: number, base: number, w: number, h: number): string {
 
 function CountyTable({ counties }: { counties: ApplicationStats["counties"] }) {
   return (
-    <table className="counts">
-      <thead>
-        <tr>
-          <th scope="col">County</th>
-          <th scope="col">Received</th>
-          <th scope="col">Granted</th>
-          <th scope="col">Refused</th>
-          <th scope="col">Pending</th>
-        </tr>
-      </thead>
-      <tbody>
-        {counties.map((c) => (
-          <tr key={c.county}>
-            <th scope="row">
-              <Link to={`/counties/${countySlug(c.county)}`}>
-                {titleCase(c.county)}
-              </Link>
-            </th>
-            <td>{fmt.format(c.total)}</td>
-            <td>{fmt.format(c.granted)}</td>
-            <td>{fmt.format(c.refused)}</td>
-            <td>{fmt.format(c.pending)}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <details className="chart-table">
+      <summary>Show each county</summary>
+      <TableRegion label="Planning applications by county">
+        <table className="counts">
+          <thead>
+            <tr>
+              <th scope="col">County</th>
+              <th scope="col">Received</th>
+              <th scope="col">Granted</th>
+              <th scope="col">Refused</th>
+              <th scope="col">Pending</th>
+            </tr>
+          </thead>
+          <tbody>
+            {counties.map((c) => (
+              <tr key={c.county}>
+                <th scope="row">
+                  <Link to={`/counties/${countySlug(c.county)}`}>
+                    {titleCase(c.county)}
+                  </Link>
+                </th>
+                <td>{fmt.format(c.total)}</td>
+                <td>{fmt.format(c.granted)}</td>
+                <td>{fmt.format(c.refused)}</td>
+                <td>{fmt.format(c.pending)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </TableRegion>
+    </details>
   );
 }

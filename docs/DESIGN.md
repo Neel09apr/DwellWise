@@ -712,6 +712,30 @@ Decided 26 November 2026 (grilled before building):
 features. Rule 10 (minimal, hierarchical, one accent) is revisited in that pull
 request.
 
+Decided 26 November 2026 (grilled before building), in two pull requests:
+
+- **Structure, not a new look.** Fonts and colour tokens stay. Rule 10 stays,
+  plus a lighter tint of the accent for charts. Pages are 72rem wide on large
+  screens; prose keeps its 46rem measure.
+- **M14a, the frame:** header links (Towns, Cost estimate); the Ireland and
+  county pages share one overview that fetches each dataset once and leads with
+  three headline figures (applications and grants, homes started, the latest
+  median sale price), each linking to its section; county pages add "Towns
+  compared" (the M13 shortlist, ranked by code, working with the assistant off)
+  and a sticky side list of sections on wide screens. Data tables open on
+  demand (`<details>`, still found by find-in-page); wide tables scroll inside a
+  named, focusable region; sections well below the fold skip rendering until
+  near the screen (`content-visibility: auto` with a size placeholder), checked
+  for keyboard reach; `color-scheme` is declared in the HTML so dark mode does
+  not flash.
+- **M14b, the brief:** a summary strip (residential grants, homes started,
+  protected sites within 1 km, the area's median price) from data the brief
+  already fetches; the side list; "Nearby alternatives" leaves the page until
+  the capacity registers can be republished; the question box moves below the
+  evidence.
+- Proved by screenshots at 375, 768 and 1280 px, keyboard-only navigation, no
+  extra requests, and no new dependency or API change.
+
 **Constraint screening** (with M10 or M13, as licences allow): radon (EPA),
 landslide susceptibility (GSI), recorded monuments (National Monuments
 Service), beside the protected sites already shown. Flood data stays out.

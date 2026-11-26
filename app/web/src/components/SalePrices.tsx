@@ -7,20 +7,20 @@ import { Failure, Loading } from "./Status";
 
 const fmt = new Intl.NumberFormat("en-IE");
 
-/** What homes sold for around Ireland, a county or a town (CSO). Area figures, never a site's value. */
-export function SalePrices({ county, settlement }: { county?: string; settlement?: string }) {
-  const data = useResource(
-    (signal) => api.prices({ county, settlement }, signal),
-    `${county ?? ""}:${settlement ?? ""}`,
-  );
-  if (settlement)
-    return (
-      <div className="section-body">
-        <Body data={data} />
-      </div>
-    );
+/** What homes sold for around a town (CSO), fetched here (the brief). Area figures, never a site's value. */
+export function SalePrices({ settlement }: { settlement: string }) {
+  const data = useResource((signal) => api.prices({ settlement }, signal), settlement);
   return (
-    <section aria-labelledby="prices-title" className="level">
+    <div className="section-body">
+      <Body data={data} />
+    </div>
+  );
+}
+
+/** Sale prices for Ireland or a county, from data the overview fetched. */
+export function PriceSection({ data }: { data: Resource<Prices> }) {
+  return (
+    <section aria-labelledby="prices-title" className="level deferred">
       <h2 id="prices-title" className="level-title">
         Sale prices of homes
       </h2>
