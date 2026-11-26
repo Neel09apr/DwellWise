@@ -38,3 +38,17 @@ def test_a_grounded_answer_that_skipped_the_tool_still_fails():
     no_tools = [{"role": "assistant", "content": "I do not have that."}]  # no numbers: grounded
     passed, result = live.run_case(case, script(no_tools))
     assert result["grounded"] is True and passed is False
+
+
+def test_a_list_in_must_call_accepts_any_one_of_its_tools():
+    case = next(c for c in live.CASES if c["name"] == "an unknown place is reported, not invented")
+    search = {
+        "role": "assistant",
+        "content": "",
+        "tool_calls": [
+            {"id": "s", "type": "function", "function": {"name": "search_settlements", "arguments": "{}"}}
+        ],
+    }
+    reply = {"role": "assistant", "content": "There is no county called Ballykilty in the data."}
+    assert live.run_case(case, script([search, reply]))[0] is True
+    assert live.run_case(case, script([reply]))[0] is False  # no check at all

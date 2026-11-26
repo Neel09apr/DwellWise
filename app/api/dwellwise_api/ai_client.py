@@ -46,6 +46,13 @@ def _post(provider: Provider, body: dict) -> dict:
         return json.loads(response.read())
 
 
+def _body(exc: urllib.error.HTTPError) -> bytes:
+    try:
+        return exc.read() or b""
+    except (OSError, AttributeError, TypeError):
+        return b""
+
+
 class ChatClient:
     """``chat(messages, tools)`` returns the assistant message, the provider's name and the tokens used."""
 
@@ -62,6 +69,11 @@ class ChatClient:
                 message = answer["choices"][0]["message"]
                 tokens = int((answer.get("usage") or {}).get("total_tokens") or 0)
             except urllib.error.HTTPError as exc:
+                if exc.code == 400 and b"tool_use_failed" in _body(exc):
+                    # The provider rejected a tool call the model made up (one not on the list, as an
+                    # injected instruction asks for). Nothing ran: an empty reply, which becomes the refusal.
+                    AI_MODEL_CALLS.labels(provider.name, "tool_use_failed").inc()
+                    return {"message": {"content": ""}, "provider": provider.name, "tokens": 0}
                 AI_MODEL_CALLS.labels(provider.name, "failed").inc()
                 if exc.code == 429 or exc.code >= 500:
                     failures.append(f"{provider.name}: HTTP {exc.code}")

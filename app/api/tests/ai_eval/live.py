@@ -48,7 +48,9 @@ def recorded(results: dict):
 def run_case(case: dict, chat) -> tuple[bool, dict]:
     result = asyncio.run(answer(case["question"], case["settlement"], chat, recorded(case["tool_results"])))
     called = set(result["tools"])
-    passed = result["grounded"] and all(t in called for t in case["live_must_call"])
+    # Each entry is a tool name, or a list of names any one of which will do.
+    needs = [{t} if isinstance(t, str) else set(t) for t in case["live_must_call"]]
+    passed = result["grounded"] and all(called & need for need in needs)
     return passed, result
 
 

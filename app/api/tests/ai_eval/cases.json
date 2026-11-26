@@ -250,7 +250,10 @@
   },
   "expect": "grounded",
   "live_must_call": [
-   "application_stats"
+   [
+    "search_settlements",
+    "application_stats"
+   ]
   ]
  },
  {

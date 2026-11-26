@@ -270,3 +270,24 @@ def test_todays_tokens_start_again_at_midnight_utc():
     gate.report()
     assert sample("dwellwise_ai_today", {"kind": "tokens"}) == 0
     assert sample("dwellwise_ai_today", {"kind": "questions"}) == 1
+
+
+def test_a_tool_call_the_provider_rejects_becomes_the_refusal_not_an_outage():
+    import io
+
+    def post(_provider, _body):
+        body = io.BytesIO(
+            b'{"error":{"code":"tool_use_failed","message":"run_sql was not in request.tools"}}'
+        )
+        raise urllib.error.HTTPError("u", 400, "Bad Request", {}, body)
+
+    client = ChatClient([Provider("groq", "https://g", "m", "k")], post)
+    assert client([], [])["message"] == {"content": ""}
+    result = asyncio.run(answer("What is being built in Athy?", "1", client, recorded({})))
+    assert (result["grounded"], result["answer"]) == (False, REFUSAL)
+
+    def other_400(_provider, _body):
+        raise urllib.error.HTTPError("u", 400, "Bad Request", {}, io.BytesIO(b'{"error":{"code":"invalid"}}'))
+
+    with pytest.raises(AiUnavailable, match="HTTP 400"):
+        ChatClient([Provider("groq", "https://g", "m", "k")], other_400)([], [])
