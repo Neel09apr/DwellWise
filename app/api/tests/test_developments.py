@@ -34,3 +34,12 @@ def test_the_page_may_load_map_tiles_from_openfreemap_and_nowhere_else():
     assert "connect-src 'self' https://tiles.openfreemap.org;" in csp
     assert "worker-src 'self'" in csp and "blob:" not in csp.split("worker-src")[1].split(";")[0]
     assert "script-src" not in csp  # scripts stay on default-src 'self'
+
+
+def test_the_typeface_is_self_hosted_and_no_third_party_may_serve_styles_or_fonts():
+    import mimetypes
+
+    csp = SECURITY_HEADERS["Content-Security-Policy"]
+    assert "font-src 'self';" in csp and "style-src 'self';" in csp
+    assert "googleapis" not in csp and "gstatic" not in csp
+    assert mimetypes.guess_type("archivo.woff2")[0] == "font/woff2"

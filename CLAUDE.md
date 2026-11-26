@@ -141,7 +141,8 @@ deploy/        Helm chart for the app, installed on a throwaway kind cluster in 
 | v2 M12b: assistant metrics and quota alerts (Grafana, Terraform), live eval workflow, question box on Ireland and briefs | Merged (PR #68); live 26 Nov. Refused price answers fixed (PR #70): thousands in narrow spaces, rejected tool calls retried |
 | v2 M13: scheme assistant: code-ranked county shortlist (`GET /v1/shortlist`), follow-up questions, a token budget per question, the table and brief links beside the answer | Merged (PR #71); live 26 Nov, verified on the Ireland page. Shorter answers, no reading of prices (PR #72) |
 | v2 M14a: UI frame: wide pages with a side list, header links, headline figures and one shared overview for Ireland and counties, towns compared on county pages, tables collapsed and keyboard-scrollable | Merged (PR #73); live 26 Nov, checked at 375, 768 and 1280 px |
-| v2 M14b: the brief: four-figure summary strip, side list of sections, Nearby alternatives off the page, question box below the evidence | In review |
+| v2 M14b: the brief: four-figure summary strip, side list of sections, Nearby alternatives off the page, question box below the evidence | Merged (PR #74); live 26 Nov |
+| M15b: UI revisit, the brief as a site notice (statutory-yellow board, pinned notices, self-hosted Archivo, PRODUCT.md) | In review |
 
 
 ## Next

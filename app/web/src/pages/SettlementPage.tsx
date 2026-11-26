@@ -4,14 +4,13 @@ import { api, type Brief, type CommencementStats, type Prices } from "../api/cli
 import { Breadcrumbs } from "../components/Breadcrumbs";
 import { AskBox } from "../components/AskBox";
 import { BuildingSection } from "../components/BuildingNow";
-import { FigureStrip } from "../components/FigureStrip";
 import { PageRail } from "../components/PageRail";
 import { PlanningPrecedents } from "../components/PlanningPrecedents";
 import { ProtectedSites } from "../components/ProtectedSites";
 import { TownPrices } from "../components/SalePrices";
 import { WastewaterRegister } from "../components/WastewaterRegister";
 import { Failure, Loading } from "../components/Status";
-import { townFigures } from "../overviewText";
+import { type Figure, townFigures } from "../overviewText";
 import { countySlug, titleCase } from "../text";
 import { type Resource, useResource } from "../useResource";
 
@@ -67,8 +66,46 @@ function SectionBody({ id, title, brief, starts, prices, settlement }: SectionPr
   );
 }
 
-const number = (i: number) => String(i + 1).padStart(2, "0");
 const ready = <T,>(r: Resource<T>): T | null => (r.kind === "ready" ? r.data : null);
+const captured = (when: string) => new Date(when).toLocaleDateString("en-IE", { dateStyle: "medium" });
+
+/** The notice board: the town in heavy caps and its record as the notice's prescribed lines. */
+function Board({
+  name,
+  county,
+  code,
+  area,
+  figures,
+}: {
+  name: string;
+  county: string | null;
+  code: string;
+  area: number;
+  figures: Figure[];
+}) {
+  return (
+    <header className="board">
+      <h1>{name}</h1>
+      <p className="board-place">
+        {county ? `County ${county}` : "Ireland"} · CSO settlement {code} · {area.toFixed(2)} km²
+      </p>
+      <ul className="board-lines" aria-label="The town's record">
+        {figures.map((f) => (
+          <li key={f.id}>
+            <a href={`#${f.id}`}>
+              <strong>{f.value}</strong> {f.label}
+              <span className="board-detail">{f.detail}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+      <p className="board-foot">
+        Compiled from public records. Describes the town as a whole, never a particular site, and is not planning
+        advice.
+      </p>
+    </header>
+  );
+}
 
 export function SettlementPage() {
   const { code = "" } = useParams();
@@ -93,78 +130,32 @@ export function SettlementPage() {
     ...(county ? [{ label: county, to: `/counties/${countySlug(s.county ?? "")}` }] : []),
     { label: s.name },
   ];
+  const rail = [...SECTIONS.map((x) => ({ id: x.id, label: x.title })), { id: "sources", label: "Sources" }];
 
   return (
-    <article>
+    <article className="brief">
       <Breadcrumbs trail={trail} />
-      <header className="page-head">
-        <p className="eyebrow">Pre-planning brief</p>
-        <h1>{s.name}</h1>
-        <p className="muted">
-          {county ? `County ${county}. ` : ""}Evidence about the town as a whole, not about any site in it.
-        </p>
-        <dl className="facts">
-          <div>
-            <dt>Area</dt>
-            <dd>{s.area_km2.toFixed(2)} km²</dd>
-          </div>
-          <div>
-            <dt>Centre</dt>
-            <dd>
-              {s.latitude.toFixed(4)}, {s.longitude.toFixed(4)}
-            </dd>
-          </div>
-          <div>
-            <dt>CSO code</dt>
-            <dd>{s.code}</dd>
-          </div>
-        </dl>
-        <p className="note">
-          <Link to={`/costs?${new URLSearchParams({ settlement: s.code, county: s.county ?? "" })}`}>
-            Estimate what a scheme might cost
-          </Link>{" "}
-          with your own figures, beside what homes sold for here.
-        </p>
-      </header>
-      <FigureStrip figures={townFigures(ready(brief), ready(starts), ready(prices))} />
+      <Board
+        name={s.name}
+        county={county}
+        code={s.code}
+        area={s.area_km2}
+        figures={townFigures(ready(brief), ready(starts), ready(prices))}
+      />
+      <p className="brief-tools">
+        <Link to={`/costs?${new URLSearchParams({ settlement: s.code, county: s.county ?? "" })}`}>
+          Estimate what a scheme might cost
+        </Link>{" "}
+        with your own figures, beside what homes sold for here.
+      </p>
 
       <div className="with-rail">
-        <PageRail
-          links={[
-            ...SECTIONS.map((x) => ({ id: x.id, label: x.title })),
-            { id: "sources", label: "Sources" },
-          ]}
-        />
-        <div>
-          <nav aria-labelledby="contents" className="contents">
-            <h2 id="contents" className="level-title">
-              Contents
-            </h2>
-            <ol>
-              {SECTIONS.map((section, i) => (
-                <li key={section.id}>
-                  <a href={`#${section.id}`}>
-                    <span className="num">{number(i)}</span>
-                    {section.title}
-                  </a>
-                </li>
-              ))}
-              <li>
-                <a href="#sources">
-                  <span className="num">{number(SECTIONS.length)}</span>
-                  Sources
-                </a>
-              </li>
-            </ol>
-          </nav>
-
-          {SECTIONS.map((section, i) => (
-            <section key={section.id} id={section.id} className="section" aria-labelledby={`${section.id}-title`}>
-              <h2 id={`${section.id}-title`}>
-                <span className="num">{number(i)}</span>
-                {section.title}
-              </h2>
-              <p className="muted">{section.about}</p>
+        <PageRail links={rail} />
+        <div className="notices">
+          {SECTIONS.map((section) => (
+            <section key={section.id} id={section.id} className="notice" aria-labelledby={`${section.id}-title`}>
+              <h2 id={`${section.id}-title`}>{section.title}</h2>
+              <p className="notice-about">{section.about}</p>
               <SectionBody
                 id={section.id}
                 title={section.title}
@@ -178,21 +169,13 @@ export function SettlementPage() {
 
           <AskBox place={s.name} settlement={s.code} />
 
-          <section id="sources" className="section" aria-labelledby="sources-title">
-            <h2 id="sources-title">
-              <span className="num">{number(SECTIONS.length)}</span>
-              Sources
-            </h2>
+          <section id="sources" className="notice" aria-labelledby="sources-title">
+            <h2 id="sources-title">Sources</h2>
             <ul className="sources">
               {s.sources.map((src) => (
                 <li key={src.name}>
                   <span>{src.attribution}</span>
-                  <span className="row-meta">
-                    captured{" "}
-                    {new Date(src.captured_at).toLocaleDateString("en-IE", {
-                      dateStyle: "medium",
-                    })}
-                  </span>
+                  <span className="row-meta">captured {captured(src.captured_at)}</span>
                 </li>
               ))}
             </ul>

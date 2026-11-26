@@ -736,6 +736,17 @@ Decided 26 November 2026 (grilled before building), in two pull requests:
 - Proved by screenshots at 375, 768 and 1280 px, keyboard-only navigation, no
   extra requests, and no new dependency or API change.
 
+**M15. UI revisit** (decided 26 November 2026, replaces M14's "structure, not
+a new look"). Product truth lives in `PRODUCT.md`; the visual rules will live
+in a root `DESIGN.md`, written from the built world at the end (M15e). The
+owner chose **The Site Notice**: each place's record posted like a statutory
+planning notice, a yellow board in heavy black caps, the evidence on white
+notices pinned below; one self-hosted face (Archivo); no colour carries state.
+Delivered as M15b (the brief), M15c (Ireland and county), M15d (cost estimate
+and assistant), M15e (finish review, `DESIGN.md`, rule 10 rewritten, and the
+Ireland page's copy corrected: it promises capacity and alternatives the
+product does not show). Light only for now: the scene is a desk in daylight.
+
 **Constraint screening** (with M10 or M13, as licences allow): radon (EPA),
 landslide susceptibility (GSI), recorded monuments (National Monuments
 Service), beside the protected sites already shown. Flood data stays out.
