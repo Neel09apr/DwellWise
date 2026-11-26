@@ -243,7 +243,7 @@ def seed_commencements(conn) -> None:
         {
             "notice_number": number, "local_authority": "Kildare County Council", "county": "KILDARE",
             "submitted": submitted, "commenced": commenced, "expected_end": None, "homes": homes,
-            "scheme_homes": None, "homes_completed": None, "planning_ref": None, "project_name": name,
+            "scheme_homes": None, "homes_completed": 0, "planning_ref": None, "project_name": name,
             "routing_key": None, "geometry": point(*where),
         }
         for number, name, homes, commenced, where in notices
