@@ -5,17 +5,15 @@ import type { Figure } from "../overviewText";
 const DISCLAIMER = "Describes places as a whole, never a particular site, and is not planning advice.";
 
 /** The notice board: the place in heavy caps and its record as the notice's prescribed lines, each a link. */
-export function Board({
-  title,
-  place,
-  figures,
-  foot,
-}: {
+type Props = {
   title: string;
   place: ReactNode;
   figures: Figure[];
   foot?: string;
-}) {
+  disclaimer?: boolean; // false on boards that show the user's own figures rather than a place
+};
+
+export function Board({ title, place, figures, foot, disclaimer = true }: Props) {
   return (
     <header className="board">
       <h1>{title}</h1>
@@ -33,7 +31,8 @@ export function Board({
         </ul>
       )}
       <p className="board-foot">
-        {foot ?? "Compiled from public records."} {DISCLAIMER}
+        {foot ?? "Compiled from public records."}
+        {disclaimer && ` ${DISCLAIMER}`}
       </p>
     </header>
   );

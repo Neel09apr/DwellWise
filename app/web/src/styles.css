@@ -254,3 +254,15 @@ p { text-wrap: pretty; }
 .notices .activity-head .level-title { border-bottom: 0; margin-bottom: 0; }
 .notices .activity-head .toggle { margin-bottom: 0.35rem; }
 @media (max-width: 30rem) { .board-lines a { padding-right: 0.75rem; } .board h1 { font-size: clamp(2.4rem, 13vw, 3.4rem); } }
+
+/* M15d: tools in the notice world. Inputs are ruled boxes on the notice; the button is a black plate. */
+.cost-field input, .cost-field select, .ask-form textarea, .search input, .toggle select { border: 1.5px solid var(--ink); border-radius: 2px; background: var(--notice); }
+.cost-field input:focus, .cost-field select:focus, .ask-form textarea:focus, .search input:focus { border-color: var(--ink); }
+.cost-submit { border-radius: 2px; background: var(--ink); color: var(--notice); font: 800 0.95rem var(--face); font-stretch: 90%; letter-spacing: 0.04em; text-transform: uppercase; padding: 0.75rem 1.5rem; }
+.cost-submit:hover { background: #000; box-shadow: 0 0 0 3px var(--board); }
+.cost-submit:disabled { background: var(--muted); cursor: progress; }
+.cost-form > section .cost-field { max-width: 44rem; grid-template-columns: 1fr minmax(0, 17rem); }
+@media (max-width: 520px) { .cost-form > section .cost-field { grid-template-columns: 1fr; } }
+.ask-question { font: 600 0.95rem var(--face); color: var(--ink); }
+.ask-question::before { content: "Asked: "; font-weight: 400; color: var(--muted); }
+.ask-restart { color: var(--ink); text-decoration: underline; text-underline-offset: 0.2em; }

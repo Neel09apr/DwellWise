@@ -144,6 +144,7 @@ deploy/        Helm chart for the app, installed on a throwaway kind cluster in 
 | v2 M14b: the brief: four-figure summary strip, side list of sections, Nearby alternatives off the page, question box below the evidence | Merged (PR #74); live 26 Nov |
 | M15b: UI revisit, the brief as a site notice (statutory-yellow board, pinned notices, self-hosted Archivo, PRODUCT.md) | Merged (PR #75); live 26 Nov |
 | M15c: Ireland and county pages as site notices (shared board, every section a pinned notice, towns compared first on counties, partial month hatched) | Merged (PR #76); live 26 Nov |
+| M15d: cost estimate and question box as notices (board shows the user's own total and per-home cost; square ruled inputs, black plate buttons) | In review |
 
 
 ## Next

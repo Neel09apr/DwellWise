@@ -1,5 +1,9 @@
 /** Councils, their websites, and the cost form's fields: the parts of the calculator page that are plain data. */
 
+import type { Costs } from "./api/client";
+import { price } from "./components/priceText";
+import type { Figure } from "./overviewText";
+
 export type Council = { name: string; county: string; url: string };
 
 // The 31 local authorities. Development contribution schemes are on each council's own site; DwellWise
@@ -107,4 +111,25 @@ export function saveDraft(storage: Pick<Storage, "setItem"> | undefined, form: C
   } catch {
     // storage blocked or full: the figures simply are not remembered
   }
+}
+
+const area = new Intl.NumberFormat("en-IE", { maximumFractionDigits: 1 });
+
+/** The board's lines once an estimate exists: the user's own sums, each pointing at the estimate notice. */
+export function estimateFigures(costs: Costs): Figure[] {
+  const homes = costs.homes === 1 ? "1 home" : `${costs.homes} homes`;
+  return [
+    {
+      id: "estimate-title",
+      value: price(costs.total),
+      label: "total, before VAT",
+      detail: `${homes}, ${area.format(costs.floor_area_m2)} m² in all`,
+    },
+    {
+      id: "estimate-title",
+      value: price(costs.per_home),
+      label: "per home",
+      detail: `${costs.lines.length} lines, worked below`,
+    },
+  ];
 }
