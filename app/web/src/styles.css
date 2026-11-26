@@ -191,13 +191,6 @@ h1 { font: 800 clamp(2rem, 5vw, 3rem)/1.05 var(--face); font-stretch: 85%; lette
 h2, h3 { text-wrap: balance; }
 p { text-wrap: pretty; }
 .intro, .search, .note, .lede, .ask-form, .ask-answer > p, .page-head { max-width: var(--measure); }
-.figures { list-style: none; margin: 0 0 1rem; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); container-type: inline-size; }
-.figures a { display: grid; gap: 0.15rem; height: 100%; padding: 1rem 1.1rem; background: var(--ground); color: var(--ink); text-decoration: none; }
-.figures a:hover { background: var(--accent-wash); }
-.figure-value { font: 600 1.9rem/1.1 var(--serif); }
-.figure-label { font-size: 0.9rem; color: var(--prose); }
-.figure-detail { font: 0.75rem var(--mono); color: var(--muted); }
-@container (width < 30rem) { .figures a { padding: 0.75rem 0.9rem; } .figure-value { font-size: 1.5rem; } }
 .table-region { overflow-x: auto; max-width: 100%; }
 .table-region:focus-visible { outline-offset: 4px; }
 .table-region .counts { min-width: 34rem; }
@@ -213,12 +206,11 @@ p { text-wrap: pretty; }
 }
 /* Sections well below the fold skip rendering until they are near the screen; the size is a placeholder. */
 .deferred { content-visibility: auto; contain-intrinsic-size: auto 640px; }
-@media (min-width: 64rem) { .with-rail .contents { display: none; } }
 
 /* M15b: the notice world. The board is the only yellow; notices are white and pinned in order. */
-.board, .notice, .notices > .ask { position: relative; box-shadow: var(--lift); }
+.board, .notices > section { position: relative; box-shadow: var(--lift); }
 /* Four cable ties hold every board and notice to the hoarding. */
-.board::before, .notice::before, .notices > .ask::before {
+.board::before, .notices > section::before {
   content: ""; position: absolute; inset: 9px; pointer-events: none;
   --hole: radial-gradient(circle, var(--tie) 0 2.5px, transparent 3px);
   background: var(--hole) left top / 12px 12px no-repeat, var(--hole) right top / 12px 12px no-repeat,
@@ -227,22 +219,35 @@ p { text-wrap: pretty; }
 .board { margin: 1.25rem 0 0; padding: clamp(1.75rem, 4.5vw, 3.25rem); background: var(--board); color: var(--board-ink); }
 .board h1 { font-size: clamp(2.6rem, 8vw, 5.75rem); line-height: 0.92; font-stretch: 72%; letter-spacing: -0.02em; text-transform: uppercase; overflow-wrap: anywhere; }
 .board-place { margin: 0.9rem 0 0; font-weight: 600; font-size: 1.05rem; }
-.board-lines { list-style: none; margin: 2rem 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14.5rem), 1fr)); border-top: 3px solid var(--board-ink); }
+.board-lines { list-style: none; margin: 2rem 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr)); border-top: 3px solid var(--board-ink); }
 .board-lines a { display: block; height: 100%; padding: 1rem 1.25rem 1.1rem 0; color: var(--board-ink); text-decoration: none; font-weight: 500; line-height: 1.3; border-bottom: 1px solid rgb(18 18 18 / 0.3); }
 .board-lines a:hover { background: rgb(18 18 18 / 0.06); }
-.board-lines strong { display: block; margin-bottom: 0.3rem; font: 800 clamp(2.2rem, 4vw, 3rem)/1 var(--face); font-stretch: 80%; letter-spacing: -0.02em; }
+.board-lines strong { display: block; margin-bottom: 0.3rem; font: 800 clamp(1.75rem, 4vw, 3rem)/1 var(--face); font-stretch: 80%; letter-spacing: -0.02em; }
 .board-detail { display: block; margin-top: 0.3rem; font-size: 0.85rem; color: #3a3300; }
 .board-foot { margin: 1.5rem 0 0; max-width: 62ch; font-size: 0.85rem; color: #3a3300; }
 .brief-tools { margin: 1.25rem 0 0; font-size: 0.95rem; }
-.brief .with-rail { margin-top: 0.5rem; }
-.brief .rail { margin-top: 1.5rem; }
+.with-rail { margin-top: 0.5rem; }
+.with-rail > .rail { margin-top: 1.5rem; }
 .notices { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; margin-top: 1.5rem; }
-.notice, .notices > .ask { margin: 0; padding: clamp(1.5rem, 3.5vw, 2.5rem); background: var(--notice); }
-.notice h2, .notices > .ask .level-title { margin: 0 0 0.75rem; padding-bottom: 0.6rem; border-bottom: 3px solid var(--ink); font: 800 clamp(1.5rem, 3vw, 2.1rem)/1.02 var(--face); font-stretch: 82%; letter-spacing: -0.01em; text-transform: uppercase; color: var(--ink); }
+.notices > section { margin: 0; padding: clamp(1.5rem, 3.5vw, 2.5rem); background: var(--notice); }
+.notices > section h2:not(.letter-mark), .notices > section h2.level-title { margin: 0 0 0.75rem; padding-bottom: 0.6rem; border-bottom: 3px solid var(--ink); font: 800 clamp(1.5rem, 3vw, 2.1rem)/1.02 var(--face); font-stretch: 82%; letter-spacing: -0.01em; text-transform: uppercase; color: var(--ink); }
 .notice-about { margin: 0 0 1.25rem; color: var(--muted); max-width: 65ch; }
 .notice .section-body, .notice .sources { margin-left: 0; }
 .notice .building { margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid var(--rule); }
 .notice .building .level-title { font-size: 1.15rem; }
-.notice .table-region tbody th[scope="row"] { background: var(--notice); }
+.notices .table-region tbody th[scope="row"] { background: var(--notice); }
 .headline-number { font: 800 2.4rem/1 var(--face); font-stretch: 80%; letter-spacing: -0.02em; }
 .facts dt, .counts thead th, .chart-table thead th { font-weight: 700; letter-spacing: 0.04em; }
+
+/* M15c: places on the board. The current month is still filling in: hatched, not paler. */
+.chart-bar-partial path { fill: url(#partial-month); stroke: var(--ink); stroke-width: 1; fill-opacity: 1; }
+.notices > section .activity-head .level-title { flex: 1; }
+.notices .activity-head { align-items: flex-end; }
+.notices .activity-head .toggle { margin-bottom: 0.75rem; }
+.letter-mark { color: var(--ink); font-weight: 800; }
+.row:hover { background: var(--accent-wash); color: var(--ink); }
+.find .search { max-width: var(--measure); }
+.notices .activity-head { border-bottom: 3px solid var(--ink); margin-bottom: 0.75rem; gap: 0.5rem 1rem; }
+.notices .activity-head .level-title { border-bottom: 0; margin-bottom: 0; }
+.notices .activity-head .toggle { margin-bottom: 0.35rem; }
+@media (max-width: 30rem) { .board-lines a { padding-right: 0.75rem; } .board h1 { font-size: clamp(2.4rem, 13vw, 3.4rem); } }

@@ -2,7 +2,6 @@ import { Link, useParams } from "react-router-dom";
 
 import { api } from "../api/client";
 import { Breadcrumbs } from "../components/Breadcrumbs";
-import { PageRail } from "../components/PageRail";
 import { PlaceOverview } from "../components/PlaceOverview";
 import { TownsCompared } from "../components/TownsCompared";
 import { Failure, Loading } from "../components/Status";
@@ -15,7 +14,7 @@ const RAIL = [
   { id: "building", label: "Construction started" },
   { id: "map-title", label: "Map of schemes" },
   { id: "prices-title", label: "Sale prices" },
-  { id: "settlements", label: "Settlements A–Z" },
+  { id: "settlements", label: "Towns A to Z" },
 ];
 
 export function CountyPage() {
@@ -26,37 +25,32 @@ export function CountyPage() {
   return (
     <>
       <Breadcrumbs trail={[{ label: "Ireland", to: "/" }, { label: name }]} />
-      <header className="page-head">
-        <p className="eyebrow">County</p>
-        <h1>{name}</h1>
-        {settlements.kind === "ready" && (
-          <p className="muted">
-            {settlements.data.length} settlement
-            {settlements.data.length === 1 ? "" : "s"}
-          </p>
-        )}
-      </header>
-
-      <div className="with-rail">
-        <PageRail links={RAIL} />
-        <div>
-          <PlaceOverview county={countyFromSlug(slug)} lead={<TownsCompared county={countyFromSlug(slug)} />} />
-
+      <PlaceOverview
+        county={countyFromSlug(slug)}
+        title={name}
+        place={
+          settlements.kind === "ready"
+            ? `County ${name} · ${settlements.data.length} town${settlements.data.length === 1 ? "" : "s"}`
+            : `County ${name}`
+        }
+        rail={RAIL}
+        lead={<TownsCompared county={countyFromSlug(slug)} />}
+        after={
           <section aria-labelledby="settlements" className="level deferred">
             <h2 id="settlements" className="level-title">
-              Settlements
+              Towns A to Z
             </h2>
             {settlements.kind === "loading" && <Loading what="settlements" />}
             {settlements.kind === "error" && <Failure message={settlements.message} />}
             {settlements.kind === "ready" && settlements.data.length === 0 && (
-              <p className="muted">No settlements are recorded in this county.</p>
+              <p className="muted">No towns are recorded in this county.</p>
             )}
             {settlements.kind === "ready" &&
               byFirstLetter(settlements.data).map(([letter, items]) => (
                 <section key={letter} className="letter" aria-labelledby={`letter-${letter}`}>
-                  <h2 id={`letter-${letter}`} className="letter-mark">
+                  <h3 id={`letter-${letter}`} className="letter-mark">
                     {letter}
-                  </h2>
+                  </h3>
                   <ul className="rows">
                     {items.map((s) => (
                       <li key={s.code}>
@@ -72,8 +66,8 @@ export function CountyPage() {
                 </section>
               ))}
           </section>
-        </div>
-      </div>
+        }
+      />
     </>
   );
 }

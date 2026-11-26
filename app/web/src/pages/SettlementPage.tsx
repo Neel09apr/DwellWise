@@ -1,6 +1,7 @@
 import { Link, useParams } from "react-router-dom";
 
 import { api, type Brief, type CommencementStats, type Prices } from "../api/client";
+import { Board } from "../components/Board";
 import { Breadcrumbs } from "../components/Breadcrumbs";
 import { AskBox } from "../components/AskBox";
 import { BuildingSection } from "../components/BuildingNow";
@@ -10,7 +11,7 @@ import { ProtectedSites } from "../components/ProtectedSites";
 import { TownPrices } from "../components/SalePrices";
 import { WastewaterRegister } from "../components/WastewaterRegister";
 import { Failure, Loading } from "../components/Status";
-import { type Figure, townFigures } from "../overviewText";
+import { townFigures } from "../overviewText";
 import { countySlug, titleCase } from "../text";
 import { type Resource, useResource } from "../useResource";
 
@@ -69,44 +70,6 @@ function SectionBody({ id, title, brief, starts, prices, settlement }: SectionPr
 const ready = <T,>(r: Resource<T>): T | null => (r.kind === "ready" ? r.data : null);
 const captured = (when: string) => new Date(when).toLocaleDateString("en-IE", { dateStyle: "medium" });
 
-/** The notice board: the town in heavy caps and its record as the notice's prescribed lines. */
-function Board({
-  name,
-  county,
-  code,
-  area,
-  figures,
-}: {
-  name: string;
-  county: string | null;
-  code: string;
-  area: number;
-  figures: Figure[];
-}) {
-  return (
-    <header className="board">
-      <h1>{name}</h1>
-      <p className="board-place">
-        {county ? `County ${county}` : "Ireland"} · CSO settlement {code} · {area.toFixed(2)} km²
-      </p>
-      <ul className="board-lines" aria-label="The town's record">
-        {figures.map((f) => (
-          <li key={f.id}>
-            <a href={`#${f.id}`}>
-              <strong>{f.value}</strong> {f.label}
-              <span className="board-detail">{f.detail}</span>
-            </a>
-          </li>
-        ))}
-      </ul>
-      <p className="board-foot">
-        Compiled from public records. Describes the town as a whole, never a particular site, and is not planning
-        advice.
-      </p>
-    </header>
-  );
-}
-
 export function SettlementPage() {
   const { code = "" } = useParams();
   const settlement = useResource((signal) => api.settlement(code, signal), code);
@@ -136,10 +99,8 @@ export function SettlementPage() {
     <article className="brief">
       <Breadcrumbs trail={trail} />
       <Board
-        name={s.name}
-        county={county}
-        code={s.code}
-        area={s.area_km2}
+        title={s.name}
+        place={`${county ? `County ${county}` : "Ireland"} · CSO settlement ${s.code} · ${s.area_km2.toFixed(2)} km²`}
         figures={townFigures(ready(brief), ready(starts), ready(prices))}
       />
       <p className="brief-tools">
