@@ -142,7 +142,8 @@ deploy/        Helm chart for the app, installed on a throwaway kind cluster in 
 | v2 M13: scheme assistant: code-ranked county shortlist (`GET /v1/shortlist`), follow-up questions, a token budget per question, the table and brief links beside the answer | Merged (PR #71); live 26 Nov, verified on the Ireland page. Shorter answers, no reading of prices (PR #72) |
 | v2 M14a: UI frame: wide pages with a side list, header links, headline figures and one shared overview for Ireland and counties, towns compared on county pages, tables collapsed and keyboard-scrollable | Merged (PR #73); live 26 Nov, checked at 375, 768 and 1280 px |
 | v2 M14b: the brief: four-figure summary strip, side list of sections, Nearby alternatives off the page, question box below the evidence | Merged (PR #74); live 26 Nov |
-| M15b: UI revisit, the brief as a site notice (statutory-yellow board, pinned notices, self-hosted Archivo, PRODUCT.md) | In review |
+| M15b: UI revisit, the brief as a site notice (statutory-yellow board, pinned notices, self-hosted Archivo, PRODUCT.md) | Merged (PR #75); live 26 Nov |
+| M15c: Ireland and county pages as site notices (shared board, every section a pinned notice, towns compared first on counties, partial month hatched) | In review |
 
 
 ## Next

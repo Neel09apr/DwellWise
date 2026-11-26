@@ -86,7 +86,7 @@ function Figures({
       {national && <CountyTable counties={stats.counties} />}
       <p className="note">
         Counted by the month received and the decision as it stands now; the
-        current month, drawn lighter, is still filling in. “Other” covers
+        current month, hatched, is still filling in. “Other” covers
         invalid, exempt and split decisions.{" "}
         {stats.residential &&
           "Residential means the application states new dwellings. "}
@@ -114,6 +114,12 @@ function MonthChart({ months }: { months: ApplicationStats["months"] }) {
         role="img"
         aria-label="Applications received per month"
       >
+        <defs>
+          {/* The month still filling in is hatched: a mark, not a paler colour. */}
+          <pattern id="partial-month" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+            <line x1="0" y1="0" x2="0" y2="6" stroke="currentColor" strokeWidth="2" />
+          </pattern>
+        </defs>
         <line x1="0" x2={W} y1={H} y2={H} className="chart-axis" />
         {months.map((m, i) => {
           const h = Math.max((m.total / max) * (H - 18), m.total ? 2 : 0);
