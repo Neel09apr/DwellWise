@@ -97,7 +97,7 @@ def load_planning(cur, rows: list[dict], snapshot_id: str) -> dict:
         "decision_class, county, units_stated, residential, location, settlement, snapshot_id) "
         "select p.authority, p.application_number, p.received, p.decided, p.decision, p.decision_class, "
         "p.county, p.units_stated, p.residential, p.location, "
-        "(select s.code from dw.settlement s where ST_Contains(s.boundary, p.location) limit 1), %s "
+        "null, %s "
         "from (select distinct on (authority, application_number) *, "
         "ST_Transform(ST_SetSRID(ST_GeomFromGeoJSON(geometry), 4326), 2157) as location "
         "from stage_planning order by authority, application_number, received desc) p",
