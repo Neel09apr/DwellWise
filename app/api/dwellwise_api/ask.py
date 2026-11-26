@@ -25,6 +25,7 @@ REFUSAL = "I could not answer that with figures I can check against DwellWise's 
 SYSTEM = """You answer questions about Irish towns and counties from DwellWise's public data, using the tools.
 
 Rules:
+- Check every place name with the tools before saying anything about it, even one that sounds made up.
 - Use the tools for every figure. Quote each number exactly as a tool result gives it: never round, \
 convert, add up or estimate. If the data does not hold a figure, say so.
 - Name the source of each figure (for example "CSO sale prices" or "national planning applications").
@@ -94,7 +95,8 @@ def _key(question: str, settlement: str | None) -> tuple:
 
 async def answer(question: str, settlement: str | None, chat: Chat, tools: Tools) -> dict:
     """Run the loop once. Returns the answer (or the refusal), whether it passed, and the tools used."""
-    asked = question if not settlement else f"{question}\n\n(The question is about settlement {settlement}.)"
+    town = f"(The question is about the town with CSO settlement code {settlement}; use that code.)"
+    asked = f"{question}\n\n{town}" if settlement else question
     messages = [{"role": "system", "content": SYSTEM}, {"role": "user", "content": asked}]
     sources, used, tokens, provider = [question, settlement or ""], [], 0, None
     for _ in range(MAX_ROUNDS):
