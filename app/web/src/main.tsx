@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { RouterProvider, createBrowserRouter } from "react-router-dom";
 
 import { Layout } from "./Layout";
+import { CostsPage } from "./pages/CostsPage";
 import { CountyPage } from "./pages/CountyPage";
 import { HomePage } from "./pages/HomePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
@@ -17,6 +18,7 @@ const router = createBrowserRouter([
       { path: "/", element: <HomePage /> },
       { path: "/counties/:slug", element: <CountyPage /> },
       { path: "/settlements/:code", element: <SettlementPage /> },
+      { path: "/costs", element: <CostsPage /> },
       { path: "*", element: <NotFoundPage /> },
     ],
   },

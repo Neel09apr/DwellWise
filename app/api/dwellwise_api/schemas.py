@@ -184,6 +184,23 @@ class Prices(BaseModel):
     areas: list[PriceArea]
 
 
+class CostLine(BaseModel):
+    item: str
+    amount: int  # euro, rounded
+    working: str  # the arithmetic, in words: "8 homes × 110 m² × €2,800 per m²"
+
+
+class Costs(BaseModel):
+    """A development cost estimate from the user's own figures. Excludes VAT; never a site's value."""
+
+    homes: int
+    floor_area_m2: float  # all homes together
+    lines: list[CostLine]
+    total: int  # the sum of the lines
+    per_home: int
+    note: str
+
+
 class PrecedentApplication(BaseModel):
     """One planning application, as the council published it. Never an applicant name or address."""
 
