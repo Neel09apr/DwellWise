@@ -1,1 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none" role="img" aria-label="DwellWise"><path d="M46 15 C36 8, 20 10, 14 20 C8 30, 10 44, 20 50 C30 56, 44 54, 50 46" stroke="#1B4D7A" stroke-width="5" stroke-linecap="round"/><path d="M25.37 24.96 L30.19 24.96 C36.34 24.96, 40.07 28.7, 40.07 33.4 C40.07 38.1, 36.34 41.83, 30.19 41.83 L25.37 41.83 Z" stroke="#6BA8DC" stroke-width="4.2" stroke-linecap="round"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="38" viewBox="-1.5 -1.5 60.5 35" fill="none" role="img" aria-label="DwellWise">
+  <!-- Two half-roofs as hollow bands, green (left) and gold (right), each rising to its own ridge and ending
+       in a square cut just short of the other. Coded geometry; roof pitch 0.66 throughout. -->
+  <path d="M1 32 V16.5 L24.5 1 L27 2.65 V4.1 L7.5 17 V32 Z" stroke="#0E4A2F" stroke-width="2.4" stroke-linejoin="miter"/>
+  <path d="M56.5 32 V16.5 L33 1 L30.5 2.65 V4.1 L50 17 V32 Z" stroke="#C99A2E" stroke-width="2.4" stroke-linejoin="miter"/>
+</svg>
