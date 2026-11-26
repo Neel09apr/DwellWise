@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -201,9 +202,15 @@ class Costs(BaseModel):
     note: str
 
 
+class Turn(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str = Field(min_length=1, max_length=1000)
+
+
 class Question(BaseModel):
     question: str = Field(min_length=3, max_length=500)
     settlement: str | None = Field(default=None, pattern=r"^\d{1,6}$")
+    history: list[Turn] = Field(default_factory=list, max_length=4)  # the conversation so far
 
 
 class AssistantStatus(BaseModel):
@@ -217,6 +224,7 @@ class Answer(BaseModel):
     grounded: bool  # false: the answer failed the check and was replaced by a refusal
     tools: list[str]  # the tools the model called, in order
     cached: bool
+    shortlists: list[Shortlist] = []  # code-ranked tables the answer explains; never beside a refusal
 
 
 class PrecedentApplication(BaseModel):
@@ -268,3 +276,33 @@ class Brief(BaseModel):
     precedents: Precedents
     protected: ProtectedSites
     pending: list[str]  # sections whose data source has not landed yet
+
+
+class ShortlistTown(BaseModel):
+    code: str
+    name: str
+    granted: int  # residential applications inside the boundary, over the brief's years
+    refused: int
+    pending: int
+    homes_started: int  # in the months from started_since
+    protected_within_1km: int  # protected sites touching the town or within 1 km
+    price_area: str | None  # the Eircode routing area most of the town's notices carry
+    median_price: int | None  # euro, all homes, the area's newest month with a median
+    price_month: str | None
+
+
+class Shortlist(BaseModel):
+    """A county's towns side by side, sorted by one stated column. Evidence about towns, never a score."""
+
+    county: str
+    sort: str
+    sorted_by: str  # the sort, in words
+    towns_in_county: int
+    applications_since: date
+    started_since: str  # YYYY-MM, the first of the last 12 months
+    towns: list[ShortlistTown]  # at most five
+    note: str
+    attribution: list[str]
+
+
+Answer.model_rebuild()

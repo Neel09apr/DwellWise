@@ -135,6 +135,15 @@ def county_or_ireland(request: Request, conn: Conn, county: CountyQuery = None) 
     return _resolve(request, conn, county)
 
 
+def county_required(
+    request: Request,
+    conn: Conn,
+    county: Annotated[str, Query(pattern=COUNTY_PATTERN, description="County name, any case")],
+) -> Place:
+    """One county, from the query string; required."""
+    return _resolve(request, conn, county)
+
+
 def county_in_path(
     request: Request,
     conn: Conn,
@@ -154,4 +163,5 @@ def settlement_in_path(
 AnyPlace = Annotated[Place, Depends(any_place)]
 CountyOrIreland = Annotated[Place, Depends(county_or_ireland)]
 CountyInPath = Annotated[Place, Depends(county_in_path)]
+CountyRequired = Annotated[Place, Depends(county_required)]
 SettlementInPath = Annotated[Place, Depends(settlement_in_path)]

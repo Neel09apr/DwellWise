@@ -298,3 +298,64 @@ def price_data(conn, county: str | None, settlement: str | None, since) -> dict:
             {"county": county, "settlement": settlement, "since": since},
         )
         return cur.fetchone()
+
+
+def shortlist_rows(
+    conn, county: str, since, started_from, started_to, near_m: int, price_since
+) -> list[dict]:
+    """Every town in a county with its evidence columns, in one round trip (``shortlist`` ranks them)."""
+    with conn.cursor(row_factory=dict_row) as cur:
+        cur.execute(
+            """
+            with towns as (
+                select code, name, boundary from dw.settlement where county = %(county)s
+            ), apps as (
+                select settlement,
+                       count(*) filter (where decision_class = 'granted')::int as granted,
+                       count(*) filter (where decision_class = 'refused')::int as refused,
+                       count(*) filter (where decision_class = 'pending')::int as pending
+                from dw.planning_application
+                where residential and received >= %(since)s and settlement in (select code from towns)
+                group by settlement
+            ), started as (
+                select settlement, coalesce(sum(homes), 0)::int as homes from dw.commencement
+                where commenced >= %(started_from)s and commenced < %(started_to)s
+                  and settlement in (select code from towns)
+                group by settlement
+            ), keys as (  -- the routing key most of the town's notices carry, as /v1/prices chooses it
+                select distinct on (settlement) settlement, routing_key from (
+                    select settlement, routing_key, count(*) as n from dw.commencement
+                    where routing_key is not null and settlement in (select code from towns)
+                    group by 1, 2) k
+                order by settlement, n desc, routing_key
+            ), latest as (
+                select distinct on (code) code, to_char(month, 'YYYY-MM') as month, median from dw.price
+                where kind = 'eircode' and status = 'all' and median is not null and month >= %(price_since)s
+                order by code, month desc
+            ), near as (
+                select t.code, count(*)::int as n from towns t
+                join dw.protected_site ps on ST_DWithin(ps.boundary, t.boundary, %(near)s)
+                group by t.code
+            )
+            select t.code, t.name,
+                   coalesce(a.granted, 0) as granted, coalesce(a.refused, 0) as refused,
+                   coalesce(a.pending, 0) as pending, coalesce(s.homes, 0) as homes_started,
+                   coalesce(n.n, 0) as protected_within_1km,
+                   k.routing_key as price_area, l.median as median_price, l.month as price_month
+            from towns t
+            left join apps a on a.settlement = t.code
+            left join started s on s.settlement = t.code
+            left join near n on n.code = t.code
+            left join keys k on k.settlement = t.code
+            left join latest l on l.code = k.routing_key
+            """,
+            {
+                "county": county,
+                "since": since,
+                "started_from": started_from,
+                "started_to": started_to,
+                "near": near_m,
+                "price_since": price_since,
+            },  # fmt: skip
+        )
+        return cur.fetchall()

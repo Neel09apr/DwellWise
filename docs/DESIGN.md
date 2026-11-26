@@ -667,12 +667,46 @@ same day):
   symbols are stripped, never rendered), with the sources it was checked
   against; a refusal is shown muted.
 
-**M13. Scheme assistant.** The user describes a scheme ("eight homes in north
-Cork, near a town with spare treatment capacity"). The assistant asks what is
-missing, searches and compares towns through the tools, and returns a ranked
-shortlist with the trade-offs, links to each brief and a citation for every
-figure. It describes towns and evidence; it does not say whether permission
-would be granted.
+**M13. Scheme assistant.** The user describes a scheme ("eight homes in Cork,
+which towns?"). The assistant asks what is missing, compares towns through the
+tools, and returns a shortlist with the trade-offs, links to each brief and a
+citation for every figure. It describes towns and evidence; it does not say
+whether permission would be granted.
+
+Decided 26 November 2026 (grilled before building):
+
+- **Code ranks, the model explains.** `GET /v1/shortlist?county=&sort=` lists a
+  county's towns side by side and returns the top five, with how many towns the
+  county has. Columns, each from a loaded source: residential applications
+  granted, refused and pending inside the boundary over the brief's five years;
+  homes started in the last 12 months; protected sites touching the town or
+  within 1 km; the latest CSO median sale price for the town's Eircode area.
+  No population (not loaded) and no refusal rate (it would read as a likelihood
+  of permission).
+- **One stated sort, no score.** `sort` is one of started (default, highest
+  first, ties by granted), granted, protected (fewest first) or price (lowest
+  first). A weighted score would be a judgement dressed as a fact.
+- **One county per shortlist.** A Place is Ireland, a county or a town; "north
+  Cork" is none of them, so the assistant says it works per county. The number
+  of homes does not filter anything: four councils rarely state units, so a
+  size filter would empty Cork.
+- **Treatment capacity is not in DwellWise's data** (section 01 links to the
+  registers), so the assistant says so and never ranks or filters on it.
+- **One loop, not a planner and specialists.** The shortlist tool does in one
+  call what specialist steps would do in several; Groq's free 200,000 tokens a
+  day allow only a few multi-call questions. Revisit if the evaluations fail.
+- **A token budget per question:** 15,000, checked before every model call; a
+  run that reaches it is refused. Each turn of a conversation is one question.
+- **Follow-ups without server state.** The browser sends back up to four
+  earlier messages (1,000 characters each). Only the user's own messages count
+  as sources for grounding, never the assistant's earlier answers. Only
+  questions without history are cached.
+- **The table comes from code.** `/v1/ask` returns each shortlist the model
+  fetched, beside an answer that passed (never beside a refusal). The page shows
+  it under the answer with links to the briefs, so the order and the links never
+  come from the model's prose.
+- **Out of M13:** constraint screening (below) and a shortlist page without the
+  assistant (M14); the endpoint is public and documented.
 
 **M14. UI redesign.** After M9 to M13, so the design serves the finished
 features. Rule 10 (minimal, hierarchical, one accent) is revisited in that pull

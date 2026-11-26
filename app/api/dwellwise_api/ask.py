@@ -24,6 +24,8 @@ from .metrics import AI_DAILY_LIMIT, AI_QUESTIONS, AI_SECONDS, AI_TODAY
 log = logging.getLogger("dwellwise.api.ask")
 MAX_ROUNDS = 5
 MAX_REJECTED = 2  # rejected tool calls the model may retry after, within MAX_ROUNDS
+TOKEN_BUDGET = 15_000  # per question, checked before every model call; Groq's free tier is 200,000 a day
+SHORTLIST = "shortlist"  # the tool whose results the page shows as a table beside the answer
 REFUSAL = "I could not answer that with figures I can check against DwellWise's data."
 SYSTEM = """You answer questions about Irish towns and counties from DwellWise's public data, using the tools.
 
@@ -31,6 +33,12 @@ Rules:
 - Check every place name with the tools before saying anything about it, even one that sounds made up.
 - Use the tools for every figure. Quote each number exactly as a tool result gives it: never round, \
 convert, add up or estimate. If the data does not hold a figure, say so.
+- For a scheme (some homes somewhere), ask for the county if none is given. Then call shortlist \
+for that county; it works per county, so if the user names part of a county, say so and use the \
+whole county. Say what the list is sorted by and describe the trade-offs between the towns; the \
+page shows the table and links to each brief.
+- Wastewater treatment capacity is not in DwellWise's data: if asked, say so and point to the \
+county's register, linked from each town's brief. Never rank or choose towns on it.
 - For a cost estimate, use only figures the user gave. If some are missing, ask for them by name \
 and suggest no values: no examples, no typical rates.
 - If the question gives no period, use the tool's default period instead of asking. Write thousands \
@@ -112,14 +120,47 @@ def _invented_inputs(name: str, arguments: dict, question: str) -> list[str]:
             and numbers(str(v)) - given]  # fmt: skip
 
 
-async def answer(question: str, settlement: str | None, chat: Chat, tools: Tools) -> dict:
-    """Run the loop once. Returns the answer (or the refusal), whether it passed, and the tools used."""
+def _shortlist(result: str) -> dict | None:
+    try:
+        found = json.loads(result)
+    except ValueError:
+        return None
+    return found if isinstance(found, dict) and isinstance(found.get("towns"), list) else None
+
+
+def _result(text: str, sources: list[str], **run) -> dict:
+    """The answer if every number in it is in a source, else the refusal (and no shortlist with it)."""
+    missing = sorted(format(n, "f") for n in ungrounded(text, sources))
+    grounded = bool(text) and not missing
+    return {
+        "answer": text if grounded else REFUSAL,
+        "grounded": grounded,
+        "ungrounded": missing,
+        **run,
+        "shortlists": run["shortlists"] if grounded else [],
+    }
+
+
+async def answer(
+    question: str, settlement: str | None, chat: Chat, tools: Tools, history: list[dict] | None = None
+) -> dict:
+    """Run the loop once. Returns the answer (or the refusal), whether it passed, and the tools used.
+
+    ``history`` is the conversation so far, sent back by the browser. The user's own earlier messages
+    count as sources for grounding; the assistant's earlier answers never do.
+    """
+    history = history or []
     town = f"(The question is about the town with CSO settlement code {settlement}; use that code.)"
     asked = f"{question}\n\n{town}" if settlement else question
-    messages = [{"role": "system", "content": SYSTEM}, {"role": "user", "content": asked}]
-    sources, used, tokens, provider = [question, settlement or ""], [], 0, None
+    earlier = [{"role": h["role"], "content": h["content"]} for h in history]
+    messages = [{"role": "system", "content": SYSTEM}, *earlier, {"role": "user", "content": asked}]
+    said = [h["content"] for h in history if h["role"] == "user"]
+    sources, used, tokens, provider = [question, settlement or "", *said], [], 0, None
     rejected: list[str] = []  # tool calls the provider refused, by reason
+    shortlists: list[dict] = []
     for _ in range(MAX_ROUNDS):
+        if tokens >= TOKEN_BUDGET:
+            break
         reply = chat(messages, SPECS)
         tokens += reply.get("tokens", 0)
         provider = reply.get("provider")
@@ -133,17 +174,8 @@ async def answer(question: str, settlement: str | None, chat: Chat, tools: Tools
         calls = message.get("tool_calls") or []
         if not calls:
             text = (message.get("content") or "").strip()
-            missing = sorted(format(n, "f") for n in ungrounded(text, sources))
-            grounded = bool(text) and not missing
-            return {
-                "answer": text if grounded else REFUSAL,
-                "grounded": grounded,
-                "tools": used,
-                "provider": provider,
-                "tokens": tokens,
-                "ungrounded": missing,
-                "rejected": rejected,
-            }
+            return _result(text, sources, tools=used, provider=provider, tokens=tokens,
+                           rejected=rejected, shortlists=shortlists)  # fmt: skip
         messages.append({"role": "assistant", "content": message.get("content") or "", "tool_calls": calls})
         for call in calls:
             name = call["function"]["name"]
@@ -160,9 +192,12 @@ async def answer(question: str, settlement: str | None, chat: Chat, tools: Tools
                 result = await tools(name, arguments)
             sources.append(result)
             used.append(name)
+            table = _shortlist(result) if name == SHORTLIST else None
+            if table:
+                shortlists.append(table)
             messages.append({"role": "tool", "tool_call_id": call.get("id", name), "content": result})
     return {"answer": REFUSAL, "grounded": False, "tools": used, "provider": provider, "tokens": tokens,
-            "rejected": rejected}  # fmt: skip
+            "rejected": rejected, "shortlists": [], "over_budget": tokens >= TOKEN_BUDGET}  # fmt: skip
 
 
 GROQ_TOKENS_A_DAY = 200_000  # Groq's free tier, checked 26 November 2026; the alert fires at 80%
@@ -178,10 +213,15 @@ class AskService:
         AI_DAILY_LIMIT.labels("questions").set(self.gate.daily_cap)
         AI_DAILY_LIMIT.labels("tokens").set(GROQ_TOKENS_A_DAY)
 
-    async def ask(self, question: str, settlement: str | None, ip: str, tools: Tools) -> dict:
-        """Cached answers first; then the limits; then the loop. ``AiUnavailable`` passes up to the route."""
-        key = _key(question, settlement)
-        hit = self.gate.cached(key)
+    async def ask(
+        self, question: str, settlement: str | None, ip: str, tools: Tools, history: list[dict] | None = None
+    ) -> dict:
+        """Cached answers first; then the limits; then the loop. ``AiUnavailable`` passes up to the route.
+
+        Only questions without history are cached: a follow-up means something only after what came before.
+        """
+        key = None if history else _key(question, settlement)
+        hit = self.gate.cached(key) if key else None
         if hit:
             AI_QUESTIONS.labels("cached").inc()
             return {**hit, "cached": True}
@@ -192,7 +232,7 @@ class AskService:
             raise
         started = self.clock()
         try:
-            result = {**await answer(question, settlement, self.chat, tools), "cached": False}
+            result = {**await answer(question, settlement, self.chat, tools, history), "cached": False}
         except AiUnavailable:
             AI_QUESTIONS.labels("unavailable").inc()
             self.gate.report()
@@ -211,10 +251,11 @@ class AskService:
                         "ungrounded": result.get("ungrounded", []),
                         "tools": result["tools"],
                         "rejected": result.get("rejected", []),
+                        "over_budget": result.get("over_budget", False),
                     }
                 )
             )
-        if result["grounded"]:
+        if result["grounded"] and key:
             self.gate.remember(key, result)
         return result
 
