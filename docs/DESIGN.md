@@ -70,7 +70,7 @@ and print.
 flowchart LR
   user["Browser<br/>React workspace"] -->|HTTPS| api["API<br/>FastAPI on Render"]
   api --> db[("Postgres + PostGIS<br/>Supabase")]
-  api -.->|"optional summary"| llm["LLM API<br/>Gemini free tier"]
+  api -.->|"assistant (optional)"| llm["LLM API<br/>Groq free tier"]
 
   subgraph gha["GitHub Actions"]
     sched["Schedule<br/>nightly"] --> fn["Pipeline container"]
@@ -282,8 +282,10 @@ commencements and ignored the county for prices (fixed 25 Nov 2026).
   A summary that cites an unknown id or a number not in the facts is
   rejected and the template summary is shown instead.
 - Provider-agnostic (any OpenAI-compatible API); Groq's free tier by
-  default (its prompts are not used for training), Gemini's or Cloudflare
-  Workers AI's free tier as fallbacks. See §16 for the v2 assistant.
+  default (no retention of inference data by default; zero retention can be
+  switched on), Cloudflare Workers AI's free allocation as the fallback.
+  Gemini's free tier is not used: its terms let Google use unpaid prompts to
+  improve its products, with human review (checked 26 November 2026). See §16.
 - Cached by a hash of the facts, so repeat views cost nothing.
 - If the quota is exhausted or the call fails, the brief is complete without
   it. The AI is never on the critical path.
@@ -448,7 +450,7 @@ workflow runs and stale-data alerts.
 | Supabase | Postgres + PostGIS, 500 MB | $0 (free) |
 | GitHub Actions schedule, Supabase Storage | Nightly pipeline and raw files (1 GB free) | $0 |
 | Grafana Cloud, Sentry, uptime probe | Observability | $0 (free tiers) |
-| Gemini API | Optional summaries | $0 (free tier) |
+| Groq API (Cloudflare Workers AI fallback) | The assistant (`/v1/ask`), optional | $0 (free tiers, capped below quota) |
 | GitHub Actions | CI/CD on a public repo | $0 |
 
 ## 13. Decisions
@@ -596,9 +598,9 @@ As built (26 November 2026):
 
 **M12. AI platform layer.** The engineering core of v2:
 
-- One thin client for OpenAI-compatible APIs; Groq free tier first, Gemini or
-  Cloudflare Workers AI as fallbacks. The key is a secret on Render; nothing
-  runs without it.
+- One thin client for OpenAI-compatible APIs; Groq free tier first,
+  Cloudflare Workers AI as the fallback (Gemini's free tier trains on prompts,
+  so it is out). The key is a secret on Render; nothing runs without it.
 - Tools are DwellWise's own API only: search settlements, read a brief,
   national and county statistics, price index, cost calculator. No web access,
   no free-form SQL.
@@ -611,6 +613,35 @@ As built (26 November 2026):
   site fully usable with the AI off.
 - Token use, latency, refusals and failures as Prometheus metrics on the
   Grafana dashboard, with an alert when the daily free quota is close.
+
+Delivered in two pull requests. **M12a** (as built, 26 November 2026):
+
+- `POST /v1/ask {question, settlement?}` (`app/api/dwellwise_api/ask.py`).
+  The model (Groq `openai/gpt-oss-120b`, temperature 0) may call tools for at
+  most five rounds, then answers in at most 150 words.
+- Tools (`ai_tools.py`) are six allow-listed GET routes of DwellWise's own API,
+  run in-process through the app's ASGI interface, so arguments meet the same
+  validation and place resolution as a visitor's request: settlement search,
+  brief, application and commencement statistics, sale prices, cost estimate.
+  Undeclared arguments are dropped; a path argument is percent-encoded so it
+  cannot reach another route. Results are trimmed to 6,000 characters to stay
+  inside the free tier's tokens per minute.
+- Grounding (`grounding.py`): every number in the answer must equal, by value,
+  a number in a tool result from the same run or in the question. Rounded,
+  converted or added-up figures fail. A failing answer is replaced by a
+  refusal and never shown.
+- Limits: 10 questions per IP per hour, 800 a day (below Groq's 1,000), answers
+  that passed cached for 24 hours by question and town. Without a key, or with
+  `AI_ENABLED=false`, `/v1/ask` answers 503 and nothing else changes. Questions
+  are held only in memory for the cache and never logged with an address.
+- Evaluation: `tests/ai_eval/cases.json` holds ten scripted transcripts (written
+  by hand, not recorded from a model) replayed through the real loop in the
+  required CI check: exact figures shown; rounded and summed figures refused;
+  a tool not on the list never run, including when a tool result carries an
+  injected instruction; a model that never stops calling tools refused.
+
+**M12b**: metrics and the quota alert on Grafana (Terraform), a live
+evaluation workflow against the provider, and the question box in the web app.
 
 **M13. Scheme assistant.** The user describes a scheme ("eight homes in north
 Cork, near a town with spare treatment capacity"). The assistant asks what is

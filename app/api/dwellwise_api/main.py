@@ -18,9 +18,11 @@ from fastapi.responses import FileResponse, JSONResponse
 from starlette.exceptions import HTTPException
 
 from . import db, metrics
+from .ai_client import ChatClient
+from .ask import AskService, Gate
 from .config import Settings
 from .place import Places, load_from_database
-from .routers import costs, counties, health, maps, prices, settlements, stats
+from .routers import ask, costs, counties, health, maps, prices, settlements, stats
 
 log = logging.getLogger("dwellwise.api")
 
@@ -76,6 +78,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.add_middleware(GZipMiddleware, minimum_size=1000)
     app.state.pool = None
     app.state.places = Places(load_from_database)
+    providers = settings.ai_providers()
+    app.state.ai = (
+        AskService(
+            ChatClient(providers), Gate(per_ip_hour=settings.ai_per_ip_hour, daily_cap=settings.ai_daily_cap)
+        )
+        if providers
+        else None
+    )  # None: /v1/ask answers 503 and nothing else changes
     app.include_router(health.router)
     app.include_router(counties.router)
     app.include_router(settlements.router)
@@ -83,6 +93,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(maps.router)
     app.include_router(prices.router)
     app.include_router(costs.router)
+    app.include_router(ask.router)
 
     @app.exception_handler(HTTPException)
     async def http_error(_request: Request, exc: HTTPException) -> JSONResponse:

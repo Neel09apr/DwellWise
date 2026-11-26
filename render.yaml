@@ -15,3 +15,7 @@ services:
         generateValue: true
       - key: SENTRY_DSN # error tracking; off when unset
         sync: false
+      - key: AI_API_KEY # Groq free tier; the assistant (/v1/ask) is off when unset
+        sync: false
+      - key: AI_ENABLED # kill switch: "false" turns the assistant off
+        value: "true"
