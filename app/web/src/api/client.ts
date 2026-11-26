@@ -11,6 +11,8 @@ export type Developments = Schemas["Developments"];
 export type DevelopmentProperties = Schemas["DevelopmentProperties"];
 export type Prices = Schemas["Prices"];
 export type Costs = Schemas["Costs"];
+export type Answer = Schemas["Answer"];
+export type AssistantStatus = Schemas["AssistantStatus"];
 
 /** Every API error carries {error: {code, message}}; this keeps the status too. */
 export class ApiError extends Error {
@@ -23,11 +25,12 @@ export class ApiError extends Error {
   }
 }
 
-async function get<T>(path: string, signal?: AbortSignal): Promise<T> {
+async function get<T>(path: string, signal?: AbortSignal, init?: RequestInit): Promise<T> {
   let response: Response;
   try {
     response = await fetch(path, {
-      headers: { Accept: "application/json" },
+      ...init,
+      headers: { Accept: "application/json", ...(init?.body ? { "Content-Type": "application/json" } : {}) },
       signal,
     });
   } catch (error) {
@@ -74,6 +77,9 @@ export const api = {
     return get<Prices>(`/v1/prices${query ? `?${query}` : ""}`, signal);
   },
   costs: (query: string, signal?: AbortSignal) => get<Costs>(`/v1/costs?${query}`, signal),
+  assistant: (signal?: AbortSignal) => get<AssistantStatus>("/v1/assistant", signal),
+  ask: (question: string, settlement: string | undefined, signal?: AbortSignal) =>
+    get<Answer>("/v1/ask", signal, { method: "POST", body: JSON.stringify({ question, settlement }) }),
   developments: (county: string | undefined, signal?: AbortSignal) =>
     get<Developments>(`/v1/map/developments${county ? `?${new URLSearchParams({ county })}` : ""}`, signal),
 };

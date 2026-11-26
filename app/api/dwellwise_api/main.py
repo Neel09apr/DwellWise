@@ -19,6 +19,7 @@ from starlette.exceptions import HTTPException
 
 from . import db, metrics
 from .ai_client import ChatClient
+from .ai_tools import INTERNAL_HOST
 from .ask import AskService, Gate
 from .config import Settings
 from .place import Places, load_from_database
@@ -122,7 +123,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         finally:
             elapsed = time.perf_counter() - start
             route = getattr(request.scope.get("route"), "path", "unmatched")
-            metrics.observe(request.method, route, status, elapsed)
+            if request.headers.get("host") != INTERNAL_HOST:  # the assistant's tool calls are not visitors
+                metrics.observe(request.method, route, status, elapsed)
             log.info(
                 json.dumps(
                     {

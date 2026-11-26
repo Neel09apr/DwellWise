@@ -5,7 +5,7 @@ from fastapi import APIRouter, HTTPException, Request
 from ..ai_client import AiUnavailable
 from ..ai_tools import AppTools
 from ..ask import Limited
-from ..schemas import Answer, ErrorBody, Question
+from ..schemas import Answer, AssistantStatus, ErrorBody, Question
 
 router = APIRouter(prefix="/v1", tags=["assistant"])
 
@@ -14,6 +14,12 @@ def _visitor(request: Request) -> str:
     """The client's address for the hourly limit (first in Render's X-Forwarded-For). Never logged."""
     forwarded = request.headers.get("x-forwarded-for", "")
     return forwarded.split(",")[0].strip() or (request.client.host if request.client else "unknown")
+
+
+@router.get("/assistant", response_model=AssistantStatus)
+def assistant_status(request: Request) -> AssistantStatus:
+    """Whether the assistant is on. Costs no quota: the web app asks before showing the question box."""
+    return AssistantStatus(enabled=getattr(request.app.state, "ai", None) is not None)
 
 
 @router.post(

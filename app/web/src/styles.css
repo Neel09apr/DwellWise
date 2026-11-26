@@ -103,6 +103,15 @@ h1 { font: 600 clamp(1.9rem, 5vw, 2.6rem)/1.15 var(--serif); letter-spacing: -0.
 .cost-working { text-align: left !important; font-family: var(--sans) !important; color: var(--muted); }
 @media (max-width: 520px) { .cost-field { grid-template-columns: 1fr; gap: 0.3rem; } }
 
+/* ---- question box ---------------------------------------------------------- */
+.ask-form { display: flex; gap: 0.75rem; align-items: flex-start; max-width: 40rem; }
+.ask-form textarea { flex: 1; min-height: 48px; padding: 0.7rem 0.9rem; font: 1rem var(--sans); color: var(--ink); background: transparent; border: 1px solid var(--muted); border-radius: 6px; resize: vertical; }
+.ask-form textarea:focus { border-color: var(--accent); }
+.ask-form .cost-submit { margin-top: 0; }
+.ask-answer { margin-top: 1rem; max-width: 40rem; }
+.ask-answer p { margin: 0 0 0.6rem; }
+@media (max-width: 520px) { .ask-form { flex-direction: column; align-items: stretch; } }
+
 /* ---- brief -------------------------------------------------------------- */
 .facts { display: flex; flex-wrap: wrap; gap: 0.75rem 2.5rem; margin: 1.5rem 0 0; }
 .facts dt { font: 0.72rem var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }

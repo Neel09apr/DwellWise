@@ -12,6 +12,9 @@ import json
 from dataclasses import dataclass
 from urllib.parse import quote, urlencode
 
+from .metrics import AI_TOOL_CALLS
+
+INTERNAL_HOST = "dwellwise.internal"  # the middleware leaves these requests out of visitor metrics
 MAX_RESULT_CHARS = 6000  # ponytail: Groq's free tier allows ~8,000 tokens a minute; trim big briefs to fit
 
 
@@ -114,8 +117,8 @@ async def asgi_get(app, path: str, query: dict) -> tuple[int, object]:
     scope = {
         "type": "http", "asgi": {"version": "3.0"}, "http_version": "1.1", "method": "GET", "scheme": "http",
         "path": path, "raw_path": path.encode(), "root_path": "", "query_string": urlencode(query).encode(),
-        "headers": [(b"host", b"dwellwise.internal"), (b"accept", b"application/json")],
-        "client": ("127.0.0.1", 0), "server": ("dwellwise.internal", 80),
+        "headers": [(b"host", INTERNAL_HOST.encode()), (b"accept", b"application/json")],
+        "client": ("127.0.0.1", 0), "server": (INTERNAL_HOST, 80),
     }  # fmt: skip
     status, body = 500, bytearray()
 
@@ -143,7 +146,9 @@ class AppTools:
         try:
             path, query = request_for(name, arguments)
         except KeyError as exc:
+            AI_TOOL_CALLS.labels("not_allowed", "refused").inc()
             return json.dumps({"error": str(exc)})
         status, body = await asgi_get(self.app, path, query)
+        AI_TOOL_CALLS.labels(name, str(status)).inc()
         text = json.dumps({"status": status, "body": body}, ensure_ascii=False, separators=(",", ":"))
         return text[:MAX_RESULT_CHARS]

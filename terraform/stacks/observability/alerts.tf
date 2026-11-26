@@ -4,21 +4,39 @@ locals {
   alerts = {
     slow = {
       name      = "Slow responses"
-      expr      = "histogram_quantile(0.95, sum by (le) (rate(dwellwise_http_request_duration_seconds_bucket{route=~\"/v1/.*\"}[10m])))"
+      expr      = "histogram_quantile(0.95, sum by (le) (rate(dwellwise_http_request_duration_seconds_bucket{route=~\"/v1/.*\",route!=\"/v1/ask\"}[10m])))"
       threshold = 0.8
       for       = "10m"
-      summary   = "p95 latency of /v1 routes is above the 800 ms SLO."
+      summary   = "p95 latency of /v1 routes (not the assistant) is above the 800 ms SLO."
       runbook   = "docs/runbooks/slow-responses.md"
       no_data   = "OK" # no /v1 traffic is not slowness
     }
     errors = {
       name = "Server errors"
-      # /ready answers 503 when data is stale; that has its own alert.
-      expr      = "sum(rate(dwellwise_http_requests_total{status=~\"5..\",route!=\"/ready\"}[10m])) / sum(rate(dwellwise_http_requests_total{route!=\"/ready\"}[10m]))"
+      # /ready answers 503 when data is stale, /v1/ask when its model is unreachable; each has its own signal.
+      expr      = "sum(rate(dwellwise_http_requests_total{status=~\"5..\",route!~\"/ready|/v1/ask\"}[10m])) / sum(rate(dwellwise_http_requests_total{route!~\"/ready|/v1/ask\"}[10m]))"
       threshold = 0.05
       for       = "10m"
       summary   = "More than 5% of requests fail with a server error."
       runbook   = "docs/runbooks/api-down.md"
+      no_data   = "OK"
+    }
+    ai_questions = {
+      name      = "Assistant near its daily cap"
+      expr      = "max(dwellwise_ai_today{kind=\"questions\"}) / max(dwellwise_ai_daily_limit{kind=\"questions\"})"
+      threshold = 0.8
+      for       = "0m"
+      summary   = "The assistant has used 80% of today's question cap; it will refuse questions at the cap."
+      runbook   = "docs/runbooks/ai-quota.md"
+      no_data   = "OK" # no metric while the assistant is off
+    }
+    ai_tokens = {
+      name      = "Assistant near the provider's daily tokens"
+      expr      = "max(dwellwise_ai_today{kind=\"tokens\"}) / max(dwellwise_ai_daily_limit{kind=\"tokens\"})"
+      threshold = 0.8
+      for       = "0m"
+      summary   = "The assistant has used 80% of Groq's free daily tokens; Groq will start refusing calls."
+      runbook   = "docs/runbooks/ai-quota.md"
       no_data   = "OK"
     }
     stale = {

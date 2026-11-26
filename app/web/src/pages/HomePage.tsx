@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 
 import { api } from "../api/client";
+import { AskBox } from "../components/AskBox";
 import { BuildingNow } from "../components/BuildingNow";
 import { DevelopmentMap } from "../components/DevelopmentMap";
 import { SalePrices } from "../components/SalePrices";
@@ -25,6 +26,8 @@ export function HomePage() {
       </section>
 
       <SettlementSearch />
+
+      <AskBox place="Ireland" />
 
       <PlanningActivity />
 
