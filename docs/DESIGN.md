@@ -640,8 +640,32 @@ Delivered in two pull requests. **M12a** (as built, 26 November 2026):
   a tool not on the list never run, including when a tool result carries an
   injected instruction; a model that never stops calling tools refused.
 
-**M12b**: metrics and the quota alert on Grafana (Terraform), a live
-evaluation workflow against the provider, and the question box in the web app.
+**M12b** (as built, 26 November 2026; the Groq key went live on Render the
+same day):
+
+- Metrics: questions by outcome (answered, refused, cached, limited,
+  unavailable), model calls and tokens by provider, the model's tool calls by
+  tool and status, answer time, and today's questions and tokens beside their
+  limits. Four panels on the service dashboard.
+- Honest SLOs: `/v1/ask` is left out of the latency SLO alert and panels (a
+  model call takes seconds) and out of the server-error ratio (it answers 503
+  when its model is unreachable, which has its own metric). The model's tool
+  calls carry an internal host and are not counted as visitor requests.
+- Alerts at 80% of the daily question cap and of Groq's free 200,000 tokens a
+  day, with a runbook (`docs/runbooks/ai-quota.md`). Today's counts live in
+  memory, so a restart on Render's free plan resets them; Groq's own 429 is the
+  backstop.
+- Live evaluation (`.github/workflows/ai-eval.yml`): the real model over seven
+  of the eval questions, answered from their recorded tool results. A case
+  passes when the answer is grounded and the model called the tools listed; a
+  failing case is asked once more. Weekly, by hand, and on pull requests that
+  change the assistant; not a required check, because the model is not
+  deterministic and the quota is shared with the live site.
+- The question box: on the Ireland page and on each brief ("Ask about Navan"),
+  shown only when `GET /v1/assistant` says the assistant is on. The answer is
+  shown as plain paragraphs (the prompt asks for plain text, and any Markdown
+  symbols are stripped, never rendered), with the sources it was checked
+  against; a refusal is shown muted.
 
 **M13. Scheme assistant.** The user describes a scheme ("eight homes in north
 Cork, near a town with spare treatment capacity"). The assistant asks what is

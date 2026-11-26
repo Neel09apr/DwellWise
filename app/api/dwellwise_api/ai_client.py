@@ -1,7 +1,8 @@
 """One thin client for OpenAI-compatible chat APIs: Groq's free tier first, a fallback after it.
 
-Standard library only. A provider that answers 429 or 5xx, or cannot be
-reached, hands the request to the next one; when none answers, ``AiUnavailable``.
+Standard library only. A provider that answers 429 or 5xx, cannot be reached,
+or sends a malformed reply hands the request to the next one; when none
+answers, ``AiUnavailable``. Every call is counted per provider.
 """
 
 from __future__ import annotations
@@ -10,6 +11,8 @@ import json
 import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
+
+from .metrics import AI_MODEL_CALLS, AI_TOKENS
 
 TIMEOUT_SECONDS = 30
 
@@ -56,19 +59,23 @@ class ChatClient:
             body = {"model": provider.model, "messages": messages, "tools": tools, "temperature": 0}
             try:
                 answer = self.post(provider, body)
+                message = answer["choices"][0]["message"]
+                tokens = int((answer.get("usage") or {}).get("total_tokens") or 0)
             except urllib.error.HTTPError as exc:
+                AI_MODEL_CALLS.labels(provider.name, "failed").inc()
                 if exc.code == 429 or exc.code >= 500:
                     failures.append(f"{provider.name}: HTTP {exc.code}")
                     continue
                 raise AiUnavailable(f"{provider.name} refused the request: HTTP {exc.code}") from exc
             except (urllib.error.URLError, TimeoutError, ValueError) as exc:
+                AI_MODEL_CALLS.labels(provider.name, "failed").inc()
                 failures.append(f"{provider.name}: {type(exc).__name__}")
                 continue
-            try:
-                message = answer["choices"][0]["message"]
-                tokens = int((answer.get("usage") or {}).get("total_tokens") or 0)
-            except (KeyError, IndexError, TypeError, ValueError, AttributeError):
+            except (KeyError, IndexError, TypeError, AttributeError):
+                AI_MODEL_CALLS.labels(provider.name, "failed").inc()
                 failures.append(f"{provider.name}: malformed reply")
                 continue
+            AI_MODEL_CALLS.labels(provider.name, "ok").inc()
+            AI_TOKENS.labels(provider.name).inc(tokens)
             return {"message": message, "provider": provider.name, "tokens": tokens}
         raise AiUnavailable("; ".join(failures) or "no AI provider is configured")

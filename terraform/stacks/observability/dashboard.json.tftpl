@@ -69,7 +69,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "histogram_quantile(0.95, sum by (le) (rate(dwellwise_http_request_duration_seconds_bucket{route=~\"/v1/.*\"}[1h])))"
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(dwellwise_http_request_duration_seconds_bucket{route=~\"/v1/.*\",route!=\"/v1/ask\"}[1h])))"
         }
       ],
       "fieldConfig": {
@@ -193,7 +193,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "histogram_quantile(0.95, sum by (le, route) (rate(dwellwise_http_request_duration_seconds_bucket{route=~\"/v1/.*\"}[10m])))",
+          "expr": "histogram_quantile(0.95, sum by (le, route) (rate(dwellwise_http_request_duration_seconds_bucket{route=~\"/v1/.*\",route!=\"/v1/ask\"}[10m])))",
           "legendFormat": "{{route}}"
         }
       ],
@@ -530,6 +530,113 @@
         "overrides": []
       },
       "description": "Alerts: 14.4 over 1h and 10m (fast), 6 over 6h and 30m (slow)."
+    },
+    {
+      "id": 13,
+      "type": "timeseries",
+      "title": "Assistant questions per hour, by outcome",
+      "gridPos": {
+        "x": 0,
+        "y": 34,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_uid}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (outcome) (increase(dwellwise_ai_questions_total[1h]))",
+          "legendFormat": "{{outcome}}"
+        }
+      ],
+      "description": "answered and refused reached the model; refused means the grounding check replaced the answer."
+    },
+    {
+      "id": 14,
+      "type": "timeseries",
+      "title": "Assistant use today vs daily limits",
+      "gridPos": {
+        "x": 12,
+        "y": 34,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_uid}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "max(dwellwise_ai_today{kind=\"questions\"}) / max(dwellwise_ai_daily_limit{kind=\"questions\"})",
+          "legendFormat": "questions"
+        },
+        {
+          "refId": "B",
+          "expr": "max(dwellwise_ai_today{kind=\"tokens\"}) / max(dwellwise_ai_daily_limit{kind=\"tokens\"})",
+          "legendFormat": "tokens"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "description": "Alerts at 80%. In memory: a restart of the service resets today's count."
+    },
+    {
+      "id": 15,
+      "type": "timeseries",
+      "title": "Assistant model calls per hour, by provider and outcome",
+      "gridPos": {
+        "x": 0,
+        "y": 42,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_uid}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (provider, outcome) (increase(dwellwise_ai_model_calls_total[1h]))",
+          "legendFormat": "{{provider}} {{outcome}}"
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "type": "timeseries",
+      "title": "Assistant answer time, p95 (not in the API's SLO)",
+      "gridPos": {
+        "x": 12,
+        "y": 42,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${prometheus_uid}"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(dwellwise_ai_answer_seconds_bucket[1h])))",
+          "legendFormat": "p95"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      }
     }
   ]
 }

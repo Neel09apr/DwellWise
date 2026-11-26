@@ -1,0 +1,49 @@
+# The assistant's live evaluation: the real model (Groq free tier) over the eval
+# questions, answered from recorded tool results, checked by the same grounding
+# code as the site. Not a required check: the model is not deterministic and the
+# quota is shared with the live site. Runs weekly, by hand, and on pull requests
+# that change the assistant. Without the GROQ_API_KEY secret (forks) it skips.
+name: ai-eval
+
+on:
+  schedule:
+    - cron: "17 6 * * 1" # Mondays 06:17 UTC
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "app/api/dwellwise_api/ask.py"
+      - "app/api/dwellwise_api/ai_*.py"
+      - "app/api/dwellwise_api/grounding.py"
+      - "app/api/tests/ai_eval/**"
+      - ".github/workflows/ai-eval.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-eval
+  cancel-in-progress: true
+
+jobs:
+  live:
+    name: Assistant against the real model
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.15" # match the container images
+          cache: pip
+          cache-dependency-path: app/api/requirements.txt
+
+      - name: Live evaluation
+        working-directory: app/api
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          pip install -r requirements.txt
+          python -m tests.ai_eval.live

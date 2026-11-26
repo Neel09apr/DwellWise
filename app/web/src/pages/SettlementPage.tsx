@@ -2,6 +2,7 @@ import { Link, useParams } from "react-router-dom";
 
 import { api, type Brief } from "../api/client";
 import { Breadcrumbs } from "../components/Breadcrumbs";
+import { AskBox } from "../components/AskBox";
 import { BuildingNow } from "../components/BuildingNow";
 import { PlanningPrecedents } from "../components/PlanningPrecedents";
 import { ProtectedSites } from "../components/ProtectedSites";
@@ -122,6 +123,8 @@ export function SettlementPage() {
           with your own figures, beside what homes sold for here.
         </p>
       </header>
+
+      <AskBox place={s.name} settlement={s.code} />
 
       <nav aria-labelledby="contents" className="contents">
         <h2 id="contents" className="level-title">

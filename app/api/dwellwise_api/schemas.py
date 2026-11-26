@@ -206,6 +206,10 @@ class Question(BaseModel):
     settlement: str | None = Field(default=None, pattern=r"^\d{1,6}$")
 
 
+class AssistantStatus(BaseModel):
+    enabled: bool  # false: no key, or the kill switch is on; the web app hides the question box
+
+
 class Answer(BaseModel):
     """A model's answer whose every number was found in DwellWise's data, or a refusal saying it was not."""
 

@@ -243,6 +243,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/assistant": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Assistant Status
+         * @description Whether the assistant is on. Costs no quota: the web app asks before showing the question box.
+         */
+        get: operations["assistant_status_v1_assistant_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/ask": {
         parameters: {
             query?: never;
@@ -302,6 +322,11 @@ export interface components {
             months: components["schemas"]["MonthCounts"][];
             /** Counties */
             counties: components["schemas"]["CountyCounts"][];
+        };
+        /** AssistantStatus */
+        AssistantStatus: {
+            /** Enabled */
+            enabled: boolean;
         };
         /** Brief */
         Brief: {
@@ -1212,6 +1237,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    assistant_status_v1_assistant_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AssistantStatus"];
                 };
             };
         };

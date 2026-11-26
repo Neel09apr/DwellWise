@@ -899,6 +899,28 @@
         }
       }
     },
+    "/v1/assistant": {
+      "get": {
+        "tags": [
+          "assistant"
+        ],
+        "summary": "Assistant Status",
+        "description": "Whether the assistant is on. Costs no quota: the web app asks before showing the question box.",
+        "operationId": "assistant_status_v1_assistant_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantStatus"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/ask": {
       "post": {
         "tags": [
@@ -1088,6 +1110,19 @@
           "counties"
         ],
         "title": "ApplicationStats"
+      },
+      "AssistantStatus": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          }
+        },
+        "type": "object",
+        "required": [
+          "enabled"
+        ],
+        "title": "AssistantStatus"
       },
       "Brief": {
         "properties": {

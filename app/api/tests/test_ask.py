@@ -177,3 +177,96 @@ def test_the_key_never_shows_and_a_malformed_reply_counts_as_a_failure():
     assert "sk-secret" not in repr(provider)
     with pytest.raises(AiUnavailable, match="malformed reply"):
         ChatClient([provider], lambda _p, _b: {"choices": []})([], [])
+
+
+def sample(name: str, labels: dict | None = None) -> float:
+    from dwellwise_api.metrics import REGISTRY
+
+    return REGISTRY.get_sample_value(name, labels or {}) or 0.0
+
+
+def test_outcomes_tokens_and_todays_use_are_measured():
+    good = CASES[0]
+    service = AskService(scripted(good["turns"]), Gate())
+    before = sample("dwellwise_ai_questions_total", {"outcome": "answered"})
+    cached_before = sample("dwellwise_ai_questions_total", {"outcome": "cached"})
+    asyncio.run(service.ask(good["question"], None, "a", recorded(good["tool_results"])))
+    asyncio.run(service.ask(good["question"], None, "a", recorded(good["tool_results"])))
+    assert sample("dwellwise_ai_questions_total", {"outcome": "answered"}) == before + 1
+    assert sample("dwellwise_ai_questions_total", {"outcome": "cached"}) == cached_before + 1
+    assert sample("dwellwise_ai_today", {"kind": "questions"}) == 1
+    assert sample("dwellwise_ai_today", {"kind": "tokens"}) == 30  # three scripted model calls of 10 tokens
+    assert sample("dwellwise_ai_daily_limit", {"kind": "questions"}) == 800
+
+    refused = next(c for c in CASES if c["name"] == "a rounded price is refused")
+    before = sample("dwellwise_ai_questions_total", {"outcome": "refused"})
+    refusing = AskService(scripted(refused["turns"]))
+    asyncio.run(refusing.ask(refused["question"], None, "b", recorded(refused["tool_results"])))
+    assert sample("dwellwise_ai_questions_total", {"outcome": "refused"}) == before + 1
+
+
+def test_limited_and_unavailable_questions_are_counted():
+    limited = sample("dwellwise_ai_questions_total", {"outcome": "limited"})
+    with pytest.raises(Limited):
+        asyncio.run(AskService(scripted([]), Gate(per_ip_hour=0)).ask("q?", None, "a", recorded({})))
+    assert sample("dwellwise_ai_questions_total", {"outcome": "limited"}) == limited + 1
+
+    def down(_messages, _tools):
+        raise AiUnavailable("down")
+
+    unavailable = sample("dwellwise_ai_questions_total", {"outcome": "unavailable"})
+    with pytest.raises(AiUnavailable):
+        asyncio.run(AskService(down).ask("q?", None, "a", recorded({})))
+    assert sample("dwellwise_ai_questions_total", {"outcome": "unavailable"}) == unavailable + 1
+
+
+def test_model_calls_are_counted_per_provider():
+    ok = sample("dwellwise_ai_model_calls_total", {"provider": "p1", "outcome": "ok"})
+    failed = sample("dwellwise_ai_model_calls_total", {"provider": "p0", "outcome": "failed"})
+
+    def post(provider, _body):
+        if provider.name == "p0":
+            raise urllib.error.HTTPError("u", 503, "down", {}, None)
+        return {"choices": [{"message": {"content": "ok"}}], "usage": {"total_tokens": 5}}
+
+    ChatClient([Provider("p0", "https://a", "m", "k"), Provider("p1", "https://b", "m", "k")], post)([], [])
+    assert sample("dwellwise_ai_model_calls_total", {"provider": "p1", "outcome": "ok"}) == ok + 1
+    assert sample("dwellwise_ai_model_calls_total", {"provider": "p0", "outcome": "failed"}) == failed + 1
+    assert sample("dwellwise_ai_tokens_total", {"provider": "p1"}) >= 5
+
+
+def test_the_models_tool_calls_are_not_counted_as_visitors():
+    app = create_app(Settings())
+    args = {"homes": 8, "floor_area_m2": 110, "build_cost_per_m2": 2800, "contribution": 117,
+            "contribution_basis": "per_m2", "fees_pct": 10, "contingency_pct": 5, "finance_rate_pct": 8,
+            "finance_months": 18}  # fmt: skip
+    visitor = {"method": "GET", "route": "/v1/costs", "status": "200"}
+    before = sample("dwellwise_http_requests_total", visitor)
+    tool = sample("dwellwise_ai_tool_calls_total", {"tool": "cost_estimate", "status": "200"})
+    asyncio.run(AppTools(app)("cost_estimate", args))
+    assert sample("dwellwise_http_requests_total", visitor) == before
+    assert sample("dwellwise_ai_tool_calls_total", {"tool": "cost_estimate", "status": "200"}) == tool + 1
+    with TestClient(app) as c:
+        c.get("/v1/costs", params=args)
+    assert sample("dwellwise_http_requests_total", visitor) == before + 1
+
+
+def test_the_status_says_whether_the_assistant_is_on():
+    with TestClient(create_app(Settings())) as c:
+        assert c.get("/v1/assistant").json() == {"enabled": False}
+    with TestClient(create_app(Settings(ai_api_key="k"))) as c:
+        assert c.get("/v1/assistant").json() == {"enabled": True}
+
+
+def test_todays_tokens_start_again_at_midnight_utc():
+    now = [1_800_000_000.0]
+    gate = Gate(clock=lambda: now[0])
+    gate.admit("a")
+    gate.spend(150_000)
+    gate.report()
+    assert sample("dwellwise_ai_today", {"kind": "tokens"}) == 150_000
+    now[0] += 86_400
+    gate.admit("a")
+    gate.report()
+    assert sample("dwellwise_ai_today", {"kind": "tokens"}) == 0
+    assert sample("dwellwise_ai_today", {"kind": "questions"}) == 1

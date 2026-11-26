@@ -19,6 +19,39 @@ DATA_AGE = Gauge(
 )
 
 
+# The assistant (/v1/ask). Its model calls are slow by nature, so it has its own metrics and is
+# left out of the API's latency and error SLOs; its tool calls are not visitor requests.
+AI_QUESTIONS = Counter(
+    "dwellwise_ai_questions_total",
+    "Questions to the assistant, by outcome: answered, refused, cached, limited, unavailable",
+    ["outcome"],
+    registry=REGISTRY,
+)
+AI_MODEL_CALLS = Counter(
+    "dwellwise_ai_model_calls_total", "Calls to a model provider", ["provider", "outcome"], registry=REGISTRY
+)
+AI_TOKENS = Counter("dwellwise_ai_tokens_total", "Tokens used, by provider", ["provider"], registry=REGISTRY)
+AI_TOOL_CALLS = Counter(
+    "dwellwise_ai_tool_calls_total",
+    "The model's calls to DwellWise's own API",
+    ["tool", "status"],
+    registry=REGISTRY,
+)
+AI_SECONDS = Histogram(
+    "dwellwise_ai_answer_seconds",
+    "Time to answer a question that reached the model",
+    buckets=(1, 2, 5, 10, 20, 40),
+    registry=REGISTRY,
+)
+AI_TODAY = Gauge(
+    "dwellwise_ai_today", "Use so far today (UTC), by kind: questions, tokens", ["kind"], registry=REGISTRY
+)
+AI_DAILY_LIMIT = Gauge(
+    "dwellwise_ai_daily_limit", "Daily limit, by kind: the question cap, the provider's tokens", ["kind"],
+    registry=REGISTRY,
+)  # fmt: skip
+
+
 def observe(method: str, route: str, status: int, seconds: float) -> None:
     REQUESTS.labels(method, route, str(status)).inc()
     LATENCY.labels(method, route).observe(seconds)
