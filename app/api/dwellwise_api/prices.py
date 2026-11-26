@@ -10,9 +10,9 @@ from __future__ import annotations
 from datetime import date
 
 from . import repositories as repo
+from .months import add_months
 from .place import Place
 from .schemas import PriceArea, PriceMonth, Prices
-from .stats import add_months
 
 ATTRIBUTION = "Central Statistics Office, tables HPM04 and HPM05 (Revenue stamp duty data). CC BY 4.0."
 MONTHS = 24

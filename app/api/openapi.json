@@ -376,6 +376,25 @@
             "description": "true: only applications that state dwellings"
           },
           {
+            "name": "county",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[A-Za-z][A-Za-z \\-]{1,30}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "County name; none means Ireland",
+              "title": "County"
+            },
+            "description": "County name; none means Ireland"
+          },
+          {
             "name": "from",
             "in": "query",
             "required": false,
@@ -412,25 +431,6 @@
               "title": "To"
             },
             "description": "Last month, YYYY-MM"
-          },
-          {
-            "name": "county",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "pattern": "^[A-Za-z][A-Za-z \\-]{1,30}$"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "County name; none means Ireland",
-              "title": "County"
-            },
-            "description": "County name; none means Ireland"
           }
         ],
         "responses": {
@@ -477,44 +477,6 @@
         "operationId": "commencement_stats_v1_stats_commencements_get",
         "parameters": [
           {
-            "name": "from",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "First month, YYYY-MM",
-              "title": "From"
-            },
-            "description": "First month, YYYY-MM"
-          },
-          {
-            "name": "to",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Last month, YYYY-MM",
-              "title": "To"
-            },
-            "description": "Last month, YYYY-MM"
-          },
-          {
             "name": "county",
             "in": "query",
             "required": false,
@@ -551,6 +513,44 @@
               "title": "Settlement"
             },
             "description": "CSO settlement code"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "First month, YYYY-MM",
+              "title": "From"
+            },
+            "description": "First month, YYYY-MM"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Last month, YYYY-MM",
+              "title": "To"
+            },
+            "description": "Last month, YYYY-MM"
           }
         ],
         "responses": {

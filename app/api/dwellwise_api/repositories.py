@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import date
-
 from psycopg.rows import dict_row
 
 
@@ -118,7 +116,7 @@ def application_stats_data(conn, county: str | None, residential: bool | None, s
             {"start": start, "end": end, "county": county, "residential": residential},
         )
         data = cur.fetchone()
-    rows = [{**r, "month": date.fromisoformat(r["month"])} for r in data["rows"]]
+    rows = [{**r, "month": r["month"][:7]} for r in data["rows"]]  # YYYY-MM, as Months labels them
     return {
         "rows": rows,
         "captured_at": data["captured_at"],

@@ -905,12 +905,12 @@ export interface operations {
             query?: {
                 /** @description true: only applications that state dwellings */
                 residential?: boolean | null;
+                /** @description County name; none means Ireland */
+                county?: string | null;
                 /** @description First month, YYYY-MM */
                 from?: string | null;
                 /** @description Last month, YYYY-MM */
                 to?: string | null;
-                /** @description County name; none means Ireland */
-                county?: string | null;
             };
             header?: never;
             path?: never;
@@ -950,14 +950,14 @@ export interface operations {
     commencement_stats_v1_stats_commencements_get: {
         parameters: {
             query?: {
-                /** @description First month, YYYY-MM */
-                from?: string | null;
-                /** @description Last month, YYYY-MM */
-                to?: string | null;
                 /** @description County name; none means Ireland */
                 county?: string | null;
                 /** @description CSO settlement code */
                 settlement?: string | null;
+                /** @description First month, YYYY-MM */
+                from?: string | null;
+                /** @description Last month, YYYY-MM */
+                to?: string | null;
             };
             header?: never;
             path?: never;
