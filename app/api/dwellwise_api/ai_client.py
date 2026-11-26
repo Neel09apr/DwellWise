@@ -8,6 +8,7 @@ answers, ``AiUnavailable``. Every call is counted per provider.
 from __future__ import annotations
 
 import json
+import re
 import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
@@ -53,6 +54,12 @@ def _body(exc: urllib.error.HTTPError) -> bytes:
         return b""
 
 
+def _rejection(body: bytes) -> str:
+    """Why the provider rejected a tool call, in a few words: the tool's name, never its arguments."""
+    found = re.search(rb"call tool '([A-Za-z0-9_.\-]{1,64})'", body)
+    return f"the tool {found.group(1).decode()} is not on the list" if found else "the call was not valid"
+
+
 class ChatClient:
     """``chat(messages, tools)`` returns the assistant message, the provider's name and the tokens used."""
 
@@ -69,11 +76,13 @@ class ChatClient:
                 message = answer["choices"][0]["message"]
                 tokens = int((answer.get("usage") or {}).get("total_tokens") or 0)
             except urllib.error.HTTPError as exc:
-                if exc.code == 400 and b"tool_use_failed" in _body(exc):
-                    # The provider rejected a tool call the model made up (one not on the list, as an
-                    # injected instruction asks for). Nothing ran: an empty reply, which becomes the refusal.
+                body = _body(exc)
+                if exc.code == 400 and b"tool_use_failed" in body:
+                    # The provider rejected a tool call the model got wrong: a tool not on the list (as an
+                    # injected instruction asks for) or arguments that are not valid JSON. Nothing ran.
                     AI_MODEL_CALLS.labels(provider.name, "tool_use_failed").inc()
-                    return {"message": {"content": ""}, "provider": provider.name, "tokens": 0}
+                    return {"message": {"content": ""}, "provider": provider.name, "tokens": 0,
+                            "rejected": _rejection(body)}  # fmt: skip
                 AI_MODEL_CALLS.labels(provider.name, "failed").inc()
                 if exc.code == 429 or exc.code >= 500:
                     failures.append(f"{provider.name}: HTTP {exc.code}")

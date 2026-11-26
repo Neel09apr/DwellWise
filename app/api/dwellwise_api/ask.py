@@ -23,6 +23,7 @@ from .metrics import AI_DAILY_LIMIT, AI_QUESTIONS, AI_SECONDS, AI_TODAY
 
 log = logging.getLogger("dwellwise.api.ask")
 MAX_ROUNDS = 5
+MAX_REJECTED = 2  # rejected tool calls the model may retry after, within MAX_ROUNDS
 REFUSAL = "I could not answer that with figures I can check against DwellWise's data."
 SYSTEM = """You answer questions about Irish towns and counties from DwellWise's public data, using the tools.
 
@@ -115,18 +116,32 @@ async def answer(question: str, settlement: str | None, chat: Chat, tools: Tools
     asked = f"{question}\n\n{town}" if settlement else question
     messages = [{"role": "system", "content": SYSTEM}, {"role": "user", "content": asked}]
     sources, used, tokens, provider = [question, settlement or ""], [], 0, None
+    rejected: list[str] = []  # tool calls the provider refused, by reason
     for _ in range(MAX_ROUNDS):
         reply = chat(messages, SPECS)
         tokens += reply.get("tokens", 0)
         provider = reply.get("provider")
         message = reply["message"]
+        if reply.get("rejected"):
+            rejected.append(reply["rejected"])
+            if len(rejected) <= MAX_REJECTED:  # tell the model what was wrong and let it try again
+                note = f"Your last tool call was rejected: {reply['rejected']}. Call only the listed tools, "
+                messages.append({"role": "user", "content": note + "with valid JSON arguments, or answer."})
+                continue
         calls = message.get("tool_calls") or []
         if not calls:
             text = (message.get("content") or "").strip()
             missing = sorted(format(n, "f") for n in ungrounded(text, sources))
             grounded = bool(text) and not missing
-            return {"answer": text if grounded else REFUSAL, "grounded": grounded, "tools": used,
-                    "provider": provider, "tokens": tokens, "ungrounded": missing}  # fmt: skip
+            return {
+                "answer": text if grounded else REFUSAL,
+                "grounded": grounded,
+                "tools": used,
+                "provider": provider,
+                "tokens": tokens,
+                "ungrounded": missing,
+                "rejected": rejected,
+            }
         messages.append({"role": "assistant", "content": message.get("content") or "", "tool_calls": calls})
         for call in calls:
             name = call["function"]["name"]
@@ -144,7 +159,8 @@ async def answer(question: str, settlement: str | None, chat: Chat, tools: Tools
             sources.append(result)
             used.append(name)
             messages.append({"role": "tool", "tool_call_id": call.get("id", name), "content": result})
-    return {"answer": REFUSAL, "grounded": False, "tools": used, "provider": provider, "tokens": tokens}
+    return {"answer": REFUSAL, "grounded": False, "tools": used, "provider": provider, "tokens": tokens,
+            "rejected": rejected}  # fmt: skip
 
 
 GROQ_TOKENS_A_DAY = 200_000  # Groq's free tier, checked 26 November 2026; the alert fires at 80%
@@ -186,8 +202,16 @@ class AskService:
         if not result[
             "grounded"
         ]:  # the numbers that failed and the tools used; never the question or the visitor
-            log.info(json.dumps({"event": "assistant_refused", "ungrounded": result.get("ungrounded", []),
-                                 "tools": result["tools"]}))  # fmt: skip
+            log.info(
+                json.dumps(
+                    {
+                        "event": "assistant_refused",
+                        "ungrounded": result.get("ungrounded", []),
+                        "tools": result["tools"],
+                        "rejected": result.get("rejected", []),
+                    }
+                )
+            )
         if result["grounded"]:
             self.gate.remember(key, result)
         return result

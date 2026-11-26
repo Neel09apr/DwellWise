@@ -68,10 +68,13 @@ def main() -> int:
             passed, result = run_case(case, chat)  # once more: the model is not deterministic
         failures += not passed
         mark = "PASS" if passed else "FAIL"
-        print(f"{mark}  {case['name']}: grounded={result['grounded']} tools={result['tools']}")  # noqa: T201
+        rejected = len(result.get("rejected", []))
+        summary = f"grounded={result['grounded']} tools={result['tools']} rejected={rejected}"
+        print(f"{mark}  {case['name']}: {summary}")  # noqa: T201
         if not passed:
             print(f"      answer: {result['answer'][:300]!r}")  # noqa: T201
             print(f"      numbers not in the data: {result.get('ungrounded')}")  # noqa: T201
+            print(f"      tool calls rejected: {result.get('rejected')}")  # noqa: T201
     print(f"{failures} failed")  # noqa: T201
     return 1 if failures else 0
 
