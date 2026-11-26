@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class ErrorDetail(BaseModel):
@@ -199,6 +199,20 @@ class Costs(BaseModel):
     total: int  # the sum of the lines
     per_home: int
     note: str
+
+
+class Question(BaseModel):
+    question: str = Field(min_length=3, max_length=500)
+    settlement: str | None = Field(default=None, pattern=r"^\d{1,6}$")
+
+
+class Answer(BaseModel):
+    """A model's answer whose every number was found in DwellWise's data, or a refusal saying it was not."""
+
+    answer: str
+    grounded: bool  # false: the answer failed the check and was replaced by a refusal
+    tools: list[str]  # the tools the model called, in order
+    cached: bool
 
 
 class PrecedentApplication(BaseModel):

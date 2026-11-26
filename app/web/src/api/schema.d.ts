@@ -243,10 +243,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/ask": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ask
+         * @description A question about Irish towns, answered from DwellWise's data, every number checked first.
+         */
+        post: operations["ask_v1_ask_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * Answer
+         * @description A model's answer whose every number was found in DwellWise's data, or a refusal saying it was not.
+         */
+        Answer: {
+            /** Answer */
+            answer: string;
+            /** Grounded */
+            grounded: boolean;
+            /** Tools */
+            tools: string[];
+            /** Cached */
+            cached: boolean;
+        };
         /** ApplicationStats */
         ApplicationStats: {
             /** County */
@@ -608,6 +642,13 @@ export interface components {
             captured_at: string | null;
             /** Attribution */
             attribution: string;
+        };
+        /** Question */
+        Question: {
+            /** Question */
+            question: string;
+            /** Settlement */
+            settlement?: string | null;
         };
         /** Ready */
         Ready: {
@@ -1166,6 +1207,57 @@ export interface operations {
             };
             /** @description Unprocessable Content */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    ask_v1_ask_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Question"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Answer"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };
