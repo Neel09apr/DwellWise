@@ -2,43 +2,15 @@
 
 from __future__ import annotations
 
-from datetime import date
-
 from . import repositories as repo
+from .months import Months
 from .place import Place
 from .schemas import ApplicationStats, CountyCounts, DecisionCounts, MonthCounts
 
 CLASSES = ("granted", "refused", "pending", "withdrawn", "other")
-DEFAULT_MONTHS = 12
-MAX_MONTHS = 120
 ATTRIBUTION = (
     "National Planning Applications, Department of Housing, Local Government and Heritage. CC BY 4.0."
 )
-
-
-class RangeError(ValueError):
-    """The requested months make no sense, or span too long."""
-
-
-def parse_month(text: str) -> date:
-    year, month = text.split("-")
-    return date(int(year), int(month), 1)
-
-
-def add_months(day: date, n: int) -> date:
-    index = day.year * 12 + day.month - 1 + n
-    return date(index // 12, index % 12 + 1, 1)
-
-
-def month_range(start: str | None, end: str | None, today: date) -> tuple[date, date]:
-    """First and last month, inclusive. Defaults to the last 12 months up to today's."""
-    last = parse_month(end) if end else today.replace(day=1)
-    first = parse_month(start) if start else add_months(last, -(DEFAULT_MONTHS - 1))
-    if first > last:
-        raise RangeError("from must not be after to.")
-    if (last.year - first.year) * 12 + last.month - first.month + 1 > MAX_MONTHS:
-        raise RangeError(f"The range may span at most {MAX_MONTHS} months.")
-    return first, last
 
 
 def _counts(rows: list[dict]) -> dict:
@@ -48,19 +20,12 @@ def _counts(rows: list[dict]) -> dict:
     return {**counts, "total": sum(counts.values())}
 
 
-def application_stats(
-    conn, place: Place, residential: bool | None, start: str | None, end: str | None, today: date
-) -> ApplicationStats:
+def application_stats(conn, place: Place, residential: bool | None, months: Months) -> ApplicationStats:
     """Ireland or one county (``Place`` has resolved it). Each county in scope gets a row."""
-    first, last = month_range(start, end, today)
     name = place.county
-    data = repo.application_stats_data(conn, name, residential, first, add_months(last, 1))
+    data = repo.application_stats_data(conn, name, residential, months.first, months.end)
     rows = data["rows"]
-
-    months, day = [], first
-    while day <= last:
-        months.append(MonthCounts(month=f"{day:%Y-%m}", **_counts([r for r in rows if r["month"] == day])))
-        day = add_months(day, 1)
+    by_month = [MonthCounts(month=m, **_counts([r for r in rows if r["month"] == m])) for m in months.each()]
 
     counties = [
         CountyCounts(county=n, **_counts([r for r in rows if r["county"] == n])) for n in place.counties
@@ -69,12 +34,12 @@ def application_stats(
     return ApplicationStats(
         county=name,
         residential=residential,
-        from_month=f"{first:%Y-%m}",
-        to_month=f"{last:%Y-%m}",
+        from_month=months.from_label,
+        to_month=months.to_label,
         captured_at=data["captured_at"],
         newest_received=data.get("newest_received"),
         attribution=ATTRIBUTION,
         totals=DecisionCounts(**_counts(rows)),
-        months=months,
+        months=by_month,
         counties=counties,
     )

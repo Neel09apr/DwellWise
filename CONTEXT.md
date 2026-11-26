@@ -18,6 +18,11 @@ by its CSO code (`11016` is Navan). It always lies in one county, which a
 resolved Place carries. Evidence describes the settlement, never a site in it.
 _Avoid_: town as an identifier (names repeat: there are two Kells).
 
+**Months**: the whole months a stats request covers, from `from` to `to`
+(YYYY-MM, inclusive; by default the last 12 up to this month, at most 120).
+Checked once by the API's `MonthRange` dependency; features receive `Months`.
+_Avoid_: period, date range.
+
 **Source**: one public dataset the pipeline loads (`planning`, `commencements`,
 `prices`...), declared once in the pipeline's `SOURCES` with its attribution, and
 registered in `dw.source` on every run. Each source owns its reader (`fetch`):

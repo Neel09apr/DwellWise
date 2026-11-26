@@ -3,6 +3,7 @@
 from datetime import date
 
 from dwellwise_api.building import commencement_stats
+from dwellwise_api.months import Months
 from dwellwise_api.place import Place
 
 from .test_stats import TODAY, CountingConn
@@ -24,7 +25,7 @@ ROW = {
 
 def test_commencements_need_one_round_trip_and_fill_empty_months():
     conn = CountingConn(ROW)
-    found = commencement_stats(conn, Place(), "2026-09", "2026-11", TODAY)
+    found = commencement_stats(conn, Place(), Months.between("2026-09", "2026-11", TODAY))
     assert conn.queries == 1
     assert [(m.month, m.homes) for m in found.months] == [("2026-09", 0), ("2026-10", 30), ("2026-11", 0)]
     assert (found.totals.notices, found.totals.homes) == (4, 30)
