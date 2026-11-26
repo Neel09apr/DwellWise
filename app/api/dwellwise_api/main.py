@@ -23,7 +23,7 @@ from .ai_tools import INTERNAL_HOST
 from .ask import AskService, Gate
 from .config import Settings
 from .place import Places, load_from_database
-from .routers import ask, costs, counties, health, maps, prices, settlements, stats
+from .routers import ask, costs, counties, health, maps, prices, settlements, shortlist, stats
 
 log = logging.getLogger("dwellwise.api")
 
@@ -94,6 +94,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(maps.router)
     app.include_router(prices.router)
     app.include_router(costs.router)
+    app.include_router(shortlist.router)
     app.include_router(ask.router)
 
     @app.exception_handler(HTTPException)

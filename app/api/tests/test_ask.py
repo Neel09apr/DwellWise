@@ -49,7 +49,9 @@ def recorded(results):
 @pytest.mark.parametrize("case", CASES, ids=[c["name"] for c in CASES])
 def test_the_eval_set(case):
     tools = recorded(case["tool_results"])
-    result = asyncio.run(answer(case["question"], case["settlement"], scripted(case["turns"]), tools))
+    result = asyncio.run(
+        answer(case["question"], case["settlement"], scripted(case["turns"]), tools, case.get("history"))
+    )
     assert result["grounded"] is (case["expect"] == "grounded")
     if case["expect"] == "rejected":
         assert result["answer"] == REFUSAL
@@ -315,6 +317,7 @@ def test_a_refusal_logs_the_numbers_that_failed_and_never_the_question(caplog):
         "ungrounded": ["420"],
         "tools": ["sale_prices"],
         "rejected": [],
+        "over_budget": False,
     }
     assert refused["question"] not in line and "203.0.113.9" not in line
 
@@ -342,3 +345,78 @@ def test_after_a_rejected_tool_call_the_model_is_told_why_and_may_try_again():
     result = asyncio.run(answer(good["question"], None, chat, recorded(good["tool_results"])))
     assert result["grounded"] is True and result["rejected"] == ["the tool run_sql is not on the list"]
     assert "rejected: the tool run_sql is not on the list" in seen[1]["content"]
+
+
+SHORTLIST_CASE = next(c for c in CASES if c["name"] == "a shortlist quoted exactly is shown")
+
+
+def test_the_shortlist_comes_back_in_the_codes_order_whatever_the_prose_says():
+    case = SHORTLIST_CASE
+    reordered = [*case["turns"][:-1], {"role": "assistant", "content": "Athy (120 started) and Naas (640)."}]
+    result = asyncio.run(answer(case["question"], None, scripted(reordered), recorded(case["tool_results"])))
+    assert result["grounded"] is True
+    (table,) = result["shortlists"]
+    assert [t["name"] for t in table["towns"]] == ["Naas", "Newbridge", "Athy"]
+
+
+def test_no_shortlist_is_shown_beside_a_refusal_or_from_a_failed_call():
+    case = next(c for c in CASES if c["name"] == "a shortlist figure the data does not hold is refused")
+    refused = asyncio.run(
+        answer(case["question"], None, scripted(case["turns"]), recorded(case["tool_results"]))
+    )
+    assert refused["grounded"] is False and refused["shortlists"] == []
+    failed = {"shortlist": json.dumps({"status": 404, "body": {"towns": []}})}
+    turns = [SHORTLIST_CASE["turns"][0], {"role": "assistant", "content": "No county by that name."}]
+    result = asyncio.run(answer("Eight homes in Atlantis?", None, scripted(turns), recorded(failed)))
+    assert result["grounded"] is True and result["shortlists"] == []
+
+
+def test_a_question_stops_at_its_token_budget():
+    from dwellwise_api.ask import TOKEN_BUDGET
+
+    calls = []
+
+    def chat(_messages, _tools):  # a model that keeps searching and spends heavily
+        calls.append(1)
+        turn = SHORTLIST_CASE["turns"][0]
+        return {"message": turn, "provider": "script", "tokens": TOKEN_BUDGET // 2}
+
+    result = asyncio.run(
+        answer("Eight homes in Kildare?", None, chat, recorded(SHORTLIST_CASE["tool_results"]))
+    )
+    assert result["answer"] == REFUSAL and result["over_budget"] is True
+    assert len(calls) == 2  # the third call would start at the budget, so it is never made
+
+
+def test_history_reaches_the_model_and_a_follow_up_is_never_cached():
+    seen = []
+
+    def chat(messages, _tools):
+        seen.append(messages)
+        return {"message": {"role": "assistant", "content": "Which county?"}, "provider": "s", "tokens": 1}
+
+    service = AskService(chat, Gate())
+    history = [{"role": "user", "content": "Eight homes"}, {"role": "assistant", "content": "Where?"}]
+    for _ in range(2):
+        result = asyncio.run(service.ask("Somewhere quiet", None, "a", recorded({}), history))
+        assert result["cached"] is False
+    assert len(seen) == 2
+    assert [m["role"] for m in seen[0]] == ["system", "user", "assistant", "user"]
+    assert seen[0][1]["content"] == "Eight homes"
+
+
+def test_the_route_takes_at_most_four_earlier_messages_and_returns_the_shortlist(monkeypatch):
+    case = SHORTLIST_CASE
+    monkeypatch.setattr(ask_route, "AppTools", lambda _app: recorded(case["tool_results"]))
+    app = create_app(Settings())
+    turn = {"role": "user", "content": "Eight homes"}
+    with TestClient(app) as c:
+        app.state.ai = AskService(scripted(case["turns"]), Gate())
+        ok = c.post("/v1/ask", json={"question": case["question"], "history": [turn]})
+        too_many = c.post("/v1/ask", json={"question": case["question"], "history": [turn] * 5})
+        bad_role = c.post(
+            "/v1/ask", json={"question": case["question"], "history": [{**turn, "role": "system"}]}
+        )
+    assert ok.status_code == 200
+    assert [t["code"] for t in ok.json()["shortlists"][0]["towns"]] == ["10001", "10002", "10003"]
+    assert too_many.status_code == 422 and bad_role.status_code == 422

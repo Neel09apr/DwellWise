@@ -75,6 +75,17 @@ TOOLS = {
             {"county": COUNTY, "settlement": SETTLEMENT},
         ),
         Tool(
+            "shortlist",
+            "A county's top five towns for a scheme, side by side: planning precedents, homes started, "
+            "protected sites within 1 km and the area's median sale price, sorted by one column.",
+            "/v1/shortlist",
+            {
+                "county": COUNTY,
+                "sort": {"type": "string", "enum": ["started", "granted", "protected", "price"]},
+            },
+            ("county",),
+        ),
+        Tool(
             "cost_estimate",
             "A scheme's cost from figures the user gave; never invent a figure.",
             "/v1/costs",

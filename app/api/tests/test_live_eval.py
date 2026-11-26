@@ -30,7 +30,7 @@ def test_without_a_key_the_live_run_skips_rather_than_fails(monkeypatch, capsys)
 
 
 def test_nine_cases_are_asked_live():
-    assert sum("live_must_call" in c for c in live.CASES) == 9
+    assert sum("live_must_call" in c for c in live.CASES) == 11
 
 
 def test_a_grounded_answer_that_skipped_the_tool_still_fails():

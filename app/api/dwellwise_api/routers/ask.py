@@ -36,12 +36,20 @@ async def ask(question: Question, request: Request) -> Answer:
         )
     try:
         result = await service.ask(
-            question.question, question.settlement, _visitor(request), AppTools(request.app)
+            question.question,
+            question.settlement,
+            _visitor(request),
+            AppTools(request.app),
+            [h.model_dump() for h in question.history],
         )
     except Limited as exc:
         raise HTTPException(429, str(exc)) from exc
     except AiUnavailable as exc:
         raise HTTPException(503, "The assistant cannot reach its model right now. Try again later.") from exc
     return Answer(
-        answer=result["answer"], grounded=result["grounded"], tools=result["tools"], cached=result["cached"]
+        answer=result["answer"],
+        grounded=result["grounded"],
+        tools=result["tools"],
+        cached=result["cached"],
+        shortlists=result.get("shortlists", []),
     )

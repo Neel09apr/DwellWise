@@ -349,3 +349,29 @@ def test_ready_follows_the_registry_and_an_empty_one_is_not_ready(client):
     response = client.get("/ready")
     assert response.status_code == 503
     assert response.json()["checks"]["sources"] == "none registered"
+
+
+def test_the_shortlist_puts_a_countys_towns_side_by_side(client):
+    with psycopg.connect(URL, autocommit=True) as conn:
+        seed_commencements(conn)  # CN1 (9 homes) and CN2 (1 home) are in Athy
+        conn.execute("update dw.commencement set commenced = current_date - 30, routing_key = 'R14' "
+                     "where notice_number in ('CN1', 'CN2')")  # fmt: skip
+        month = (date.today().replace(day=1) - timedelta(days=32)).replace(day=1).isoformat()
+        seed(conn, "prices", [{"kind": "eircode", "code": "R14", "name": "Athy", "month": month,
+                               "status": "all", "sales": 30, "median": 350000, "mean": 360000}])  # fmt: skip
+    body = client.get("/v1/shortlist", params={"county": "kildare"}).json()
+    assert (body["county"], body["sort"], body["towns_in_county"]) == ("KILDARE", "started", 1)
+    (athy,) = body["towns"]
+    # K1 granted and K3 pending are residential; K2 is not; K4 is older than five years.
+    assert (athy["granted"], athy["refused"], athy["pending"]) == (1, 0, 1)
+    assert athy["homes_started"] == 10
+    assert athy["protected_within_1km"] == 2  # the SAC that overlaps and the SPA 500 m away, not the NHA
+    assert (athy["price_area"], athy["median_price"], athy["price_month"]) == ("R14", 350000, month[:7])
+
+    # Mayo: neither town started homes; Castlebar has a residential grant (M2), so it comes first.
+    mayo = client.get("/v1/shortlist", params={"county": "Mayo"}).json()
+    assert [t["name"] for t in mayo["towns"]] == ["Castlebar", "Ballina"]
+    assert mayo["towns"][1]["median_price"] is None
+    assert client.get("/v1/shortlist", params={"county": "Atlantis"}).status_code == 404
+    assert client.get("/v1/shortlist").status_code == 422
+    assert client.get("/v1/shortlist", params={"county": "mayo", "sort": "score"}).status_code == 422
