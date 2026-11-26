@@ -26,3 +26,4 @@ def test_narrow_and_no_break_spaces_group_thousands_but_ordinary_spaces_do_not()
         assert numbers(f"€420{space}000 and 1{space}234{space}567") == {Decimal("420000"), Decimal("1234567")}
     assert numbers("8 110") == {Decimal("8"), Decimal("110")}
     assert numbers("code 1") == {Decimal("1")}  # not a group of three
+    assert numbers("1 23") == {Decimal("1"), Decimal("23")}  # two digits after the space: not a group
