@@ -20,3 +20,7 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 .claude/launch.json
+
+# Design tool scratch (decision page logs, review screenshots)
+.impeccable/questions/
+.impeccable/review/
