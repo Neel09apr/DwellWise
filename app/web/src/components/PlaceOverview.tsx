@@ -5,6 +5,7 @@ import { headlineFigures } from "../overviewText";
 import { type Resource, useResource } from "../useResource";
 import { BuildingSection } from "./BuildingNow";
 import { DevelopmentMap } from "./DevelopmentMap";
+import { FigureStrip } from "./FigureStrip";
 import { PlanningActivity } from "./PlanningActivity";
 import { PriceSection } from "./SalePrices";
 
@@ -21,19 +22,7 @@ export function PlaceOverview({ county, lead }: { county?: string; lead?: ReactN
 
   return (
     <>
-      {figures.length > 0 && (
-        <ul className="figures" aria-label="Headline figures">
-          {figures.map((f) => (
-            <li key={f.id}>
-              <a href={`#${f.id}`}>
-                <span className="figure-value">{f.value}</span>
-                <span className="figure-label">{f.label}</span>
-                <span className="figure-detail">{f.detail}</span>
-              </a>
-            </li>
-          ))}
-        </ul>
-      )}
+      <FigureStrip figures={figures} />
       {lead}
       <PlanningActivity stats={apps} national={!county} residential={residential} onResidential={setResidential} />
       <BuildingSection stats={starts} />

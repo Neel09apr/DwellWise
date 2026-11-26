@@ -192,7 +192,7 @@ h1 { font: 600 clamp(1.9rem, 5vw, 2.6rem)/1.15 var(--serif); letter-spacing: -0.
 h2, h3 { text-wrap: balance; }
 p { text-wrap: pretty; }
 .intro, .search, .note, .lede, .ask-form, .ask-answer > p, .page-head { max-width: var(--measure); }
-.figures { list-style: none; margin: 0 0 1rem; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); container-type: inline-size; }
+.figures { list-style: none; margin: 0 0 1rem; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); container-type: inline-size; }
 .figures a { display: grid; gap: 0.15rem; height: 100%; padding: 1rem 1.1rem; background: var(--ground); color: var(--ink); text-decoration: none; }
 .figures a:hover { background: var(--accent-wash); }
 .figure-value { font: 600 1.9rem/1.1 var(--serif); }
@@ -214,3 +214,4 @@ p { text-wrap: pretty; }
 }
 /* Sections well below the fold skip rendering until they are near the screen; the size is a placeholder. */
 .deferred { content-visibility: auto; contain-intrinsic-size: auto 640px; }
+@media (min-width: 64rem) { .with-rail .contents { display: none; } }

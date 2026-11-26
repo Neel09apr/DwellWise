@@ -1,15 +1,14 @@
-import { api, type Prices } from "../api/client";
+import type { Prices } from "../api/client";
 import { dayLabel } from "../text";
-import { type Resource, useResource } from "../useResource";
+import type { Resource } from "../useResource";
 import { monthLabel } from "./planningText";
 import { areaTitle, price } from "./priceText";
 import { Failure, Loading } from "./Status";
 
 const fmt = new Intl.NumberFormat("en-IE");
 
-/** What homes sold for around a town (CSO), fetched here (the brief). Area figures, never a site's value. */
-export function SalePrices({ settlement }: { settlement: string }) {
-  const data = useResource((signal) => api.prices({ settlement }, signal), settlement);
+/** What homes sold for around a town (CSO), from data the brief fetched. Area figures, never a site's value. */
+export function TownPrices({ data }: { data: Resource<Prices> }) {
   return (
     <div className="section-body">
       <Body data={data} />

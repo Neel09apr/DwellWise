@@ -1,14 +1,17 @@
 import { Link, useParams } from "react-router-dom";
 
-import { api, type Brief } from "../api/client";
+import { api, type Brief, type CommencementStats, type Prices } from "../api/client";
 import { Breadcrumbs } from "../components/Breadcrumbs";
 import { AskBox } from "../components/AskBox";
-import { BuildingNow } from "../components/BuildingNow";
+import { BuildingSection } from "../components/BuildingNow";
+import { FigureStrip } from "../components/FigureStrip";
+import { PageRail } from "../components/PageRail";
 import { PlanningPrecedents } from "../components/PlanningPrecedents";
 import { ProtectedSites } from "../components/ProtectedSites";
-import { SalePrices } from "../components/SalePrices";
+import { TownPrices } from "../components/SalePrices";
 import { WastewaterRegister } from "../components/WastewaterRegister";
 import { Failure, Loading } from "../components/Status";
+import { townFigures } from "../overviewText";
 import { countySlug, titleCase } from "../text";
 import { type Resource, useResource } from "../useResource";
 
@@ -34,11 +37,6 @@ const SECTIONS = [
     title: "Sale prices nearby",
     about: "What homes sold for in the Eircode area around the town, by month.",
   },
-  {
-    id: "alternatives",
-    title: "Nearby alternatives",
-    about: "Nearby settlements with spare capacity, by distance.",
-  },
 ];
 
 type BriefState = Resource<Brief>;
@@ -46,13 +44,15 @@ type SectionProps = {
   id: string;
   title: string;
   brief: BriefState;
+  starts: Resource<CommencementStats>;
+  prices: Resource<Prices>;
   settlement: { code: string; name: string; county?: string | null };
 };
 
 /** A section's content: its data once the brief arrives, or a note that its source has not landed. */
-function SectionBody({ id, title, brief, settlement }: SectionProps) {
+function SectionBody({ id, title, brief, starts, prices, settlement }: SectionProps) {
   if (id === "wastewater") return <WastewaterRegister name={settlement.name} county={settlement.county} />;
-  if (id === "prices") return <SalePrices settlement={settlement.code} />;
+  if (id === "prices") return <TownPrices data={prices} />;
   if (id !== "precedents" && id !== "protected")
     return <p className="pending">Not loaded yet. This section fills in when its public data source is added.</p>;
   if (brief.kind === "loading") return <Loading what={title.toLowerCase()} />;
@@ -60,7 +60,7 @@ function SectionBody({ id, title, brief, settlement }: SectionProps) {
   return id === "precedents" ? (
     <>
       <PlanningPrecedents precedents={brief.data.precedents} />
-      <BuildingNow settlement={settlement.code} />
+      <BuildingSection stats={starts} settlement={settlement.code} />
     </>
   ) : (
     <ProtectedSites protected={brief.data.protected} />
@@ -68,11 +68,14 @@ function SectionBody({ id, title, brief, settlement }: SectionProps) {
 }
 
 const number = (i: number) => String(i + 1).padStart(2, "0");
+const ready = <T,>(r: Resource<T>): T | null => (r.kind === "ready" ? r.data : null);
 
 export function SettlementPage() {
   const { code = "" } = useParams();
   const settlement = useResource((signal) => api.settlement(code, signal), code);
   const brief = useResource((signal) => api.brief(code, signal), code);
+  const starts = useResource((signal) => api.commencementStats({ settlement: code }, signal), code);
+  const prices = useResource((signal) => api.prices({ settlement: code }, signal), code);
 
   if (settlement.kind === "loading") return <Loading what="the brief" />;
   if (settlement.kind === "error")
@@ -123,61 +126,79 @@ export function SettlementPage() {
           with your own figures, beside what homes sold for here.
         </p>
       </header>
+      <FigureStrip figures={townFigures(ready(brief), ready(starts), ready(prices))} />
 
-      <AskBox place={s.name} settlement={s.code} />
+      <div className="with-rail">
+        <PageRail
+          links={[
+            ...SECTIONS.map((x) => ({ id: x.id, label: x.title })),
+            { id: "sources", label: "Sources" },
+          ]}
+        />
+        <div>
+          <nav aria-labelledby="contents" className="contents">
+            <h2 id="contents" className="level-title">
+              Contents
+            </h2>
+            <ol>
+              {SECTIONS.map((section, i) => (
+                <li key={section.id}>
+                  <a href={`#${section.id}`}>
+                    <span className="num">{number(i)}</span>
+                    {section.title}
+                  </a>
+                </li>
+              ))}
+              <li>
+                <a href="#sources">
+                  <span className="num">{number(SECTIONS.length)}</span>
+                  Sources
+                </a>
+              </li>
+            </ol>
+          </nav>
 
-      <nav aria-labelledby="contents" className="contents">
-        <h2 id="contents" className="level-title">
-          Contents
-        </h2>
-        <ol>
           {SECTIONS.map((section, i) => (
-            <li key={section.id}>
-              <a href={`#${section.id}`}>
+            <section key={section.id} id={section.id} className="section" aria-labelledby={`${section.id}-title`}>
+              <h2 id={`${section.id}-title`}>
                 <span className="num">{number(i)}</span>
                 {section.title}
-              </a>
-            </li>
+              </h2>
+              <p className="muted">{section.about}</p>
+              <SectionBody
+                id={section.id}
+                title={section.title}
+                brief={brief}
+                starts={starts}
+                prices={prices}
+                settlement={s}
+              />
+            </section>
           ))}
-          <li>
-            <a href="#sources">
+
+          <AskBox place={s.name} settlement={s.code} />
+
+          <section id="sources" className="section" aria-labelledby="sources-title">
+            <h2 id="sources-title">
               <span className="num">{number(SECTIONS.length)}</span>
               Sources
-            </a>
-          </li>
-        </ol>
-      </nav>
-
-      {SECTIONS.map((section, i) => (
-        <section key={section.id} id={section.id} className="section" aria-labelledby={`${section.id}-title`}>
-          <h2 id={`${section.id}-title`}>
-            <span className="num">{number(i)}</span>
-            {section.title}
-          </h2>
-          <p className="muted">{section.about}</p>
-          <SectionBody id={section.id} title={section.title} brief={brief} settlement={s} />
-        </section>
-      ))}
-
-      <section id="sources" className="section" aria-labelledby="sources-title">
-        <h2 id="sources-title">
-          <span className="num">{number(SECTIONS.length)}</span>
-          Sources
-        </h2>
-        <ul className="sources">
-          {s.sources.map((src) => (
-            <li key={src.name}>
-              <span>{src.attribution}</span>
-              <span className="row-meta">
-                captured{" "}
-                {new Date(src.captured_at).toLocaleDateString("en-IE", {
-                  dateStyle: "medium",
-                })}
-              </span>
-            </li>
-          ))}
-        </ul>
-      </section>
+            </h2>
+            <ul className="sources">
+              {s.sources.map((src) => (
+                <li key={src.name}>
+                  <span>{src.attribution}</span>
+                  <span className="row-meta">
+                    captured{" "}
+                    {new Date(src.captured_at).toLocaleDateString("en-IE", {
+                      dateStyle: "medium",
+                    })}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        </div>
+      </div>
     </article>
   );
 }
