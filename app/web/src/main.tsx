@@ -8,6 +8,7 @@ import { CountyPage } from "./pages/CountyPage";
 import { HomePage } from "./pages/HomePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { SettlementPage } from "./pages/SettlementPage";
+import "@fontsource-variable/archivo/wdth.css";
 import "./styles.css";
 
 // The hierarchy the app follows: Ireland -> county -> settlement -> brief.

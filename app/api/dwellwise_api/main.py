@@ -30,6 +30,8 @@ log = logging.getLogger("dwellwise.api")
 # The map's worker is an ES module (.mjs). Browsers refuse a module worker served
 # with any type but JavaScript, and not every platform's MIME table knows .mjs.
 mimetypes.add_type("text/javascript", ".mjs")
+# The web app self-hosts its typeface; serve it as a font, not an octet stream.
+mimetypes.add_type("font/woff2", ".woff2")
 
 SECURITY_HEADERS = {
     "X-Content-Type-Options": "nosniff",
@@ -37,7 +39,7 @@ SECURITY_HEADERS = {
     "Referrer-Policy": "strict-origin-when-cross-origin",
     "Content-Security-Policy": (
         "default-src 'self'; img-src 'self' data: blob: https://tiles.openfreemap.org; "
-        "style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; "
+        "style-src 'self'; font-src 'self'; "
         "connect-src 'self' https://tiles.openfreemap.org; worker-src 'self'; "
         "frame-ancestors 'none'; base-uri 'self'"
     ),
