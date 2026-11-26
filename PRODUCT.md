@@ -67,7 +67,9 @@ It describes towns, never a site, and never predicts a planning outcome.
 
 ## Brand Commitments
 
-- The name DwellWise and its mark (`app/web/public/mark-small.svg`).
+- The name DwellWise and its mark (`app/web/public/mark-small.svg`): two hollow half-roof bands meeting at the
+  ridge, green (#0E4A2F) left and gold (#C99A2E) right, coded as SVG, with the wordmark "DwellWise" in
+  mixed case in the green (owner's logo, 26 November 2026). Its colours belong to the logo only.
 - An honest, plain-English, evidence-first voice that states sources and gaps.
 - Nothing in the current visual look is binding: fonts, colours and layout are
   open for the UI revisit (confirmed 26 November 2026). CLAUDE.md rule 10 is to

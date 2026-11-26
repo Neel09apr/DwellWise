@@ -9,7 +9,7 @@ export function Layout() {
       </a>
       <header className="header">
         <Link to="/" className="brand">
-          <img src="/mark-small.svg" alt="" width={22} height={22} />
+          <img src="/mark-small.svg" alt="" width={38} height={24} />
           DwellWise
         </Link>
         <nav className="header-nav" aria-label="Main">
