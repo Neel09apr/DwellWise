@@ -1,35 +1,48 @@
 """Runs against a real PostGIS in CI (DATABASE_URL); skipped where none is available."""
 
 import os
-import uuid
+from datetime import date, timedelta
 from pathlib import Path
 
 import pytest
+from dwellwise_pipeline.run import register
+from dwellwise_pipeline.sources import SOURCES
 from fastapi.testclient import TestClient
 
 from dwellwise_api.config import Settings
 from dwellwise_api.main import create_app
+
+from .seed import box, point, seed
 
 pytestmark = pytest.mark.integration
 psycopg = pytest.importorskip("psycopg")
 URL = os.environ.get("DATABASE_URL")
 SQL_DIR = Path(__file__).resolve().parents[3] / "pipeline" / "sql"
 
-SQUARE = "ST_Multi(ST_Transform(ST_MakeEnvelope(%s, %s, %s, %s, 4326), 2157))"
+COUNTIES = [
+    ("KILDARE", (-7.2, 52.9, -6.5, 53.4)),
+    ("MAYO", (-10.0, 53.5, -8.6, 54.3)),
+    ("MEATH", (-7.2, 53.45, -6.2, 53.9)),
+    ("LEITRIM", (-8.4, 53.8, -7.6, 54.4)),
+]
+SETTLEMENTS = [  # code, name, box; the loader finds the county
+    ("1", "Athy", (-7.0, 53.0, -6.98, 53.01)),
+    ("2", "Athboy", (-6.93, 53.62, -6.91, 53.63)),
+    ("3", "Castlebar", (-9.31, 53.85, -9.28, 53.87)),
+    ("4", "Ballina", (-9.17, 54.1, -9.14, 54.12)),
+]
+ATHY = (-6.99, 53.005)
+CASTLEBAR = (-9.295, 53.86)
+OPEN_MAYO = (-9.0, 53.9)  # in Mayo, in no town
+OPEN_KILDARE = (-6.8, 53.2)  # in Kildare, in no town
 
-
-INSERT_APPLICATION = (
-    "insert into dw.planning_application (authority, application_number, received, decision_class, "
-    "county, residential, location, settlement, snapshot_id) values ('Test Council', %s, %s, %s, %s, %s, "
-    "ST_Transform(ST_SetSRID(ST_MakePoint(%s, %s), 4326), 2157), %s, %s)"
-)
-APPLICATIONS = [  # number, county, received, class, residential, settlement
-    ("K1", "KILDARE", "2026-10-05", "granted", True, "1"),
-    ("K2", "KILDARE", "2026-10-20", "refused", False, "1"),
-    ("K3", "KILDARE", "2026-09-01", "pending", True, "1"),
-    ("K4", "KILDARE", "2019-06-01", "granted", True, "1"),  # older than the brief's five years
-    ("M1", "MAYO", "2026-10-10", "granted", False, None),
-    ("M2", "MAYO", "2025-01-15", "granted", True, "3"),  # outside the stats ranges asked for below
+APPLICATIONS = [  # number, county, received, class, residential, where; the loader finds the town
+    ("K1", "KILDARE", "2026-10-05", "granted", True, ATHY),
+    ("K2", "KILDARE", "2026-10-20", "refused", False, ATHY),
+    ("K3", "KILDARE", "2026-09-01", "pending", True, ATHY),
+    ("K4", "KILDARE", "2019-06-01", "granted", True, ATHY),  # older than the brief's five years
+    ("M1", "MAYO", "2026-10-10", "granted", False, OPEN_MAYO),
+    ("M2", "MAYO", "2025-01-15", "granted", True, CASTLEBAR),  # outside the stats ranges asked for below
 ]
 
 
@@ -42,17 +55,22 @@ PROTECTED = [  # designation, code, box
 ]
 
 
-def seed_planning(conn) -> None:
-    snap = str(uuid.uuid4())
-    conn.execute(
-        "insert into dw.snapshot (id, source, fetched_at, raw_uri, sha256, rows_loaded, status) "
-        "values (%s, 'planning', now(), 'test://', 'x', 5, 'loaded')",
-        (snap,),
-    )
-    for number, county, received, cls, residential, settlement in APPLICATIONS:
-        conn.execute(
-            INSERT_APPLICATION, (number, received, cls, county, residential, -7.0, 53.0, settlement, snap)
-        )
+def application(number, county, received, cls, residential, where) -> dict:
+    return {
+        "authority": "Test Council", "application_number": number, "received": received, "decided": None,
+        "decision": None, "decision_class": cls, "recognised": True, "county": county, "units_stated": None,
+        "residential": residential, "geometry": point(*where),
+    }  # fmt: skip
+
+
+def site(designation: str, code: str, where: tuple) -> dict:
+    return {
+        "designation": designation,
+        "site_code": code,
+        "name": f"Site {code}",
+        "url": None,
+        "geometry": box(*where),
+    }
 
 
 @pytest.fixture
@@ -63,40 +81,14 @@ def client():
         conn.execute("drop schema if exists dw cascade")
         for sql in sorted(SQL_DIR.glob("*.sql")):
             conn.execute(sql.read_text(encoding="utf-8"))
-        snap = str(uuid.uuid4())
-        conn.execute(
-            "insert into dw.snapshot (id, source, fetched_at, raw_uri, sha256, rows_loaded, status) "
-            "values (%s, 'settlements', now(), 'test://', 'x', 3, 'loaded')",
-            (snap,),
-        )
-        for name, box in [
-            ("KILDARE", (-7.2, 52.9, -6.5, 53.4)),
-            ("MAYO", (-10.0, 53.5, -8.6, 54.3)),
-            ("MEATH", (-7.2, 53.45, -6.2, 53.9)),
-            ("LEITRIM", (-8.4, 53.8, -7.6, 54.4)),
-        ]:
-            conn.execute(f"insert into dw.county values (%s, {SQUARE}, %s)", (name, *box, snap))  # noqa: S608
-        for code, name, key, county, box in [
-            ("1", "Athy", "athy", "KILDARE", (-7.0, 53.0, -6.98, 53.01)),
-            ("2", "Athboy", "athboy", "MEATH", (-6.93, 53.62, -6.91, 53.63)),
-            ("3", "Castlebar", "castlebar", "MAYO", (-9.31, 53.85, -9.28, 53.87)),
-            ("4", "Ballina", "ballina", "MAYO", (-9.17, 54.1, -9.14, 54.12)),
-        ]:
-            conn.execute(
-                f"insert into dw.settlement values (%s, %s, %s, %s, {SQUARE}, %s)",  # noqa: S608 - constant SQL
-                (code, name, key, county, *box, snap),
-            )
-        seed_planning(conn)
-        for position, name in enumerate(["counties", "settlements", "planning", "sac", "spa", "nha"]):
-            conn.execute(
-                "insert into dw.source (name, attribution, position) values (%s, %s, %s)",
-                (name, f"{name.title()} attribution. CC BY 4.0.", position),
-            )
-        for designation, code, box in PROTECTED:
-            conn.execute(
-                f"insert into dw.protected_site values (%s, %s, %s, null, {SQUARE}, %s)",  # noqa: S608
-                (designation, code, f"Site {code}", *box, snap),
-            )
+        seed(conn, "counties", [{"name": n, "geometry": box(*b)} for n, b in COUNTIES])
+        towns = [
+            {"code": c, "name": n, "name_key": n.lower(), "geometry": box(*b)} for c, n, b in SETTLEMENTS
+        ]
+        seed(conn, "settlements", towns)
+        seed(conn, "planning", [application(*a) for a in APPLICATIONS])
+        for name in ("sac", "spa", "nha"):  # one designation per run, as the pipeline loads them
+            seed(conn, name, [site(*p) for p in PROTECTED if p[0] == name.upper()])
     with TestClient(create_app(Settings(database_url=URL))) as c:
         yield c
 
@@ -122,8 +114,9 @@ def test_detail_has_location_area_and_sources(client):
     assert body["name"] == "Castlebar" and body["county"] == "MAYO"
     assert 53.85 < body["latitude"] < 53.87 and -9.31 < body["longitude"] < -9.28
     assert body["area_km2"] > 0
-    assert [s["name"] for s in body["sources"]] == ["settlements", "planning"]  # loaded ones, in order
-    assert body["sources"][0]["attribution"] == "Settlements attribution. CC BY 4.0."
+    loaded = ["counties", "settlements", "planning", "sac", "spa", "nha"]  # in the pipeline's order
+    assert [s["name"] for s in body["sources"]] == loaded
+    assert body["sources"][0]["attribution"] == SOURCES["counties"].attribution
 
 
 def test_unknown_code_is_a_404_in_the_error_shape(client):
@@ -154,9 +147,12 @@ def test_an_unknown_county_is_a_404_not_an_empty_list(client):
 
 
 def test_ready_reports_the_missing_source(client):
+    assert client.get("/ready").status_code == 200  # every seeded source has just loaded
+    with psycopg.connect(URL, autocommit=True) as conn:
+        register(conn, SOURCES["commencements"])  # a first run that failed before loading
     response = client.get("/ready")
     assert response.status_code == 503
-    assert response.json()["checks"]["data:counties"] == "never loaded"
+    assert response.json()["checks"]["data:commencements"] == "never loaded"
     assert response.json()["checks"]["data:settlements"].endswith("h old")
 
 
@@ -237,24 +233,21 @@ def test_a_town_far_from_protected_sites_has_an_empty_list(client):
 
 
 def seed_commencements(conn) -> None:
-    snap = str(uuid.uuid4())
-    conn.execute(
-        "insert into dw.snapshot (id, source, fetched_at, raw_uri, sha256, rows_loaded, status) "
-        "values (%s, 'commencements', now(), 'test://', 'x', 3, 'loaded')",
-        (snap,),
-    )
-    for number, name, homes, commenced, settlement in [  # all in Kildare
-        ("CN1", "Athy Meadows", 9, "2026-10-12", "1"),
-        ("CN2", None, 1, "2026-10-20", "1"),  # a one-off house: counted, never listed
-        ("CN3", "Old Scheme", 20, "2025-02-01", None),  # outside the months asked for, still listed
-    ]:
-        conn.execute(
-            "insert into dw.commencement (notice_number, local_authority, county, submitted, commenced, "
-            "homes, project_name, location, settlement, snapshot_id) values (%s, 'Kildare County Council', "
-            "'KILDARE', current_date - 2, %s, %s, %s, ST_Transform(ST_SetSRID(ST_MakePoint(-6.99, 53.005), "
-            "4326), 2157), %s, %s)",
-            (number, commenced, homes, name, settlement, snap),
-        )
+    submitted = (date.today() - timedelta(days=2)).isoformat()
+    notices = [  # all in Kildare; the loader finds the town
+        ("CN1", "Athy Meadows", 9, "2026-10-12", ATHY),
+        ("CN2", None, 1, "2026-10-20", ATHY),  # a one-off house: counted, never listed
+        ("CN3", "Old Scheme", 20, "2025-02-01", OPEN_KILDARE),  # outside the months asked for, still listed
+    ]
+    seed(conn, "commencements", [
+        {
+            "notice_number": number, "local_authority": "Kildare County Council", "county": "KILDARE",
+            "submitted": submitted, "commenced": commenced, "expected_end": None, "homes": homes,
+            "scheme_homes": None, "homes_completed": 0, "planning_ref": None, "project_name": name,
+            "routing_key": None, "geometry": point(*where),
+        }
+        for number, name, homes, commenced, where in notices
+    ])  # fmt: skip
 
 
 def test_commencements_count_homes_and_list_only_schemes_of_five_or_more(client):
@@ -308,22 +301,13 @@ def test_prices_follow_the_towns_routing_key_or_fall_back_to_the_county(client):
     with psycopg.connect(URL, autocommit=True) as conn:
         seed_commencements(conn)  # CN1 and CN2 are in Athy (settlement 1)
         conn.execute("update dw.commencement set routing_key = 'R14' where notice_number in ('CN1', 'CN2')")
-        snap = str(uuid.uuid4())
-        conn.execute(
-            "insert into dw.snapshot (id, source, fetched_at, raw_uri, sha256, rows_loaded, status) "
-            "values (%s, 'prices', now(), 'test://', 'x', 3, 'loaded')",
-            (snap,),
-        )
-        for kind, code, name in [
-            ("eircode", "R14", "Athy"),
-            ("region", "-", "All"),
-            ("region", "22", "Kildare"),
-        ]:
-            conn.execute(
-                "insert into dw.price values (%s, %s, %s, "
-                "date_trunc('month', current_date) - interval '2 months', 'all', 30, 350000, 360000, %s)",
-                (kind, code, name, snap),
-            )
+        month = (date.today().replace(day=1) - timedelta(days=32)).replace(day=1).isoformat()  # 2 months ago
+        areas = [("eircode", "R14", "Athy"), ("region", "-", "All"), ("region", "22", "Kildare")]
+        seed(conn, "prices", [
+            {"kind": kind, "code": code, "name": name, "month": month, "status": "all",
+             "sales": 30, "median": 350000, "mean": 360000}
+            for kind, code, name in areas
+        ])  # fmt: skip
     town = client.get("/v1/prices", params={"settlement": "1"}).json()
     assert [(a["kind"], a["code"], a["latest"]["median"]) for a in town["areas"]] == [
         ("eircode", "R14", 350000)

@@ -16,4 +16,5 @@ select = ["E", "F", "W", "I", "B", "UP", "S", "SIM"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["../../pipeline"]  # the database tests seed through its loaders
 markers = ["integration: needs a PostGIS database in DATABASE_URL"]
