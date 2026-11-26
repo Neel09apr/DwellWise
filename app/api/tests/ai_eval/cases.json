@@ -303,7 +303,10 @@
    "run_sql"
   ],
   "live_must_call": [
-   "commencement_stats"
+   [
+    "commencement_stats",
+    "settlement_brief"
+   ]
   ]
  },
  {
@@ -419,5 +422,37 @@
    "cost_estimate"
   ],
   "live_must_call": []
+ },
+ {
+  "name": "a real two-year price result is quoted without derived figures",
+  "question": "What have homes sold for here?",
+  "settlement": "11016",
+  "turns": [
+   {
+    "role": "assistant",
+    "content": "",
+    "tool_calls": [
+     {
+      "id": "c-sale_prices",
+      "type": "function",
+      "function": {
+       "name": "sale_prices",
+       "arguments": "{\"settlement\": \"11016\"}"
+      }
+     }
+    ]
+   },
+   {
+    "role": "assistant",
+    "content": "In Eircode area C15 (Navan), the CSO median sale price in 2026-09 was €420,000."
+   }
+  ],
+  "tool_results": {
+   "sale_prices": "{\"status\":200,\"body\":{\"county\":null,\"settlement\":\"11016\",\"basis\":\"Eircode area C15: 91 of the 91 construction notices in this town that give an Eircode fall in it. Figures cover the whole routing area, which is larger than the town.\",\"captured_at\":\"2026-11-26T12:30:22.189064Z\",\"attribution\":\"Central Statistics Office, tables HPM04 and HPM05 (Revenue stamp duty data). CC BY 4.0.\",\"areas\":[{\"kind\":\"eircode\",\"code\":\"C15\",\"name\":\"Navan\",\"latest\":{\"month\":\"2026-09\",\"sales\":38,\"median\":420000,\"new_sales\":6,\"new_median\":432500},\"sales_12_months\":771,\"months\":[{\"month\":\"2024-11\",\"sales\":94,\"median\":380000,\"new_sales\":42,\"new_median\":385000},{\"month\":\"2024-12\",\"sales\":67,\"median\":351000,\"new_sales\":9,\"new_median\":409962},{\"month\":\"2025-01\",\"sales\":40,\"median\":350000,\"new_sales\":1,\"new_median\":425000},{\"month\":\"2025-02\",\"sales\":37,\"median\":335000,\"new_sales\":3,\"new_median\":390000},{\"month\":\"2025-03\",\"sales\":50,\"median\":330500,\"new_sales\":6,\"new_median\":412500},{\"month\":\"2025-04\",\"sales\":40,\"median\":335000,\"new_sales\":1,\"new_median\":549999},{\"month\":\"2025-05\",\"sales\":54,\"median\":371250,\"new_sales\":9,\"new_median\":415000},{\"month\":\"2025-06\",\"sales\":58,\"median\":375005,\"new_sales\":14,\"new_median\":417500},{\"month\":\"2025-07\",\"sales\":66,\"median\":383500,\"new_sales\":10,\"new_median\":407500},{\"month\":\"2025-08\",\"sales\":44,\"median\":353000,\"new_sales\":3,\"new_median\":475000},{\"month\":\"2025-09\",\"sales\":68,\"median\":378500,\"new_sales\":3,\"new_median\":444999},{\"month\":\"2025-10\",\"sales\":78,\"median\":370000,\"new_sales\":25,\"new_median\":370000},{\"month\":\"2025-11\",\"sales\":104,\"median\":420000,\"new_sales\":64,\"new_median\":420000},{\"month\":\"2025-12\",\"sales\":126,\"median\":418627,\"new_sales\":66,\"new_median\":422500},{\"month\":\"2026-01\",\"sales\":60,\"median\":412500,\"new_sales\":16,\"new_median\":420000},{\"month\":\"2026-02\",\"sales\":48,\"median\":377500,\"new_sales\":6,\"new_median\":400000},{\"month\":\"2026-03\",\"sales\":35,\"median\":395000,\"new_sales\":7,\"new_median\":440000},{\"month\":\"2026-04\",\"sales\":49,\"median\":365000,\"new_sales\":2,\"new_median\":450014},{\"month\":\"2026-05\",\"sales\":46,\"median\":405000,\"new_sales\":7,\"new_median\":450000},{\"month\":\"2026-06\",\"sales\":69,\"median\":425000,\"new_sales\":26,\"new_median\":425000},{\"month\":\"2026-07\",\"sales\":69,\"median\":425000,\"new_sales\":27,\"new_median\":450000},{\"month\":\"2026-08\",\"sales\":49,\"median\":420000,\"new_sales\":8,\"new_median\":430000},{\"month\":\"2026-09\",\"sales\":38,\"median\":420000,\"new_sales\":6,\"new_median\":432500}]}]}}"
+  },
+  "expect": "grounded",
+  "live_must_call": [
+   "sale_prices"
+  ]
  }
 ]

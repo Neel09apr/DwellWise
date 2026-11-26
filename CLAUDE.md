@@ -135,7 +135,7 @@ deploy/        Helm chart for the app, installed on a throwaway kind cluster in 
 | v2 M10: sale prices by Eircode area and county (CSO), brief section 04 | Merged (PR #54); loaded and live 25 Nov |
 | v2 M11: cost estimate from the user's own figures (`/costs`, `GET /v1/costs`), linked from each brief | Merged (PR #64); live 26 Nov |
 | v2 M12a: AI platform: `POST /v1/ask`, own-API tools, grounding check, limits, kill switch, scripted eval in CI | Merged (PR #66); live 26 Nov, switched on 26 Nov (Groq key on Render) |
-| v2 M12b: assistant metrics and quota alerts (Grafana, Terraform), live eval workflow, question box on Ireland and briefs | In review (PR #68) |
+| v2 M12b: assistant metrics and quota alerts (Grafana, Terraform), live eval workflow, question box on Ireland and briefs | Merged (PR #68); live 26 Nov. Refused price answers fixed (PR #70): thousands in narrow spaces, rejected tool calls retried |
 
 
 ## Next

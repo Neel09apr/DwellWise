@@ -282,12 +282,63 @@ def test_a_tool_call_the_provider_rejects_becomes_the_refusal_not_an_outage():
         raise urllib.error.HTTPError("u", 400, "Bad Request", {}, body)
 
     client = ChatClient([Provider("groq", "https://g", "m", "k")], post)
-    assert client([], [])["message"] == {"content": ""}
+    reply = client([], [])
+    assert reply["message"] == {"content": ""}
+    assert (
+        reply["rejected"] == "the call was not valid"
+    )  # the message names run_sql, but not as "call tool '...'"
     result = asyncio.run(answer("What is being built in Athy?", "1", client, recorded({})))
-    assert (result["grounded"], result["answer"]) == (False, REFUSAL)
+    assert (result["grounded"], result["answer"]) == (False, REFUSAL)  # rejected every time: refused
+    assert len(result["rejected"]) == 3  # two retries with feedback, then the empty reply is refused
 
     def other_400(_provider, _body):
         raise urllib.error.HTTPError("u", 400, "Bad Request", {}, io.BytesIO(b'{"error":{"code":"invalid"}}'))
 
     with pytest.raises(AiUnavailable, match="HTTP 400"):
         ChatClient([Provider("groq", "https://g", "m", "k")], other_400)([], [])
+
+
+def test_a_refusal_logs_the_numbers_that_failed_and_never_the_question(caplog):
+    import logging
+
+    refused = next(c for c in CASES if c["name"] == "a rounded price is refused")
+    with caplog.at_level(logging.INFO, logger="dwellwise.api.ask"):
+        result = asyncio.run(
+            AskService(scripted(refused["turns"])).ask(
+                refused["question"], None, "203.0.113.9", recorded(refused["tool_results"])
+            )
+        )
+    assert result["ungrounded"] == ["420"]
+    (line,) = [r.getMessage() for r in caplog.records if "assistant_refused" in r.getMessage()]
+    assert json.loads(line) == {
+        "event": "assistant_refused",
+        "ungrounded": ["420"],
+        "tools": ["sale_prices"],
+        "rejected": [],
+    }
+    assert refused["question"] not in line and "203.0.113.9" not in line
+
+
+def test_after_a_rejected_tool_call_the_model_is_told_why_and_may_try_again():
+    from dwellwise_api.ai_client import _rejection
+
+    groq = b"tool call validation failed: attempted to call tool 'run_sql' which was not in request.tools"
+    assert _rejection(groq) == "the tool run_sql is not on the list"
+    good = CASES[0]
+    turns = list(good["turns"])
+    seen = []
+
+    def chat(messages, _tools):
+        seen.append(messages[-1])
+        if len(seen) == 1:
+            return {
+                "message": {"content": ""},
+                "provider": "p",
+                "tokens": 0,
+                "rejected": "the tool run_sql is not on the list",
+            }
+        return {"message": turns.pop(0), "provider": "p", "tokens": 1}
+
+    result = asyncio.run(answer(good["question"], None, chat, recorded(good["tool_results"])))
+    assert result["grounded"] is True and result["rejected"] == ["the tool run_sql is not on the list"]
+    assert "rejected: the tool run_sql is not on the list" in seen[1]["content"]
