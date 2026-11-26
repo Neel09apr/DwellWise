@@ -17,7 +17,7 @@ from datetime import UTC, datetime
 
 from .ai_client import AiUnavailable
 from .ai_tools import SPECS
-from .grounding import ungrounded
+from .grounding import numbers, ungrounded
 from .metrics import AI_DAILY_LIMIT, AI_QUESTIONS, AI_SECONDS, AI_TODAY
 
 MAX_ROUNDS = 5
@@ -93,6 +93,18 @@ def _key(question: str, settlement: str | None) -> tuple:
     return (" ".join(question.lower().split()), settlement or "")
 
 
+USER_FIGURES_ONLY = {"cost_estimate"}  # tools whose numbers must all come from the question
+
+
+def _invented_inputs(name: str, arguments: dict, question: str) -> list[str]:
+    """The numeric arguments of a user-figures tool that the question never gave."""
+    if name not in USER_FIGURES_ONLY:
+        return []
+    given = numbers(question)
+    return [k for k, v in arguments.items() if isinstance(v, int | float) and not isinstance(v, bool)
+            and numbers(str(v)) - given]  # fmt: skip
+
+
 async def answer(question: str, settlement: str | None, chat: Chat, tools: Tools) -> dict:
     """Run the loop once. Returns the answer (or the refusal), whether it passed, and the tools used."""
     town = f"(The question is about the town with CSO settlement code {settlement}; use that code.)"
@@ -117,7 +129,13 @@ async def answer(question: str, settlement: str | None, chat: Chat, tools: Tools
                 arguments = json.loads(call["function"].get("arguments") or "{}")
             except ValueError:
                 arguments = {}
-            result = await tools(name, arguments if isinstance(arguments, dict) else {})
+            arguments = arguments if isinstance(arguments, dict) else {}
+            invented = _invented_inputs(name, arguments, question)
+            if invented:  # the estimate must use the user's own figures; ask, never guess
+                result = json.dumps({"error": f"These figures were not given by the user: {invented}. "
+                                     "Ask the user for them; do not estimate them."})  # fmt: skip
+            else:
+                result = await tools(name, arguments)
             sources.append(result)
             used.append(name)
             messages.append({"role": "tool", "tool_call_id": call.get("id", name), "content": result})

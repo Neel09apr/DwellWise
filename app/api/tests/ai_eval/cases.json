@@ -191,7 +191,7 @@
  },
  {
   "name": "the user's own figures may be repeated",
-  "question": "What would 8 homes of 110 m2 cost at 2800 per m2?",
+  "question": "What would 8 homes of 110 m2 cost at 2800 per m2, with a contribution of 117 per m2, 10% fees, 5% contingency and 8% interest for 18 months?",
   "settlement": null,
   "turns": [
    {
@@ -386,5 +386,38 @@
    "sale_prices": "{\"status\": 200, \"body\": {\"settlement\": \"11016\", \"basis\": \"Eircode area C15.\", \"areas\": [{\"kind\": \"eircode\", \"code\": \"C15\", \"name\": \"Navan\", \"latest\": {\"month\": \"2026-09\", \"sales\": 61, \"median\": 420000, \"new_sales\": 18, \"new_median\": 432500}}]}}"
   },
   "expect": "rejected"
+ },
+ {
+  "name": "figures the user did not give are asked for, not guessed",
+  "question": "What would 8 homes of 110 m2 cost at 2800 per m2?",
+  "settlement": null,
+  "turns": [
+   {
+    "role": "assistant",
+    "content": "",
+    "tool_calls": [
+     {
+      "id": "c-cost_estimate",
+      "type": "function",
+      "function": {
+       "name": "cost_estimate",
+       "arguments": "{\"homes\": 8, \"floor_area_m2\": 110, \"build_cost_per_m2\": 2800, \"contribution\": 117, \"contribution_basis\": \"per_m2\", \"fees_pct\": 10, \"contingency_pct\": 5, \"finance_rate_pct\": 8, \"finance_months\": 18}"
+      }
+     }
+    ]
+   },
+   {
+    "role": "assistant",
+    "content": "To estimate the cost I need your development contribution rate, professional fees, contingency, interest rate and how long you will borrow."
+   }
+  ],
+  "tool_results": {
+   "cost_estimate": "{\"status\": 200, \"body\": {\"total\": 3112754}}"
+  },
+  "expect": "grounded",
+  "expect_not_run": [
+   "cost_estimate"
+  ],
+  "live_must_call": []
  }
 ]

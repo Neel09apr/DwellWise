@@ -29,8 +29,8 @@ def test_without_a_key_the_live_run_skips_rather_than_fails(monkeypatch, capsys)
     assert "skipping" in capsys.readouterr().out
 
 
-def test_seven_cases_are_asked_live():
-    assert sum("live_must_call" in c for c in live.CASES) == 7
+def test_eight_cases_are_asked_live():
+    assert sum("live_must_call" in c for c in live.CASES) == 8
 
 
 def test_a_grounded_answer_that_skipped_the_tool_still_fails():
