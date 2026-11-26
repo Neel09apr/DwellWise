@@ -9,6 +9,7 @@ by a refusal, never shown. Limits keep the site inside the free tier.
 from __future__ import annotations
 
 import json
+import logging
 import time
 from collections import defaultdict, deque
 from collections.abc import Awaitable, Callable
@@ -20,6 +21,7 @@ from .ai_tools import SPECS
 from .grounding import numbers, ungrounded
 from .metrics import AI_DAILY_LIMIT, AI_QUESTIONS, AI_SECONDS, AI_TODAY
 
+log = logging.getLogger("dwellwise.api.ask")
 MAX_ROUNDS = 5
 REFUSAL = "I could not answer that with figures I can check against DwellWise's data."
 SYSTEM = """You answer questions about Irish towns and counties from DwellWise's public data, using the tools.
@@ -121,9 +123,10 @@ async def answer(question: str, settlement: str | None, chat: Chat, tools: Tools
         calls = message.get("tool_calls") or []
         if not calls:
             text = (message.get("content") or "").strip()
-            grounded = bool(text) and not ungrounded(text, sources)
+            missing = sorted(format(n, "f") for n in ungrounded(text, sources))
+            grounded = bool(text) and not missing
             return {"answer": text if grounded else REFUSAL, "grounded": grounded, "tools": used,
-                    "provider": provider, "tokens": tokens}  # fmt: skip
+                    "provider": provider, "tokens": tokens, "ungrounded": missing}  # fmt: skip
         messages.append({"role": "assistant", "content": message.get("content") or "", "tool_calls": calls})
         for call in calls:
             name = call["function"]["name"]
@@ -180,6 +183,11 @@ class AskService:
         self.gate.spend(result.get("tokens", 0))
         self.gate.report()
         AI_QUESTIONS.labels("answered" if result["grounded"] else "refused").inc()
+        if not result[
+            "grounded"
+        ]:  # the numbers that failed and the tools used; never the question or the visitor
+            log.info(json.dumps({"event": "assistant_refused", "ungrounded": result.get("ungrounded", []),
+                                 "tools": result["tools"]}))  # fmt: skip
         if result["grounded"]:
             self.gate.remember(key, result)
         return result

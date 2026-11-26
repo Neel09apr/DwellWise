@@ -291,3 +291,19 @@ def test_a_tool_call_the_provider_rejects_becomes_the_refusal_not_an_outage():
 
     with pytest.raises(AiUnavailable, match="HTTP 400"):
         ChatClient([Provider("groq", "https://g", "m", "k")], other_400)([], [])
+
+
+def test_a_refusal_logs_the_numbers_that_failed_and_never_the_question(caplog):
+    import logging
+
+    refused = next(c for c in CASES if c["name"] == "a rounded price is refused")
+    with caplog.at_level(logging.INFO, logger="dwellwise.api.ask"):
+        result = asyncio.run(
+            AskService(scripted(refused["turns"])).ask(
+                refused["question"], None, "203.0.113.9", recorded(refused["tool_results"])
+            )
+        )
+    assert result["ungrounded"] == ["420"]
+    (line,) = [r.getMessage() for r in caplog.records if "assistant_refused" in r.getMessage()]
+    assert json.loads(line) == {"event": "assistant_refused", "ungrounded": ["420"], "tools": ["sale_prices"]}
+    assert refused["question"] not in line and "203.0.113.9" not in line

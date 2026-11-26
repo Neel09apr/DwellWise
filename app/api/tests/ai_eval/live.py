@@ -71,6 +71,7 @@ def main() -> int:
         print(f"{mark}  {case['name']}: grounded={result['grounded']} tools={result['tools']}")  # noqa: T201
         if not passed:
             print(f"      answer: {result['answer'][:300]!r}")  # noqa: T201
+            print(f"      numbers not in the data: {result.get('ungrounded')}")  # noqa: T201
     print(f"{failures} failed")  # noqa: T201
     return 1 if failures else 0
 
