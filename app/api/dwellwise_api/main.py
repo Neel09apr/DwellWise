@@ -20,7 +20,7 @@ from starlette.exceptions import HTTPException
 from . import db, metrics
 from .config import Settings
 from .place import Places, load_from_database
-from .routers import counties, health, maps, prices, settlements, stats
+from .routers import costs, counties, health, maps, prices, settlements, stats
 
 log = logging.getLogger("dwellwise.api")
 
@@ -82,6 +82,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(stats.router)
     app.include_router(maps.router)
     app.include_router(prices.router)
+    app.include_router(costs.router)
 
     @app.exception_handler(HTTPException)
     async def http_error(_request: Request, exc: HTTPException) -> JSONResponse:

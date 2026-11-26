@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 
 import { api, type Brief } from "../api/client";
 import { Breadcrumbs } from "../components/Breadcrumbs";
@@ -115,6 +115,12 @@ export function SettlementPage() {
             <dd>{s.code}</dd>
           </div>
         </dl>
+        <p className="note">
+          <Link to={`/costs?${new URLSearchParams({ settlement: s.code, county: s.county ?? "" })}`}>
+            Estimate what a scheme might cost
+          </Link>{" "}
+          with your own figures, beside what homes sold for here.
+        </p>
       </header>
 
       <nav aria-labelledby="contents" className="contents">

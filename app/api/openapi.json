@@ -731,6 +731,173 @@
           }
         }
       }
+    },
+    "/v1/costs": {
+      "get": {
+        "tags": [
+          "costs"
+        ],
+        "summary": "Cost Estimate",
+        "description": "What a scheme might cost to build, from your own figures, each line with its working. Excludes VAT.",
+        "operationId": "cost_estimate_v1_costs_get",
+        "parameters": [
+          {
+            "name": "homes",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 1,
+              "description": "Number of homes",
+              "title": "Homes"
+            },
+            "description": "Number of homes"
+          },
+          {
+            "name": "floor_area_m2",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "maximum": 2000,
+              "exclusiveMinimum": 0,
+              "description": "Floor area of each home, m²",
+              "title": "Floor Area M2"
+            },
+            "description": "Floor area of each home, m²"
+          },
+          {
+            "name": "build_cost_per_m2",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "maximum": 50000,
+              "exclusiveMinimum": 0,
+              "description": "Build cost, euro per m²",
+              "title": "Build Cost Per M2"
+            },
+            "description": "Build cost, euro per m²"
+          },
+          {
+            "name": "contribution",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "maximum": 1000000,
+              "minimum": 0,
+              "description": "Development contribution, euro per m² or per home",
+              "title": "Contribution"
+            },
+            "description": "Development contribution, euro per m² or per home"
+          },
+          {
+            "name": "contribution_basis",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "enum": [
+                "per_m2",
+                "per_home"
+              ],
+              "type": "string",
+              "description": "How the council charges",
+              "title": "Contribution Basis"
+            },
+            "description": "How the council charges"
+          },
+          {
+            "name": "fees_pct",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "maximum": 100,
+              "minimum": 0,
+              "description": "Professional fees, % of build",
+              "title": "Fees Pct"
+            },
+            "description": "Professional fees, % of build"
+          },
+          {
+            "name": "contingency_pct",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "maximum": 100,
+              "minimum": 0,
+              "description": "Contingency, % of build",
+              "title": "Contingency Pct"
+            },
+            "description": "Contingency, % of build"
+          },
+          {
+            "name": "finance_rate_pct",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "maximum": 50,
+              "minimum": 0,
+              "description": "Interest, % a year",
+              "title": "Finance Rate Pct"
+            },
+            "description": "Interest, % a year"
+          },
+          {
+            "name": "finance_months",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 240,
+              "minimum": 0,
+              "description": "Months the money is borrowed for",
+              "title": "Finance Months"
+            },
+            "description": "Months the money is borrowed for"
+          },
+          {
+            "name": "land",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "maximum": 1000000000,
+              "minimum": 0,
+              "description": "Land cost, euro; omit to leave out",
+              "default": 0,
+              "title": "Land"
+            },
+            "description": "Land cost, euro; omit to leave out"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Costs"
+                }
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -976,6 +1143,71 @@
           "recent_schemes"
         ],
         "title": "CommencementStats"
+      },
+      "CostLine": {
+        "properties": {
+          "item": {
+            "type": "string",
+            "title": "Item"
+          },
+          "amount": {
+            "type": "integer",
+            "title": "Amount"
+          },
+          "working": {
+            "type": "string",
+            "title": "Working"
+          }
+        },
+        "type": "object",
+        "required": [
+          "item",
+          "amount",
+          "working"
+        ],
+        "title": "CostLine"
+      },
+      "Costs": {
+        "properties": {
+          "homes": {
+            "type": "integer",
+            "title": "Homes"
+          },
+          "floor_area_m2": {
+            "type": "number",
+            "title": "Floor Area M2"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/CostLine"
+            },
+            "type": "array",
+            "title": "Lines"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "per_home": {
+            "type": "integer",
+            "title": "Per Home"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "homes",
+          "floor_area_m2",
+          "lines",
+          "total",
+          "per_home",
+          "note"
+        ],
+        "title": "Costs",
+        "description": "A development cost estimate from the user's own figures. Excludes VAT; never a site's value."
       },
       "County": {
         "properties": {

@@ -223,6 +223,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/costs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Cost Estimate
+         * @description What a scheme might cost to build, from your own figures, each line with its working. Excludes VAT.
+         */
+        get: operations["cost_estimate_v1_costs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -289,6 +309,33 @@ export interface components {
             months: components["schemas"]["CommencementMonth"][];
             /** Recent Schemes */
             recent_schemes: components["schemas"]["Scheme"][];
+        };
+        /** CostLine */
+        CostLine: {
+            /** Item */
+            item: string;
+            /** Amount */
+            amount: number;
+            /** Working */
+            working: string;
+        };
+        /**
+         * Costs
+         * @description A development cost estimate from the user's own figures. Excludes VAT; never a site's value.
+         */
+        Costs: {
+            /** Homes */
+            homes: number;
+            /** Floor Area M2 */
+            floor_area_m2: number;
+            /** Lines */
+            lines: components["schemas"]["CostLine"][];
+            /** Total */
+            total: number;
+            /** Per Home */
+            per_home: number;
+            /** Note */
+            note: string;
         };
         /** County */
         County: {
@@ -1065,6 +1112,56 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    cost_estimate_v1_costs_get: {
+        parameters: {
+            query: {
+                /** @description Number of homes */
+                homes: number;
+                /** @description Floor area of each home, m² */
+                floor_area_m2: number;
+                /** @description Build cost, euro per m² */
+                build_cost_per_m2: number;
+                /** @description Development contribution, euro per m² or per home */
+                contribution: number;
+                /** @description How the council charges */
+                contribution_basis: "per_m2" | "per_home";
+                /** @description Professional fees, % of build */
+                fees_pct: number;
+                /** @description Contingency, % of build */
+                contingency_pct: number;
+                /** @description Interest, % a year */
+                finance_rate_pct: number;
+                /** @description Months the money is borrowed for */
+                finance_months: number;
+                /** @description Land cost, euro; omit to leave out */
+                land?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Costs"];
                 };
             };
             /** @description Unprocessable Content */

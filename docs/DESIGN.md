@@ -570,6 +570,30 @@ published scheme, cited with its date), professional fees, finance and a
 contingency. Every input is the user's or a cited published rate; the result
 shows its working. Stays in the browser like drafts.
 
+As built (26 November 2026):
+
+- `GET /v1/costs` computes the estimate (`app/api/dwellwise_api/costs.py`):
+  land if given; build (homes × floor area × €/m²); development contributions
+  per m² or per home; professional fees and contingency as a share of build;
+  finance at a yearly rate for a number of months on half the cost before
+  finance, as if drawn evenly. Each line carries its working in words. VAT is
+  excluded and the response says so. No database, no model: the AI layer
+  (M12) calls the same endpoint as a tool.
+- Contribution rates are not stored. Schemes differ by council (per m², per
+  home, thresholds, supplementary schemes for particular areas), are indexed
+  every year and change with temporary waivers, so a stored rate would go
+  wrong without anyone noticing. The page links each of the 31 councils'
+  websites and the user enters the rate from the current scheme.
+- Nothing is prefilled. Empty fields show hints; the build cost hint cites the
+  SCSI's Real Costs of New Apartment Delivery (December 2025), a copyright
+  report cited, never copied.
+- `/costs` is a page of its own (the user's scheme is not the town's evidence,
+  rule 7). Each brief links to it with its county and settlement; there the
+  town's latest median sale price (M10) sits beside the cost per home, as an
+  area figure. No margin and no residual land value: that would value a site.
+- The form's figures stay in the browser's localStorage; the server keeps
+  nothing.
+
 **M12. AI platform layer.** The engineering core of v2:
 
 - One thin client for OpenAI-compatible APIs; Groq free tier first, Gemini or
