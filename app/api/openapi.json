@@ -899,6 +899,78 @@
         }
       }
     },
+    "/v1/shortlist": {
+      "get": {
+        "tags": [
+          "shortlist"
+        ],
+        "summary": "County Shortlist",
+        "description": "A county's top five towns by one stated column: planning precedents, homes started, protected\nsites within 1 km and the area's median sale price. Evidence about towns, never a score.",
+        "operationId": "county_shortlist_v1_shortlist_get",
+        "parameters": [
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "started",
+                "granted",
+                "protected",
+                "price"
+              ],
+              "type": "string",
+              "default": "started",
+              "title": "Sort"
+            }
+          },
+          {
+            "name": "county",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z][A-Za-z \\-]{1,30}$",
+              "description": "County name, any case",
+              "title": "County"
+            },
+            "description": "County name, any case"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Shortlist"
+                }
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          }
+        }
+      }
+    },
     "/v1/assistant": {
       "get": {
         "tags": [
@@ -1006,6 +1078,14 @@
           "cached": {
             "type": "boolean",
             "title": "Cached"
+          },
+          "shortlists": {
+            "items": {
+              "$ref": "#/components/schemas/Shortlist"
+            },
+            "type": "array",
+            "title": "Shortlists",
+            "default": []
           }
         },
         "type": "object",
@@ -2128,6 +2208,14 @@
               }
             ],
             "title": "Settlement"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/Turn"
+            },
+            "type": "array",
+            "maxItems": 4,
+            "title": "History"
           }
         },
         "type": "object",
@@ -2343,6 +2431,146 @@
         ],
         "title": "SettlementSummary"
       },
+      "Shortlist": {
+        "properties": {
+          "county": {
+            "type": "string",
+            "title": "County"
+          },
+          "sort": {
+            "type": "string",
+            "title": "Sort"
+          },
+          "sorted_by": {
+            "type": "string",
+            "title": "Sorted By"
+          },
+          "towns_in_county": {
+            "type": "integer",
+            "title": "Towns In County"
+          },
+          "applications_since": {
+            "type": "string",
+            "format": "date",
+            "title": "Applications Since"
+          },
+          "started_since": {
+            "type": "string",
+            "title": "Started Since"
+          },
+          "towns": {
+            "items": {
+              "$ref": "#/components/schemas/ShortlistTown"
+            },
+            "type": "array",
+            "title": "Towns"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          },
+          "attribution": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Attribution"
+          }
+        },
+        "type": "object",
+        "required": [
+          "county",
+          "sort",
+          "sorted_by",
+          "towns_in_county",
+          "applications_since",
+          "started_since",
+          "towns",
+          "note",
+          "attribution"
+        ],
+        "title": "Shortlist",
+        "description": "A county's towns side by side, sorted by one stated column. Evidence about towns, never a score."
+      },
+      "ShortlistTown": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "granted": {
+            "type": "integer",
+            "title": "Granted"
+          },
+          "refused": {
+            "type": "integer",
+            "title": "Refused"
+          },
+          "pending": {
+            "type": "integer",
+            "title": "Pending"
+          },
+          "homes_started": {
+            "type": "integer",
+            "title": "Homes Started"
+          },
+          "protected_within_1km": {
+            "type": "integer",
+            "title": "Protected Within 1Km"
+          },
+          "price_area": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Area"
+          },
+          "median_price": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median Price"
+          },
+          "price_month": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price Month"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "name",
+          "granted",
+          "refused",
+          "pending",
+          "homes_started",
+          "protected_within_1km",
+          "price_area",
+          "median_price",
+          "price_month"
+        ],
+        "title": "ShortlistTown"
+      },
       "SourceInfo": {
         "properties": {
           "name": {
@@ -2366,6 +2594,30 @@
           "attribution"
         ],
         "title": "SourceInfo"
+      },
+      "Turn": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "assistant"
+            ],
+            "title": "Role"
+          },
+          "content": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Content"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role",
+          "content"
+        ],
+        "title": "Turn"
       },
       "UnitReporting": {
         "properties": {

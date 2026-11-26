@@ -454,5 +454,136 @@
   "live_must_call": [
    "sale_prices"
   ]
+ },
+ {
+  "name": "a shortlist quoted exactly is shown",
+  "question": "I want to build eight homes in Kildare. Which towns should I look at?",
+  "settlement": null,
+  "turns": [
+   {
+    "role": "assistant",
+    "content": "",
+    "tool_calls": [
+     {
+      "id": "c-shortlist",
+      "type": "function",
+      "function": {
+       "name": "shortlist",
+       "arguments": "{\"county\": \"KILDARE\"}"
+      }
+     }
+    ]
+   },
+   {
+    "role": "assistant",
+    "content": "Sorted by homes started in the last 12 months: Naas (640 started, 212 residential applications granted, median €455,000 in W91), Newbridge (410 started, one protected site within 1 km, €390,000) and Athy (120 started, the lowest price at €285,000, but 2 protected sites within 1 km). Source: national planning applications, commencement notices, CSO sale prices. Treatment capacity is not in DwellWise's data; see each brief."
+   }
+  ],
+  "tool_results": {
+   "shortlist": "{\"status\":200,\"body\":{\"county\":\"KILDARE\",\"sort\":\"started\",\"sorted_by\":\"homes started in the last 12 months, most first\",\"towns_in_county\":41,\"applications_since\":\"2021-11-26\",\"started_since\":\"2025-12\",\"towns\":[{\"code\":\"10001\",\"name\":\"Naas\",\"granted\":212,\"refused\":31,\"pending\":18,\"homes_started\":640,\"protected_within_1km\":0,\"price_area\":\"W91\",\"median_price\":455000,\"price_month\":\"2026-09\"},{\"code\":\"10002\",\"name\":\"Newbridge\",\"granted\":150,\"refused\":22,\"pending\":9,\"homes_started\":410,\"protected_within_1km\":1,\"price_area\":\"W12\",\"median_price\":390000,\"price_month\":\"2026-09\"},{\"code\":\"10003\",\"name\":\"Athy\",\"granted\":64,\"refused\":11,\"pending\":5,\"homes_started\":120,\"protected_within_1km\":2,\"price_area\":\"R14\",\"median_price\":285000,\"price_month\":\"2026-09\"}],\"note\":\"Evidence about towns, not a judgement on any site or application.\",\"attribution\":[\"National Planning Applications. CC BY 4.0.\"]}}"
+  },
+  "expect": "grounded",
+  "expect_tools": [
+   "shortlist"
+  ],
+  "live_must_call": [
+   "shortlist"
+  ]
+ },
+ {
+  "name": "a shortlist figure the data does not hold is refused",
+  "question": "I want to build eight homes in Kildare. Which towns should I look at?",
+  "settlement": null,
+  "turns": [
+   {
+    "role": "assistant",
+    "content": "",
+    "tool_calls": [
+     {
+      "id": "c-shortlist",
+      "type": "function",
+      "function": {
+       "name": "shortlist",
+       "arguments": "{\"county\": \"KILDARE\"}"
+      }
+     }
+    ]
+   },
+   {
+    "role": "assistant",
+    "content": "Naas leads with about 650 homes started; Athy is cheapest."
+   }
+  ],
+  "tool_results": {
+   "shortlist": "{\"status\":200,\"body\":{\"county\":\"KILDARE\",\"sort\":\"started\",\"sorted_by\":\"homes started in the last 12 months, most first\",\"towns_in_county\":41,\"applications_since\":\"2021-11-26\",\"started_since\":\"2025-12\",\"towns\":[{\"code\":\"10001\",\"name\":\"Naas\",\"granted\":212,\"refused\":31,\"pending\":18,\"homes_started\":640,\"protected_within_1km\":0,\"price_area\":\"W91\",\"median_price\":455000,\"price_month\":\"2026-09\"},{\"code\":\"10002\",\"name\":\"Newbridge\",\"granted\":150,\"refused\":22,\"pending\":9,\"homes_started\":410,\"protected_within_1km\":1,\"price_area\":\"W12\",\"median_price\":390000,\"price_month\":\"2026-09\"},{\"code\":\"10003\",\"name\":\"Athy\",\"granted\":64,\"refused\":11,\"pending\":5,\"homes_started\":120,\"protected_within_1km\":2,\"price_area\":\"R14\",\"median_price\":285000,\"price_month\":\"2026-09\"}],\"note\":\"Evidence about towns, not a judgement on any site or application.\",\"attribution\":[\"National Planning Applications. CC BY 4.0.\"]}}"
+  },
+  "expect": "rejected",
+  "expect_tools": [
+   "shortlist"
+  ]
+ },
+ {
+  "name": "a scheme with no county gets a question, not a search",
+  "question": "I want to build eight homes. Where should I build?",
+  "settlement": null,
+  "turns": [
+   {
+    "role": "assistant",
+    "content": "Which county are you thinking of? I compare towns one county at a time."
+   }
+  ],
+  "tool_results": {},
+  "expect": "grounded",
+  "expect_tools": [],
+  "live_must_call": [],
+  "live_calls_nothing": true
+ },
+ {
+  "name": "the assistant's earlier answer is not a source",
+  "question": "And which is cheapest?",
+  "settlement": null,
+  "history": [
+   {
+    "role": "user",
+    "content": "I want 8 homes in Kildare."
+   },
+   {
+    "role": "assistant",
+    "content": "Naas had 640 homes started in the last 12 months."
+   }
+  ],
+  "turns": [
+   {
+    "role": "assistant",
+    "content": "For your 8 homes: Naas had 640 started, the most."
+   }
+  ],
+  "tool_results": {},
+  "expect": "rejected",
+  "expect_tools": []
+ },
+ {
+  "name": "the user's earlier figure may be repeated in a follow-up",
+  "question": "What else do you need from me?",
+  "settlement": null,
+  "history": [
+   {
+    "role": "user",
+    "content": "I want 8 homes near a good town."
+   },
+   {
+    "role": "assistant",
+    "content": "Which county are you thinking of?"
+   }
+  ],
+  "turns": [
+   {
+    "role": "assistant",
+    "content": "For your 8 homes, tell me the county and I will compare its towns."
+   }
+  ],
+  "tool_results": {},
+  "expect": "grounded",
+  "expect_tools": []
  }
 ]

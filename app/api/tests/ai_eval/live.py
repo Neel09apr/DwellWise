@@ -46,11 +46,14 @@ def recorded(results: dict):
 
 
 def run_case(case: dict, chat) -> tuple[bool, dict]:
-    result = asyncio.run(answer(case["question"], case["settlement"], chat, recorded(case["tool_results"])))
+    tools = recorded(case["tool_results"])
+    result = asyncio.run(answer(case["question"], case["settlement"], chat, tools, case.get("history")))
     called = set(result["tools"])
     # Each entry is a tool name, or a list of names any one of which will do.
     needs = [{t} if isinstance(t, str) else set(t) for t in case["live_must_call"]]
     passed = result["grounded"] and all(called & need for need in needs)
+    if case.get("live_calls_nothing"):  # a scheme with no county: the model must ask, not search
+        passed = result["grounded"] and not called
     return passed, result
 
 

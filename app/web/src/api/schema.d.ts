@@ -243,6 +243,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/shortlist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * County Shortlist
+         * @description A county's top five towns by one stated column: planning precedents, homes started, protected
+         *     sites within 1 km and the area's median sale price. Evidence about towns, never a score.
+         */
+        get: operations["county_shortlist_v1_shortlist_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/assistant": {
         parameters: {
             query?: never;
@@ -300,6 +321,11 @@ export interface components {
             tools: string[];
             /** Cached */
             cached: boolean;
+            /**
+             * Shortlists
+             * @default []
+             */
+            shortlists: components["schemas"]["Shortlist"][];
         };
         /** ApplicationStats */
         ApplicationStats: {
@@ -674,6 +700,8 @@ export interface components {
             question: string;
             /** Settlement */
             settlement?: string | null;
+            /** History */
+            history?: components["schemas"]["Turn"][];
         };
         /** Ready */
         Ready: {
@@ -736,6 +764,56 @@ export interface components {
             /** County */
             county: string | null;
         };
+        /**
+         * Shortlist
+         * @description A county's towns side by side, sorted by one stated column. Evidence about towns, never a score.
+         */
+        Shortlist: {
+            /** County */
+            county: string;
+            /** Sort */
+            sort: string;
+            /** Sorted By */
+            sorted_by: string;
+            /** Towns In County */
+            towns_in_county: number;
+            /**
+             * Applications Since
+             * Format: date
+             */
+            applications_since: string;
+            /** Started Since */
+            started_since: string;
+            /** Towns */
+            towns: components["schemas"]["ShortlistTown"][];
+            /** Note */
+            note: string;
+            /** Attribution */
+            attribution: string[];
+        };
+        /** ShortlistTown */
+        ShortlistTown: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
+            /** Granted */
+            granted: number;
+            /** Refused */
+            refused: number;
+            /** Pending */
+            pending: number;
+            /** Homes Started */
+            homes_started: number;
+            /** Protected Within 1Km */
+            protected_within_1km: number;
+            /** Price Area */
+            price_area: string | null;
+            /** Median Price */
+            median_price: number | null;
+            /** Price Month */
+            price_month: string | null;
+        };
         /** SourceInfo */
         SourceInfo: {
             /** Name */
@@ -747,6 +825,16 @@ export interface components {
             captured_at: string;
             /** Attribution */
             attribution: string;
+        };
+        /** Turn */
+        Turn: {
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "user" | "assistant";
+            /** Content */
+            content: string;
         };
         /** UnitReporting */
         UnitReporting: {
@@ -1228,6 +1316,48 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Costs"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+        };
+    };
+    county_shortlist_v1_shortlist_get: {
+        parameters: {
+            query: {
+                sort?: "started" | "granted" | "protected" | "price";
+                /** @description County name, any case */
+                county: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Shortlist"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
             /** @description Unprocessable Content */

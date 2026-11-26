@@ -121,11 +121,13 @@ def _invented_inputs(name: str, arguments: dict, question: str) -> list[str]:
 
 
 def _shortlist(result: str) -> dict | None:
+    """The shortlist in a tool result ({"status": 200, "body": {...}}), or None for an error or a cut-off."""
     try:
         found = json.loads(result)
     except ValueError:
         return None
-    return found if isinstance(found, dict) and isinstance(found.get("towns"), list) else None
+    body = found.get("body") if isinstance(found, dict) and found.get("status") == 200 else None
+    return body if isinstance(body, dict) and isinstance(body.get("towns"), list) else None
 
 
 def _result(text: str, sources: list[str], **run) -> dict:
