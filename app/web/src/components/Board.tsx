@@ -19,12 +19,12 @@ export function Board({ title, place, figures, foot, disclaimer = true }: Props)
       <h1>{title}</h1>
       <p className="board-place">{place}</p>
       {figures.length > 0 && (
-        <ul className="board-lines" aria-label="The record">
+        <ul className="board-lines" aria-label="The record, as the notice's prescribed lines">
           {figures.map((f) => (
             <li key={f.id}>
               <a href={`#${f.id}`}>
                 <strong>{f.value}</strong> {f.label}
-                <span className="board-detail">{f.detail}</span>
+                <span className="board-detail"> ({f.detail})</span>
               </a>
             </li>
           ))}

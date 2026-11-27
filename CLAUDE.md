@@ -85,11 +85,11 @@ If it does neither, it is drift.
    possibly an upgrade: time and cost, not a refusal. Use the register's words.
    Settlement evidence describes the town, never the user's site. "Residential"
    is not "housing".
-10. **Design.** Minimal and hierarchical: Ireland > county > settlement > brief, with
-    breadcrumbs and numbered sections. One serif, one sans, mono for metadata;
-    survey blue is the only accent (charts may also use a lighter tint of it);
-    green, amber and red are for capacity status only. Wide pages (72rem) for
-    reference content; prose keeps its 46rem measure (revisited in M14, 26 Nov).
+10. **Design.** The visual system is [`DESIGN.md`](DESIGN.md) (The Site Notice, recorded
+    from the built site); product truth for design work is [`PRODUCT.md`](PRODUCT.md).
+    Keep the hierarchy Ireland > county > settlement > brief with breadcrumbs; yellow
+    belongs to the board alone and state is a mark, never a hue. Change DESIGN.md in the
+    same pull request as any change to the look (rewritten in M15e, 27 Nov).
 8. **Security defaults.** No long-lived cloud keys. Least privilege. Non-root
    containers. Every scanner suppression is scoped and gives its reason.
 9. **Tests that can fail.** A new check is mutation-tested before it is trusted.
@@ -144,7 +144,8 @@ deploy/        Helm chart for the app, installed on a throwaway kind cluster in 
 | v2 M14b: the brief: four-figure summary strip, side list of sections, Nearby alternatives off the page, question box below the evidence | Merged (PR #74); live 26 Nov |
 | M15b: UI revisit, the brief as a site notice (statutory-yellow board, pinned notices, self-hosted Archivo, PRODUCT.md) | Merged (PR #75); live 26 Nov |
 | M15c: Ireland and county pages as site notices (shared board, every section a pinned notice, towns compared first on counties, partial month hatched) | Merged (PR #76); live 26 Nov |
-| M15d: cost estimate and question box as notices (board shows the user's own total and per-home cost; square ruled inputs, black plate buttons) | In review |
+| M15d: cost estimate and question box as notices (board shows the user's own total and per-home cost; square ruled inputs, black plate buttons) | Merged (PR #78); live 26 Nov |
+| M15e: finish review (board lines as prescribed statements, the notice's printed border), root DESIGN.md, rule 10 rewritten, old CSS removed | In review |
 
 
 ## Next
