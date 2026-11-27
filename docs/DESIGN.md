@@ -49,8 +49,8 @@ and print.
 | F4 | see recent residential planning applications in the settlement and their decisions |
 | F5 | see protected sites (SAC, SPA, NHA) within 1 km and 5 km |
 | F6 | see nearby settlements with spare capacity, by distance. **Deferred:** it needs the capacity register's data (F3) |
-| F7 | read an optional plain-English summary written over those facts |
-| F8 | edit the brief, keep it in the browser, and print or export it |
+| F7 | read an optional plain-English summary written over those facts. **Superseded** by the assistant (§16, M12 and M13), which answers questions over the same facts and checks every number |
+| F8 | edit the brief, keep it in the browser, and print or export it. **Not built:** the brief is read-only; only the cost estimate keeps a draft in the browser |
 | F9 | see planning activity for Ireland and each county: applications granted, refused and pending, by month, with the date the data was captured |
 
 ### Non-functional
@@ -746,6 +746,12 @@ Delivered as M15b (the brief), M15c (Ireland and county), M15d (cost estimate
 and assistant), M15e (finish review, `DESIGN.md`, rule 10 rewritten, and the
 Ireland page's copy corrected: it promises capacity and alternatives the
 product does not show). Light only for now: the scene is a desk in daylight.
+
+**M15 as built** (merged 26 and 27 November 2026, PRs #75 to #79): the brief (M15b), Ireland and county
+pages (M15c), the cost estimate and question box (M15d), and the finish (M15e): a finish review turned the
+board's figures from a stat grid into prescribed lines and gave the board the notice's printed border; the
+visual system is recorded in the root `DESIGN.md` from the built site; CLAUDE.md rule 10 points to it. The
+logo is coded SVG (PR #77).
 
 **Constraint screening** (with M10 or M13, as licences allow): radon (EPA),
 landslide susceptibility (GSI), recorded monuments (National Monuments
