@@ -111,8 +111,15 @@ Spacing sits on a 4px grid (0.25rem steps; a 2px nudge only inside small control
 prose keeps a 46rem measure. Under the board, a column of notices 1.5rem apart; on
 screens 64rem or wider a sticky side list of the notices sits to its left (plain links). The notices column is
 `minmax(0, 1fr)` so a wide table never stretches it: wide tables scroll inside a named, focusable region with a
-sticky first column. Sections far below the fold use `content-visibility: auto` with a size placeholder. On
-phones the board's lines stay one per row and its border insets to 12px.
+sticky first column. Sections far below the fold use `content-visibility: auto` with a size placeholder.
+
+Wide pages use their width through container queries, not media queries. When the page container (`.with-rail`)
+is 66rem or wider, short notices (`.notice-half`) pair up two to a row at equal height, and long ones span both
+columns; a short notice with no short neighbour spans the row again. Pairs follow reading order (no
+`grid-auto-flow: dense`), so the brief runs constraints (wastewater, protected sites), then activity (planning
+precedents, construction started), then the market (sale prices) beside the question box. When the board is 50rem
+or wider its prescribed lines go two by two. On phones everything is one column, the board's lines stay one per
+row and its border insets to 12px. Long lists show their first five rows and the rest behind "Show all".
 
 ## Elevation & Depth
 

@@ -23,6 +23,17 @@ export function BuildingSection({ stats, settlement }: { stats: Resource<Commenc
   );
 }
 
+/** A town's construction starts as the body of its own notice on the brief (the notice supplies the heading). */
+export function BuildingBody({ stats }: { stats: Resource<CommencementStats> }) {
+  if (stats.kind === "loading") return <Loading what="construction starts" />;
+  if (stats.kind === "error") return <Failure message={stats.message} />;
+  return (
+    <div className="section-body">
+      <Figures stats={stats.data} inTown />
+    </div>
+  );
+}
+
 function Figures({ stats, inTown }: { stats: CommencementStats; inTown: boolean }) {
   const { totals, last_7_days: week } = stats;
   return (

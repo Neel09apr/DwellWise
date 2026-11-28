@@ -33,7 +33,7 @@ export function HomePage() {
       rail={RAIL}
       lead={
         <>
-          <section aria-labelledby="find" className="level find">
+          <section aria-labelledby="find" className="level find notice-half">
             <h2 id="find" className="level-title">
               Find a town
             </h2>

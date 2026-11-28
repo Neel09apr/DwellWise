@@ -12,6 +12,7 @@ const FIGURES = [
 
 const fmt = new Intl.NumberFormat("en-IE");
 const day = dayLabel;
+const FIRST = 5; // applications shown before "Show all"
 
 /** Brief section 02: recent residential planning applications in the town (F4). */
 export function PlanningPrecedents({ precedents: p }: { precedents: Brief["precedents"] }) {
@@ -40,31 +41,13 @@ export function PlanningPrecedents({ precedents: p }: { precedents: Brief["prece
               </div>
             ))}
           </dl>
-          <table className="counts">
-            <caption className="sr-only">Most recent residential applications</caption>
-            <thead>
-              <tr>
-                <th scope="col">Received</th>
-                <th scope="col" className="wording">
-                  Reference
-                </th>
-                <th scope="col" className="wording">
-                  Decision
-                </th>
-                <th scope="col">Dwellings</th>
-              </tr>
-            </thead>
-            <tbody>
-              {p.recent.map((a) => (
-                <tr key={`${a.authority}/${a.application_number}`}>
-                  <th scope="row">{day(a.received)}</th>
-                  <td className="wording">{a.application_number}</td>
-                  <td className="wording">{decisionLabel(a.decision, a.decision_class)}</td>
-                  <td>{a.units_stated || "–"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <ApplicationTable rows={p.recent.slice(0, FIRST)} caption="Most recent residential applications" />
+          {p.recent.length > FIRST && (
+            <details className="chart-table">
+              <summary>Show all {p.recent.length} applications</summary>
+              <ApplicationTable rows={p.recent.slice(FIRST)} caption="Older residential applications" />
+            </details>
+          )}
         </>
       )}
       <p className="note">
@@ -76,5 +59,35 @@ export function PlanningPrecedents({ precedents: p }: { precedents: Brief["prece
         {p.attribution}
       </p>
     </div>
+  );
+}
+
+function ApplicationTable({ rows, caption }: { rows: Brief["precedents"]["recent"]; caption: string }) {
+  return (
+    <table className="counts">
+      <caption className="sr-only">{caption}</caption>
+      <thead>
+        <tr>
+          <th scope="col">Received</th>
+          <th scope="col" className="wording">
+            Reference
+          </th>
+          <th scope="col" className="wording">
+            Decision
+          </th>
+          <th scope="col">Dwellings</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((a) => (
+          <tr key={`${a.authority}/${a.application_number}`}>
+            <th scope="row">{day(a.received)}</th>
+            <td className="wording">{a.application_number}</td>
+            <td className="wording">{decisionLabel(a.decision, a.decision_class)}</td>
+            <td>{a.units_stated || "–"}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }

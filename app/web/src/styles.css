@@ -264,3 +264,18 @@ p { text-wrap: pretty; }
 .board-lines strong { display: inline; margin: 0 0.125rem 0 0; font: 800 1.35em/1 var(--face); font-stretch: 85%; letter-spacing: -0.01em; }
 .board-detail { display: inline; margin: 0; font-size: 0.85em; color: #3a3300; }
 @media (max-width: 30rem) { .board::after { inset: 12px; } .board { padding: 1.75rem 1.5rem; } .board-lines a { padding: 0.5rem 0; } }
+
+/* Space: on wide pages short notices pair up and the board's lines go two-up. Size-aware (container queries,
+   Baseline 2023); the one-column default is the fallback. Pairs follow reading order, never grid-auto-flow: dense. */
+.with-rail { container: page / inline-size; }
+.board { container: board / inline-size; }
+@container page (width >= 66rem) {
+  .notices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .notices > section { grid-column: 1 / -1; }
+  .notices > section.notice-half { grid-column: auto; }
+  /* A short notice with no short neighbour (the assistant off, say) takes the full width again. */
+  .notices > section.notice-half:is(:first-child, section:not(.notice-half) + section):is(:last-child, :has(+ section:not(.notice-half))) { grid-column: 1 / -1; }
+}
+@container board (width >= 50rem) {
+  .board-lines { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 2.5rem; }
+}
