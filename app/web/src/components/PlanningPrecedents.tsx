@@ -1,4 +1,9 @@
+import { useState } from "react";
+
 import type { Brief } from "../api/client";
+import { nextSort, type SortState, sortRows } from "../sortText";
+import { SortHeader, sortMessage } from "./SortHeader";
+import { TableRegion } from "./TableRegion";
 import { decidedShare, decisionLabel } from "./planningText";
 import { dayLabel } from "../text";
 
@@ -41,13 +46,7 @@ export function PlanningPrecedents({ precedents: p }: { precedents: Brief["prece
               </div>
             ))}
           </dl>
-          <ApplicationTable rows={p.recent.slice(0, FIRST)} caption="Most recent residential applications" />
-          {p.recent.length > FIRST && (
-            <details className="chart-table">
-              <summary>Show all {p.recent.length} applications</summary>
-              <ApplicationTable rows={p.recent.slice(FIRST)} caption="Older residential applications" />
-            </details>
-          )}
+          <ApplicationTable rows={p.recent} />
         </>
       )}
       <p className="note">
@@ -62,32 +61,63 @@ export function PlanningPrecedents({ precedents: p }: { precedents: Brief["prece
   );
 }
 
-function ApplicationTable({ rows, caption }: { rows: Brief["precedents"]["recent"]; caption: string }) {
+const COLUMNS = [
+  { key: "received", label: "Received", type: "text", className: undefined },
+  { key: "application_number", label: "Reference", type: "text", className: "wording" },
+  { key: "decision", label: "Decision", type: "text", className: "wording" },
+  { key: "units_stated", label: "Dwellings", type: "number", className: undefined },
+] as const;
+
+type Application = Brief["precedents"]["recent"][number];
+const cell = (a: Application, key: (typeof COLUMNS)[number]["key"]) =>
+  key === "decision" ? decisionLabel(a.decision, a.decision_class) : a[key];
+
+/** The recent applications, sortable by any column; the first five show until "Show all". */
+function ApplicationTable({ rows }: { rows: Brief["precedents"]["recent"] }) {
+  const [sort, setSort] = useState<SortState>(null);
+  const [all, setAll] = useState(false);
+  const column = COLUMNS.find((c) => c.key === sort?.key);
+  const sorted = sort && column ? sortRows(rows, (a) => cell(a, column.key), column.type, sort.direction) : rows;
+  const shown = all ? sorted : sorted.slice(0, FIRST);
   return (
-    <table className="counts">
-      <caption className="sr-only">{caption}</caption>
-      <thead>
-        <tr>
-          <th scope="col">Received</th>
-          <th scope="col" className="wording">
-            Reference
-          </th>
-          <th scope="col" className="wording">
-            Decision
-          </th>
-          <th scope="col">Dwellings</th>
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((a) => (
-          <tr key={`${a.authority}/${a.application_number}`}>
-            <th scope="row">{day(a.received)}</th>
-            <td className="wording">{a.application_number}</td>
-            <td className="wording">{decisionLabel(a.decision, a.decision_class)}</td>
-            <td>{a.units_stated || "–"}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <>
+      <TableRegion label="Recent residential applications">
+        <table className="counts">
+          <caption className="sr-only">Recent residential applications in the town</caption>
+          <thead>
+            <tr>
+              {COLUMNS.map((c) => (
+                <SortHeader
+                  key={c.key}
+                  label={c.label}
+                  column={c.key}
+                  sort={sort}
+                  className={c.className}
+                  onSort={(k) => setSort((s) => nextSort(s, k))}
+                />
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {shown.map((a) => (
+              <tr key={`${a.authority}/${a.application_number}`}>
+                <th scope="row">{day(a.received)}</th>
+                <td className="wording">{a.application_number}</td>
+                <td className="wording">{decisionLabel(a.decision, a.decision_class)}</td>
+                <td>{a.units_stated || "–"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </TableRegion>
+      {rows.length > FIRST && (
+        <button type="button" className="show-all" aria-expanded={all} onClick={() => setAll((v) => !v)}>
+          {all ? "Show the newest five" : `Show all ${rows.length} applications`}
+        </button>
+      )}
+      <p role="status" className="sr-only">
+        {sortMessage(column?.label, sort, shown.length)}
+      </p>
+    </>
   );
 }
