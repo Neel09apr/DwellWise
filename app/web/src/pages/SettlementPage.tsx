@@ -4,7 +4,7 @@ import { api, type Brief, type CommencementStats, type Prices } from "../api/cli
 import { Board } from "../components/Board";
 import { Breadcrumbs } from "../components/Breadcrumbs";
 import { AskBox } from "../components/AskBox";
-import { BuildingSection } from "../components/BuildingNow";
+import { BuildingBody } from "../components/BuildingNow";
 import { PageRail } from "../components/PageRail";
 import { PlanningPrecedents } from "../components/PlanningPrecedents";
 import { ProtectedSites } from "../components/ProtectedSites";
@@ -17,25 +17,36 @@ import { type Resource, useResource } from "../useResource";
 
 /** The brief's sections in order (docs/DESIGN.md F3–F6). Each fills in when its data source lands. */
 const SECTIONS = [
+  // Constraints on the town, then its activity, then its market. Short notices ("half") pair up on wide screens.
   {
     id: "wastewater",
     title: "Wastewater capacity",
     about: "Spare capacity at the treatment plant serving the town.",
-  },
-  {
-    id: "precedents",
-    title: "Planning precedents",
-    about: "Residential planning applications in the town over the last five years.",
+    half: true,
   },
   {
     id: "protected",
     title: "Protected sites nearby",
     about: "SAC, SPA and NHA sites within 1 km and 5 km of the town boundary.",
+    half: true,
+  },
+  {
+    id: "precedents",
+    title: "Planning precedents",
+    about: "Residential planning applications in the town over the last five years.",
+    half: false,
+  },
+  {
+    id: "building",
+    title: "Construction started",
+    about: "Homes whose construction started in the town in the last 12 months, from commencement notices.",
+    half: false,
   },
   {
     id: "prices",
     title: "Sale prices nearby",
     about: "What homes sold for in the Eircode area around the town, by month.",
+    half: true,
   },
 ];
 
@@ -53,15 +64,13 @@ type SectionProps = {
 function SectionBody({ id, title, brief, starts, prices, settlement }: SectionProps) {
   if (id === "wastewater") return <WastewaterRegister name={settlement.name} county={settlement.county} />;
   if (id === "prices") return <TownPrices data={prices} />;
+  if (id === "building") return <BuildingBody stats={starts} />;
   if (id !== "precedents" && id !== "protected")
     return <p className="pending">Not loaded yet. This section fills in when its public data source is added.</p>;
   if (brief.kind === "loading") return <Loading what={title.toLowerCase()} />;
   if (brief.kind === "error") return <Failure message={brief.message} />;
   return id === "precedents" ? (
-    <>
-      <PlanningPrecedents precedents={brief.data.precedents} />
-      <BuildingSection stats={starts} settlement={settlement.code} />
-    </>
+    <PlanningPrecedents precedents={brief.data.precedents} />
   ) : (
     <ProtectedSites protected={brief.data.protected} />
   );
@@ -114,7 +123,12 @@ export function SettlementPage() {
         <PageRail links={rail} />
         <div className="notices">
           {SECTIONS.map((section) => (
-            <section key={section.id} id={section.id} className="notice" aria-labelledby={`${section.id}-title`}>
+            <section
+              key={section.id}
+              id={section.id}
+              className={section.half ? "notice notice-half" : "notice"}
+              aria-labelledby={`${section.id}-title`}
+            >
               <h2 id={`${section.id}-title`}>{section.title}</h2>
               <p className="notice-about">{section.about}</p>
               <SectionBody

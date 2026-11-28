@@ -46,7 +46,7 @@ export function AskBox({ place, settlement }: { place: string; settlement?: stri
   };
 
   return (
-    <section aria-labelledby="ask-title" className="level ask">
+    <section aria-labelledby="ask-title" className="level ask notice-half">
       <h2 id="ask-title" className="level-title">
         Ask about {place}
       </h2>
