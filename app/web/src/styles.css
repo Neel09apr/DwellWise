@@ -279,3 +279,19 @@ p { text-wrap: pretty; }
 @container board (width >= 50rem) {
   .board-lines { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 2.5rem; }
 }
+
+/* Where you are: the side list marks the notice in view (native scroll-target-group, or the observer's class).
+   :is() keeps older browsers from dropping the rule over the unknown pseudo-class. Not colour alone: weight + rule. */
+.rail ol { scroll-target-group: auto; }
+.rail a:is(:target-current, .target-current) { color: var(--ink); font-weight: 700; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 0.25em; }
+
+/* Sortable columns: the button fills the heading; the marks show the sorted column and its direction. */
+th.sortable { padding: 0; }
+th.sortable button { display: inline-flex; align-items: center; gap: 0.25rem; width: 100%; min-height: 32px; padding: 0.5rem 0.25rem; border: 0; background: none; color: inherit; font: inherit; text-align: inherit; justify-content: flex-end; cursor: pointer; }
+th.sortable:first-child button, th.sortable.wording button { justify-content: flex-start; }
+th.sortable button:hover { color: var(--ink); }
+.sort-mark { flex: none; }
+.sort-mark path { fill: currentColor; opacity: 0.25; }
+th[aria-sort="ascending"] .sort-up, th[aria-sort="descending"] .sort-down { opacity: 1; }
+th[aria-sort] button { color: var(--ink); }
+.show-all { margin-top: 0.5rem; min-height: 32px; padding: 0; border: 0; background: none; color: var(--ink); font: inherit; font-size: 0.9rem; text-decoration: underline; text-underline-offset: 0.2em; cursor: pointer; }

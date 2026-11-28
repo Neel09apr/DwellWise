@@ -141,6 +141,13 @@ corners; the board adds the statutory notice's printed 2px ink border, inset 20p
   in muted text; its source and capture date at its foot.
 - **Controls**: inputs, selects, the search and question boxes are ruled boxes (1.5px ink) on white; buttons are
   black plates in heavy capitals with a 3px yellow ring on hover. Focus is a 3px ink outline with a yellow halo.
+- **Side list** (`PageRail.tsx`): marks the notice in view in bold with a 2px underline (never colour alone) and
+  `aria-current`; natively with `scroll-target-group` where supported, otherwise an IntersectionObserver on the
+  line across the middle of the screen.
+- **Sortable tables** (`SortHeader.tsx`, `sortText.ts`): a button inside each column heading, `aria-sort` on the
+  sorted heading only, small up and down marks, numbers compared as numbers and text by locale ignoring case; one
+  visually hidden status line says what was sorted. The first press sorts ascending, a repeat flips it. A table
+  that shows its first five rows sorts all of them, then shows the first five.
 - **Charts**: bars in ink; the month still filling in is hatched (a mark), never paler. Every chart has a table
   behind "Show as a table".
 - **Logo**: two hollow half-roof bands, green left and gold right, meeting at the ridge (coded SVG,
