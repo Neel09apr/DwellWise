@@ -1,10 +1,10 @@
 import { useEffect, useRef } from "react";
 
 /** Mark one link as current, for sight (a class the CSS shares with :target-current) and for screen readers. */
-function mark(links: HTMLAnchorElement[], current: Element | null) {
+function mark(links: HTMLAnchorElement[], current: Element | null, withClass = true) {
   for (const link of links) {
     const on = link === current;
-    link.classList.toggle("target-current", on);
+    if (withClass) link.classList.toggle("target-current", on);
     if (on) link.setAttribute("aria-current", "true");
     else link.removeAttribute("aria-current");
   }
@@ -24,10 +24,22 @@ export function PageRail({ links }: { links: { id: string; label: string }[] }) 
     if (!ol) return;
     const anchors = [...ol.querySelectorAll("a")];
     if (CSS.supports("scroll-target-group: auto")) {
-      const sync = () => mark(anchors, ol.querySelector("a:target-current"));
+      // The browser draws the mark; mirror it in aria-current once scrolling settles. Page scrolls reach window,
+      // and a short timer after the last scroll event backs up browsers that send no scrollend.
+      const sync = () => mark(anchors, ol.querySelector("a:target-current"), false);
+      let timer = 0;
+      const settle = () => {
+        window.clearTimeout(timer);
+        timer = window.setTimeout(sync, 150);
+      };
       sync();
-      document.addEventListener("scrollend", sync);
-      return () => document.removeEventListener("scrollend", sync);
+      window.addEventListener("scroll", settle, { passive: true });
+      window.addEventListener("scrollend", sync);
+      return () => {
+        window.clearTimeout(timer);
+        window.removeEventListener("scroll", settle);
+        window.removeEventListener("scrollend", sync);
+      };
     }
     // A link may point at a heading; watch the notice it heads, so the band across the middle always meets it.
     const linkFor = new Map<Element, HTMLAnchorElement>();
