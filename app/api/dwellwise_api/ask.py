@@ -26,6 +26,11 @@ MAX_ROUNDS = 5
 MAX_REJECTED = 2  # rejected tool calls the model may retry after, within MAX_ROUNDS
 TOKEN_BUDGET = 15_000  # per question, checked before every model call; Groq's free tier is 200,000 a day
 SHORTLIST = "shortlist"  # the tool whose results the page shows as a table beside the answer
+# Said again right after a shortlist result: the rule in SYSTEM alone was ignored on the live site.
+SHORTLIST_NOTE = (
+    "The page shows that table, with every town and figure, under your answer. Do not list the towns: "
+    "say what it is sorted by and name at most two towns and their trade-off, in under 80 words."
+)
 REFUSAL = "I could not answer that with figures I can check against DwellWise's data."
 SYSTEM = """You answer questions about Irish towns and counties from DwellWise's public data, using the tools.
 
@@ -35,9 +40,9 @@ Rules:
 convert, add up or estimate. If the data does not hold a figure, say so.
 - For a scheme (some homes somewhere), ask for the county if none is given. Then call shortlist \
 for that county; it works per county, so if the user names part of a county, say so and use the \
-whole county. The page shows the table and links to each brief, so do not go through every town or \
-figure: say what the list is sorted by and name the two or three trade-offs that stand out, in at \
-most 100 words.
+whole county. The page shows the table and links to each brief, so never list the towns one by \
+one: say what the list is sorted by and name at most two towns and the trade-off between them, in \
+under 80 words.
 - Wastewater treatment capacity is not in DwellWise's data: if asked, say so and point to the \
 county's register, linked from each town's brief. Never rank or choose towns on it.
 - For a cost estimate, use only figures the user gave. If some are missing, ask for them by name \
@@ -200,6 +205,8 @@ async def answer(
             if table:
                 shortlists.append(table)
             messages.append({"role": "tool", "tool_call_id": call.get("id", name), "content": result})
+        if any(c["function"]["name"] == SHORTLIST for c in calls) and shortlists:
+            messages.append({"role": "user", "content": SHORTLIST_NOTE})
     return {"answer": REFUSAL, "grounded": False, "tools": used, "provider": provider, "tokens": tokens,
             "rejected": rejected, "shortlists": [], "over_budget": tokens >= TOKEN_BUDGET}  # fmt: skip
 
