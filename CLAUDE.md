@@ -145,7 +145,7 @@ deploy/        Helm chart for the app, installed on a throwaway kind cluster in 
 | M15b: UI revisit, the brief as a site notice (statutory-yellow board, pinned notices, self-hosted Archivo, PRODUCT.md) | Merged (PR #75); live 26 Nov |
 | M15c: Ireland and county pages as site notices (shared board, every section a pinned notice, towns compared first on counties, partial month hatched) | Merged (PR #76); live 26 Nov |
 | M15d: cost estimate and question box as notices (board shows the user's own total and per-home cost; square ruled inputs, black plate buttons) | Merged (PR #78); live 26 Nov |
-| M15e: finish review (board lines as prescribed statements, the notice's printed border), root DESIGN.md, rule 10 rewritten, old CSS removed | In review |
+| M15e: finish review (board lines as prescribed statements, the notice's printed border), root DESIGN.md, rule 10 rewritten, old CSS removed | Merged (PR #79); live 27 Nov. Shorter shortlist answers (PR #80) |
 
 
 ## Next

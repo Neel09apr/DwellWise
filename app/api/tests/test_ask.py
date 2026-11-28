@@ -420,3 +420,23 @@ def test_the_route_takes_at_most_four_earlier_messages_and_returns_the_shortlist
     assert ok.status_code == 200
     assert [t["code"] for t in ok.json()["shortlists"][0]["towns"]] == ["10001", "10002", "10003"]
     assert too_many.status_code == 422 and bad_role.status_code == 422
+
+
+def test_after_a_shortlist_the_model_is_reminded_not_to_list_the_towns_and_only_then():
+    from dwellwise_api.ask import SHORTLIST_NOTE
+
+    def run(results):
+        seen = []
+        turns = [SHORTLIST_CASE["turns"][0], {"role": "assistant", "content": "Sorted by homes started."}]
+        script = list(turns)
+
+        def chat(messages, _tools):
+            seen.append([m["content"] for m in messages])
+            return {"message": script.pop(0), "provider": "s", "tokens": 1}
+
+        asyncio.run(answer("Eight homes in Kildare?", None, chat, recorded(results)))
+        return seen[-1]  # what the model saw before it answered
+
+    assert run(SHORTLIST_CASE["tool_results"])[-1] == SHORTLIST_NOTE
+    failed = {"shortlist": json.dumps({"status": 404, "body": {"error": "No county is called Atlantis."}})}
+    assert SHORTLIST_NOTE not in run(failed)
