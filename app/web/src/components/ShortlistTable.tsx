@@ -12,7 +12,7 @@ export function ShortlistTable({ shortlist }: { shortlist: Shortlist }) {
       <TableRegion label={`Towns in ${county} compared`}>
         <table className="counts">
           <caption className="table-caption">
-            Top {shortlist.towns.length} of {shortlist.towns_in_county} towns in {county}, by {shortlist.sorted_by}.
+            Top {shortlist.towns.length} of {shortlist.towns_in_county} towns in {county}, by {shortlist.sorted_by}
           </caption>
           <thead>
             <tr>
