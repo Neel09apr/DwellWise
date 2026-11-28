@@ -41,9 +41,8 @@ typography:
     lineHeight: 1.6
   label:
     fontFamily: "Archivo Variable, Archivo, Helvetica Neue, Arial, sans-serif"
-    fontSize: "0.72rem"
-    fontWeight: 700
-    letterSpacing: "0.04em"
+    fontSize: "0.8rem"
+    fontWeight: 600
 rounded:
   control: "2px"
 spacing:
@@ -100,12 +99,16 @@ text only.
 
 One face, Archivo (variable, OFL), self-hosted from `@fontsource-variable/archivo`; nothing loads from a third
 party. Two registers: heavy (800) condensed capitals (`font-stretch` 72 to 85%) for the board title and notice
-headings, and plain weights for everything else. Figures are tabular everywhere. Labels on data (table heads,
-fact names) are small bold capitals; there are no eyebrow labels above headings and no section numbers.
+headings, and plain weights for everything else. Fixed sizes come from a short scale, 0.8, 0.9, 1 and 1.25rem;
+only display type (the board title, notice headings, headline figures) uses larger or fluid sizes. Figures are
+tabular everywhere. Labels on data (table heads, fact names) are sentence case at 0.8rem, weight 600, muted, with
+normal tracking; capitals belong to the board and notice headings only. There are no eyebrow labels above
+headings and no section numbers.
 
 ## Layout
 
-Pages are 72rem wide; prose keeps a 46rem measure. Under the board, a column of notices 1.5rem apart; on
+Spacing sits on a 4px grid (0.25rem steps; a 2px nudge only inside small controls). Pages are 72rem wide;
+prose keeps a 46rem measure. Under the board, a column of notices 1.5rem apart; on
 screens 64rem or wider a sticky side list of the notices sits to its left (plain links). The notices column is
 `minmax(0, 1fr)` so a wide table never stretches it: wide tables scroll inside a named, focusable region with a
 sticky first column. Sections far below the fold use `content-visibility: auto` with a size placeholder. On
@@ -143,5 +146,6 @@ corners; the board adds the statutory notice's printed 2px ink border, inset 20p
 - Do put each notice's source and capture date at its foot.
 - Don't use a big-number, small-label stat grid; it reads as a dashboard, not a notice.
 - Don't add eyebrow labels, section numbers, card grids, gradients or extra shadows.
+- Don't use typed characters (›, →, •) as icons; a row that is a link needs no arrow.
 - Don't load fonts or styles from a third party (the CSP forbids it).
 - Don't add dark mode without a design for content on a dark ground; the notices stay white either way.

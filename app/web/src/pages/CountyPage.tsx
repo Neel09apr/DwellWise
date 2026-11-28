@@ -56,9 +56,6 @@ export function CountyPage() {
                       <li key={s.code}>
                         <Link to={`/settlements/${encodeURIComponent(s.code)}`} className="row">
                           <span>{s.name}</span>
-                          <span className="row-meta" aria-hidden="true">
-                            ›
-                          </span>
                         </Link>
                       </li>
                     ))}
